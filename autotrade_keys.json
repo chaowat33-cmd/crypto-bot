@@ -1,0 +1,27 @@
+{
+  "bitkub": {
+    "key": "baf43960e1ff7fd9f1baf60c17556758eb1eec37dcad39de210ceb25da03036b",
+    "secret": "a0e510ff8a9b44c7ab93c2eb2913482bd90ce446c00a4969ae84342c2e6b80c674XTznBFzMtV1K9pZiMpYBPcDvW5",
+    "connected": true
+  },
+  "binance_th": {
+    "key": "",
+    "secret": "",
+    "connected": false
+  },
+  "binance_global": {
+    "key": "ZbaYfChmyKJH0gpeMHF3moaq9eqU4jbZHF1xI9ka7JxCbesSHKvSEsq6r2S6ygnS",
+    "secret": "4FsrQkqJHRj4itpAmpqbnJle2GIA3rIxGnOGybLTf6fwAZezt7HVoDiXdWPGcwrG",
+    "connected": true
+  },
+  "orbix": {
+    "key": "",
+    "secret": "",
+    "connected": false
+  },
+  "upbit": {
+    "key": "",
+    "secret": "",
+    "connected": false
+  }
+}

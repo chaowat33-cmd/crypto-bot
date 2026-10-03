@@ -1,0 +1,1381 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🇹🇭 Thai Baht (THB) Crypto Arbitrage & Multi-Exchange Observation Terminal</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', 'Noto Sans Thai', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    @keyframes pulseGreen {
+      0% { background-color: rgba(34, 197, 94, 0.45); color: #4ade80; }
+      100% { background-color: transparent; }
+    }
+    @keyframes pulseRed {
+      0% { background-color: rgba(239, 68, 68, 0.45); color: #f87171; }
+      100% { background-color: transparent; }
+    }
+    .flash-up { animation: pulseGreen 0.45s cubic-bezier(0.1, 0.9, 0.2, 1); }
+    .flash-down { animation: pulseRed 0.45s cubic-bezier(0.1, 0.9, 0.2, 1); }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #050811; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #334155; }
+  </style>
+</head>
+<body class="bg-[#050811] text-slate-100 min-h-screen flex flex-col antialiased selection:bg-emerald-500 selection:text-white">
+
+  <!-- TOP HEADER -->
+  <header class="border-b border-slate-800/80 bg-[#080d1a]/95 backdrop-blur-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      
+      <!-- Brand & Mode Title -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 via-cyan-400 to-purple-500 p-[2px] flex items-center justify-center shadow-lg shadow-emerald-500/25">
+          <div class="w-full h-full bg-[#050811] rounded-[10px] flex items-center justify-center font-black text-emerald-400 text-lg">
+            🇹🇭
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg font-bold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
+              Thai Crypto Arbitrage Matrix
+            </h1>
+            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 uppercase tracking-wider">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+              Pure THB (4 Exchanges)
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-400 hidden sm:block">
+            ศูนย์สังเกตการณ์ราคาเงินบาท (THB) สดจาก 4 กระดานที่ได้รับใบอนุญาต ก.ล.ต. ไทย
+          </p>
+        </div>
+      </div>
+
+      <!-- Live Speed & USDT/THB Tick -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        
+        <!-- Live Exchanges Status -->
+        <div class="hidden lg:flex items-center gap-2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-[11px] mono">
+          <span class="flex items-center gap-1 text-slate-300">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span> Bitkub
+          </span>
+          <span class="text-slate-700">•</span>
+          <span class="flex items-center gap-1 text-slate-300">
+            <span class="w-2 h-2 rounded-full bg-cyan-400"></span> Binance TH
+          </span>
+          <span class="text-slate-700">•</span>
+          <span class="flex items-center gap-1 text-slate-300">
+            <span class="w-2 h-2 rounded-full bg-purple-400"></span> Orbix
+          </span>
+          <span class="text-slate-700">•</span>
+          <span class="flex items-center gap-1 text-slate-300">
+            <span class="w-2 h-2 rounded-full bg-blue-400"></span> Upbit
+          </span>
+        </div>
+
+        <!-- Live USDT/THB Rate -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 flex items-center gap-2">
+          <div class="text-xs">
+            <span class="text-slate-400 block text-[9px] uppercase font-bold tracking-wider leading-none">USDT/THB สด</span>
+            <span id="rate-usdt-thb" class="font-black text-emerald-400 mono text-sm leading-none mt-1 inline-block">฿33.54</span>
+          </div>
+        </div>
+
+        <!-- Refresh / Live Toggle -->
+        <button id="btn-toggle-live" onclick="toggleStream()" class="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white transition border border-slate-800 flex items-center gap-1.5 text-xs font-semibold">
+          <span id="stream-pulse" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span id="stream-text" class="mono text-[11px]">สตรีมสด</span>
+        </button>
+
+        <!-- Token Dictionary Modal Button -->
+        <button onclick="openDictionaryModal()" class="px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 transition border border-amber-500/30 flex items-center gap-1.5 text-xs font-bold shadow-sm">
+          <span>📖</span>
+          <span class="hidden md:inline">พจนานุกรมชื่อเหรียญซ้ำ</span>
+          <span class="md:hidden">พจนานุกรม</span>
+        </button>
+
+        <!-- Report Page Link Button -->
+        <a href="/report.html" class="px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/40 transition flex items-center gap-1.5 text-xs font-bold shadow-sm">
+          <span>📊</span>
+          <span class="hidden sm:inline">หน้า Report สถิติ Spread</span>
+          <span class="sm:hidden">Report</span>
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        </a>
+
+        <!-- Auto Trade Page Link Button -->
+        <a href="/autotrade.html" class="px-3 py-1.5 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/40 transition flex items-center gap-1.5 text-xs font-bold shadow-sm">
+          <span>🤖</span>
+          <span class="hidden sm:inline">ระบบ Auto Trade ⚡</span>
+          <span class="sm:hidden">Auto Trade</span>
+          <span class="w-1.5 h-1.5 rounded-full bg-purple-400 animate-ping"></span>
+        </a>
+
+        <!-- API & Loan Trade Page Link Button -->
+        <a href="/api_trade.html" class="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 transition flex items-center gap-1.5 text-xs font-bold shadow-sm">
+          <span>⚡</span>
+          <span class="hidden sm:inline">API & ระบบ Loan</span>
+          <span class="sm:hidden">API/Loan</span>
+        </a>
+
+      </div>
+
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex-1 w-full space-y-4">
+
+    <!-- INTERACTIVE EXCHANGE TOGGLE BAR (กดเปิด-ปิดคู่เทียบได้ทุกเจ้า) -->
+    <div class="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-3.5 sm:p-4 shadow-lg backdrop-blur-sm">
+      <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
+        
+        <div class="flex items-center flex-wrap gap-2">
+          <span class="text-xs font-bold text-slate-300 flex items-center gap-1.5 mr-1">
+            <span>🔘</span> กดเพื่อเปิด / ปิด Exchange ที่ต้องการสังเกตการณ์:
+          </span>
+
+          <!-- Toggle Bitkub -->
+          <button id="toggle-bk" onclick="toggleExchange('bitkub')" class="px-3 py-1.5 rounded-xl border font-bold text-xs flex items-center gap-2 transition bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-sm">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            Bitkub 🟢
+            <span id="badge-bk" class="text-[10px] mono bg-emerald-500 text-slate-950 px-1 rounded font-black">ON</span>
+          </button>
+
+          <!-- Toggle Binance TH -->
+          <button id="toggle-bnth" onclick="toggleExchange('binance_th')" class="px-3 py-1.5 rounded-xl border font-bold text-xs flex items-center gap-2 transition bg-cyan-500/20 border-cyan-500 text-cyan-300 shadow-sm">
+            <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+            Binance TH 🔵
+            <span id="badge-bnth" class="text-[10px] mono bg-cyan-400 text-slate-950 px-1 rounded font-black">ON</span>
+          </button>
+
+          <!-- Toggle Binance Global (ธรรมดา) -->
+          <button id="toggle-bg" onclick="toggleExchange('binance_global')" class="px-3 py-1.5 rounded-xl border font-bold text-xs flex items-center gap-2 transition bg-amber-500/20 border-amber-500 text-amber-300 shadow-sm">
+            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+            Binance ธรรมดา (Global) 🟡
+            <span id="badge-bg" class="text-[10px] mono bg-amber-400 text-slate-950 px-1 rounded font-black">ON</span>
+          </button>
+
+          <!-- Toggle Orbix (KBank) -->
+          <button id="toggle-orb" onclick="toggleExchange('orbix')" class="px-3 py-1.5 rounded-xl border font-bold text-xs flex items-center gap-2 transition bg-purple-500/20 border-purple-500 text-purple-300 shadow-sm">
+            <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+            Orbix (KBank) 🟣
+            <span id="badge-orb" class="text-[10px] mono bg-purple-400 text-slate-950 px-1 rounded font-black">ON</span>
+          </button>
+
+          <!-- Toggle Upbit Thailand -->
+          <button id="toggle-upb" onclick="toggleExchange('upbit')" class="px-3 py-1.5 rounded-xl border font-bold text-xs flex items-center gap-2 transition bg-blue-500/20 border-blue-500 text-blue-300 shadow-sm">
+            <span class="w-2 h-2 rounded-full bg-blue-400"></span>
+            Upbit Thailand 🔷
+            <span id="badge-upb" class="text-[10px] mono bg-blue-400 text-slate-950 px-1 rounded font-black">ON</span>
+          </button>
+        </div>
+
+        <div class="text-[11px] text-slate-400 font-mono">
+          * ระบบคำนวณส่วนต่าง Best Buy / Best Sell เฉพาะจาก Exchange ที่เปิดอยู่แบบ Real-time
+        </div>
+
+      </div>
+    </div>
+
+    <!-- EXPLANATION BANNER (ทำไม Spread ถึงห่างผิดปกติ) -->
+    <div class="bg-gradient-to-r from-amber-500/10 via-slate-900/70 to-cyan-500/10 border border-amber-500/30 rounded-2xl p-4 shadow-lg">
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+        <div class="space-y-1">
+          <div class="flex items-center gap-2">
+            <span class="text-amber-400 font-bold text-sm flex items-center gap-1.5">
+              <span>⚠️</span> ดึงข้อมูลถูกมั้ย? ทำไมบางเหรียญ Spread ถึงห่างมหาศาล (+100% ถึง +1,000%)?
+            </span>
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            API ดึงราคา <code class="text-amber-300 font-mono font-bold">lastPrice</code> มาถูกต้อง 100% จาก Exchange แต่สาเหตุที่ Spread กว้างผิดปกติเกิดจาก:
+            <br>
+            <b class="text-amber-400">1. ราคาค้างในอดีต (Stale Price / ตลาดร้าง):</b> โดยเฉพาะ <b>Orbix</b> และ <b>Upbit</b> ในเหรียญเล็กๆ (เช่น QNT, GRASS, DEXE, ZENT) ไม่มีคนเทรดใน 24 ชม. (<code class="text-slate-400">Volume = 0</code>) ราคาที่แสดงจึงเป็นราคาบิลเก่าค้างในอดีต ไม่ใช่ราคาตลาดปัจจุบัน
+            <br>
+            <b class="text-cyan-400">2. ชื่อ Ticker ซ้ำแต่คนละเหรียญ (Token Mismatch):</b> เช่น <code class="text-cyan-300">VELO</code> บน Bitkub คือ <i>Velo Protocol</i> (~1.17 ฿) แต่บน Binance TH คือ <i>Velodrome Finance</i> (~0.17 ฿) (ระบบตัดการเทียบเหรียญนี้ออกให้แล้ว)
+          </p>
+          <div class="pt-1">
+            <button onclick="openDictionaryModal()" class="inline-flex items-center gap-1.5 text-xs text-amber-300 hover:text-amber-200 font-bold bg-amber-500/10 hover:bg-amber-500/20 px-2.5 py-1 rounded-lg border border-amber-500/30 transition">
+              <span>📖</span> เปิดดูพจนานุกรมชื่อเหรียญซ้ำ & Ticker สับสนทั้งหมด (VELO, LUNA, POL, RENDER ฯลฯ) ➔
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 bg-slate-950/80 px-3.5 py-2.5 rounded-xl border border-slate-700/60 whitespace-nowrap self-stretch md:self-auto justify-between md:justify-start">
+          <label for="cb-filter-stale" class="text-xs font-bold text-slate-200 flex items-center gap-2 cursor-pointer select-none">
+            <input type="checkbox" id="cb-filter-stale" checked onchange="toggleFilterStale()" class="w-4 h-4 rounded text-emerald-500 focus:ring-0 cursor-pointer">
+            <span class="text-emerald-400">🛡️ กรองราคาค้าง (Vol = 0)</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- METRICS OVERVIEW CARDS -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+      
+      <!-- Card 1: Top Arbitrage Opportunity -->
+      <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 relative overflow-hidden backdrop-blur-sm hover:border-emerald-500/40 transition">
+        <div class="flex items-center justify-between text-slate-400 text-xs font-semibold mb-1">
+          <span>โอกาส Net Arbitrage สูงสุด (หลังหัก Fee)</span>
+          <span class="text-emerald-400 text-xs font-black mono">▲ NET PROFIT</span>
+        </div>
+        <div class="flex items-baseline justify-between mt-1">
+          <span id="card-max-prem-coin" class="text-2xl font-black text-emerald-400 mono">SOL</span>
+          <span id="card-max-prem-val" class="text-xl font-black mono text-emerald-400">+2.86%</span>
+        </div>
+        <div id="card-prem-route" class="text-[11px] text-slate-300 mt-2 font-mono truncate">
+          ซื้อ Orbix ➔ ขาย Upbit (+114 ฿/SOL)
+        </div>
+      </div>
+
+      <!-- Card 2: Highest Price Diff in Baht -->
+      <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 relative overflow-hidden backdrop-blur-sm hover:border-cyan-500/40 transition">
+        <div class="flex items-center justify-between text-slate-400 text-xs font-semibold mb-1">
+          <span>ส่วนต่างบาทสูงสุด (BTC Diff)</span>
+          <span class="text-cyan-400 text-xs font-black mono">฿ GAP</span>
+        </div>
+        <div class="flex items-baseline justify-between mt-1">
+          <span class="text-2xl font-black text-cyan-300 mono">BTC</span>
+          <span id="card-btc-diff" class="text-xl font-black mono text-cyan-300">฿2,951</span>
+        </div>
+        <div class="text-[11px] text-slate-400 mt-2">
+          ส่วนต่างระหว่างราคาต่ำสุดกับสูงสุดในไทย
+        </div>
+      </div>
+
+      <!-- Card 3: USDT Premium -->
+      <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 relative overflow-hidden backdrop-blur-sm">
+        <div class="flex items-center justify-between text-slate-400 text-xs font-semibold mb-1">
+          <span>ราคา USDT ข้ามกระดานไทย</span>
+          <span class="text-purple-400 text-xs font-bold mono">USDT/THB</span>
+        </div>
+        <div class="flex items-baseline justify-between mt-1">
+          <span id="card-usdt-spread" class="text-2xl font-black text-purple-300 mono">฿33.48 - ฿33.55</span>
+        </div>
+        <div class="text-[11px] text-slate-400 mt-2 flex items-center justify-between">
+          <span>ส่วนต่าง USDT:</span>
+          <span class="text-emerald-400 font-bold mono">~0.07 ฿ (+0.21%)</span>
+        </div>
+      </div>
+
+      <!-- Card 4: Throughput & Latency -->
+      <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 relative overflow-hidden backdrop-blur-sm">
+        <div class="flex items-center justify-between text-slate-400 text-xs font-semibold mb-1">
+          <span>ความเร็วการสตรีม (Throughput)</span>
+          <span class="text-amber-400 text-sm mono">⚡</span>
+        </div>
+        <div class="flex items-baseline justify-between mt-1">
+          <span id="card-events-per-sec" class="text-2xl font-black mono text-white">~30 ticks/s</span>
+        </div>
+        <div class="text-[11px] text-slate-400 mt-2 flex items-center justify-between">
+          <span>ความหน่วงระบบ:</span>
+          <span class="text-emerald-400 font-bold mono">&lt; 30ms Event Latency</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- CONTROL & SEARCH BAR -->
+    <div class="bg-slate-900/70 border border-slate-800/90 rounded-2xl p-3 sm:p-4 space-y-3">
+      <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        
+        <div class="relative flex-1 max-w-md">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+            🔍
+          </div>
+          <input 
+            type="text" 
+            id="search-input" 
+            oninput="handleSearch()" 
+            placeholder="ค้นหาเหรียญ เช่น BTC, ETH, SOL, XRP, USDT, KUB, DOGE, ADA..." 
+            class="w-full bg-[#080d1a] border border-slate-700/80 rounded-xl pl-9 pr-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+          >
+        </div>
+
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none text-xs font-semibold">
+          <button onclick="setFilter('all')" id="filter-all" class="filter-btn px-3 py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-bold transition whitespace-nowrap">
+            เหรียญทั้งหมด 🔥
+          </button>
+          <button onclick="setFilter('ready')" id="filter-ready" class="filter-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap">
+            🟢 พร้อมจบจริงเท่านั้น 🎯
+          </button>
+          <button onclick="setFilter('major')" id="filter-major" class="filter-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap">
+            เหรียญหลัก (Top 10) ⭐
+          </button>
+          <button onclick="setFilter('arb')" id="filter-arb" class="filter-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap">
+            กำไรสุทธิหลังหัก Fee (>0%) ⚡
+          </button>
+          <button onclick="setFilter('all-four')" id="filter-all-four" class="filter-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap">
+            มีครบทั้ง 4 กระดาน 💎
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2 self-end md:self-auto">
+          <span class="text-xs text-slate-400 whitespace-nowrap">เรียงตาม:</span>
+          <select id="sort-select" onchange="handleSort()" class="bg-[#080d1a] border border-slate-700 text-xs rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-emerald-500 font-medium">
+            <option value="real-spread-desc" selected>Spread สุทธิหลังหัก Fee (มากไปน้อย) ⚡</option>
+            <option value="max-cap-desc">วงเงินพร้อมจบจริง (฿) (มากไปน้อย)</option>
+            <option value="spread-desc">ส่วนต่าง Match Price % (มากไปน้อย)</option>
+            <option value="price-desc">ราคาเหรียญ (สูงไปต่ำ)</option>
+            <option value="symbol-asc">ชื่อเหรียญ (A-Z)</option>
+          </select>
+        </div>
+
+      </div>
+
+      <!-- FEE DEDUCTION BAR (ปรับค่าธรรมเนียมหักลบ Spread อัตโนมัติ) -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-800/80 text-xs">
+        <div class="flex items-center flex-wrap gap-2.5">
+          <span class="font-bold text-amber-300 flex items-center gap-1.5">
+            <span>💸</span> หักค่าธรรมเนียมเทรด (Trading Fee):
+          </span>
+          
+          <div class="relative flex items-center">
+            <span class="absolute left-2.5 text-slate-400 font-bold">-</span>
+            <input 
+              type="number" 
+              id="input-fee-rate" 
+              value="0.35" 
+              step="0.05" 
+              min="0" 
+              max="5" 
+              oninput="handleFeeChange()" 
+              class="w-24 bg-[#050811] border border-amber-500/50 rounded-xl pl-6 pr-6 py-1.5 mono font-black text-amber-300 focus:outline-none focus:border-amber-400 text-center"
+            >
+            <span class="absolute right-2.5 text-amber-400 font-bold">%</span>
+          </div>
+
+          <!-- Quick Presets -->
+          <div class="flex items-center gap-1 font-semibold">
+            <button onclick="setFeeRate(0.35)" id="btn-fee-035" class="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 transition text-[11px] font-bold">
+              -0.35% (ค่าเริ่มต้น)
+            </button>
+            <button onclick="setFeeRate(0.50)" id="btn-fee-050" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition text-[11px]">
+              -0.50% (Bitkub 0.25% x 2)
+            </button>
+            <button onclick="setFeeRate(0.20)" id="btn-fee-020" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition text-[11px]">
+              -0.20% (Binance TH VIP)
+            </button>
+            <button onclick="setFeeRate(0.00)" id="btn-fee-000" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition text-[11px]">
+              0.00% (Gross ดิบ)
+            </button>
+          </div>
+        </div>
+
+        <div class="text-[11px] text-slate-400 font-mono">
+          * Spread และการเรียงลำดับจะคำนวณเป็น <b class="text-emerald-400">Net Profit % สุทธิ</b> หลังหักค่าฟีทันที
+        </div>
+      </div>
+    </div>
+
+    <!-- PURE THB COMPARISON TABLE -->
+    <div class="bg-slate-900/50 border border-slate-800/80 rounded-2xl overflow-hidden shadow-2xl">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b border-slate-800 bg-[#080d1a]/90 text-slate-400 text-xs font-semibold uppercase tracking-wider">
+              <th class="py-3 px-4">เหรียญ (Coin)</th>
+              <th id="th-bk" class="py-3 px-4 text-right">Bitkub (THB) 🟢</th>
+              <th id="th-bnth" class="py-3 px-4 text-right">Binance TH (THB) 🔵</th>
+              <th id="th-bg" class="py-3 px-4 text-right">Binance Global (THB) 🟡</th>
+              <th id="th-orb" class="py-3 px-4 text-right">Orbix KBank (THB) 🟣</th>
+              <th id="th-upb" class="py-3 px-4 text-right">Upbit TH (THB) 🔷</th>
+              <th class="py-3 px-4 text-right">ซื้อจริงที่ (Ask)</th>
+              <th class="py-3 px-4 text-right">ขายจริงที่ (Bid)</th>
+              <th class="py-3 px-4 text-right">Spread สุทธิ (หลังหัก Fee)</th>
+              <th class="py-3 px-4 text-center">วงเงินจบจริง (Max Fill)</th>
+              <th class="py-3 px-4 text-center">Arbitrage Route</th>
+              <th class="py-3 px-4 text-center">คำนวณ</th>
+            </tr>
+          </thead>
+          <tbody id="table-body" class="divide-y divide-slate-800/50 text-sm">
+            <tr>
+              <td colspan="10" class="text-center py-12 text-slate-400">
+                <div class="inline-block animate-spin w-8 h-8 border-4 border-emerald-400 border-t-transparent rounded-full mb-3"></div>
+                <div class="mono text-xs">กำลังสตรีมราคาสดจาก 4 ศูนย์ซื้อขายในไทย (Bitkub, Binance TH, Orbix, Upbit)...</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="border-t border-slate-800/80 bg-[#080d1a]/60 px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
+        <div>
+          กำลังสังเกตการณ์ <span id="showing-count" class="font-bold text-white mono">0</span> รายการจากทั้งหมด <span id="total-count" class="font-bold text-white mono">0</span> คู่เงินบาทไทย (THB)
+        </div>
+        <div class="flex items-center gap-2">
+          <span>Render Tick: <span id="last-render-time" class="mono text-slate-300 font-bold">-</span></span>
+          <span class="text-slate-600">•</span>
+          <span class="text-emerald-400 font-bold mono">100% Pure Thai Baht Pairs</span>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MULTI-EXCHANGE ARBITRAGE CALCULATOR MODAL -->
+  <div id="calc-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-[#0b1020] border border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl relative">
+      <button onclick="closeCalculator()" class="absolute top-5 right-5 text-slate-400 hover:text-white p-2 rounded-xl bg-slate-800/60 hover:bg-slate-800 transition">✕</button>
+      
+      <div class="flex items-center gap-3 mb-5">
+        <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-xl font-black text-emerald-400">🧮</div>
+        <div>
+          <h3 class="text-lg font-bold text-white flex items-center gap-2">
+            คำนวณกำไร Arbitrage เงินบาท (THB)
+            <span id="modal-coin-symbol" class="text-xs px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 mono font-black">BTC</span>
+          </h3>
+          <p class="text-xs text-slate-400">จำลองการซื้อจากกระดานไทย A ไปขายกระดานไทย B (หักค่าธรรมเนียมตามจริง)</p>
+        </div>
+      </div>
+
+      <!-- Source and Destination Exchange Selector -->
+      <div class="grid grid-cols-2 gap-3 mb-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">1. ซื้อที่ Exchange ต้นทาง (Buy):</label>
+          <select id="calc-source-ex" onchange="runArbitrageCalculation()" class="w-full bg-[#050811] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-bold focus:border-emerald-500">
+            <option value="bitkub">Bitkub 🟢</option>
+            <option value="binance_th" selected>Binance TH 🔵</option>
+            <option value="binance_global">Binance Global (ธรรมดา) 🟡</option>
+            <option value="orbix">Orbix KBank 🟣</option>
+            <option value="upbit">Upbit Thailand 🔷</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">2. ขายที่ Exchange ปลายทาง (Sell):</label>
+          <select id="calc-target-ex" onchange="runArbitrageCalculation()" class="w-full bg-[#050811] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-bold focus:border-emerald-500">
+            <option value="orbix" selected>Orbix KBank 🟣</option>
+            <option value="upbit">Upbit Thailand 🔷</option>
+            <option value="bitkub">Bitkub 🟢</option>
+            <option value="binance_th">Binance TH 🔵</option>
+            <option value="binance_global">Binance Global (ธรรมดา) 🟡</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Capital Input -->
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">เงินลงทุนเริ่มต้น (THB)</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 font-bold">฿</span>
+            <input type="number" id="calc-capital" value="50000" step="1000" oninput="runArbitrageCalculation()" class="w-full bg-[#050811] border border-slate-700 rounded-xl pl-8 pr-4 py-2.5 mono text-white text-base focus:outline-none focus:border-emerald-500">
+          </div>
+          <div class="flex gap-2 mt-1.5">
+            <button onclick="setCapital(10000)" class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700">10,000</button>
+            <button onclick="setCapital(50000)" class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700">50,000</button>
+            <button onclick="setCapital(100000)" class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700">100,000</button>
+            <button onclick="setCapital(500000)" class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700">500,000</button>
+          </div>
+        </div>
+
+        <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-2">
+          <div class="flex justify-between items-center text-xs text-slate-400">
+            <span>ราคาซื้อต้นทาง:</span>
+            <span id="calc-buy-price" class="mono text-slate-200 font-semibold">-</span>
+          </div>
+          <div class="flex justify-between items-center text-xs text-slate-400">
+            <span>ราคาขายปลายทาง:</span>
+            <span id="calc-sell-price" class="mono text-slate-200 font-semibold">-</span>
+          </div>
+          <div class="flex justify-between items-center text-xs text-slate-400">
+            <span>ค่าธรรมเนียมรวมทั้งสองฝั่ง:</span>
+            <span id="calc-fees" class="mono text-rose-400 font-semibold">-฿0.00</span>
+          </div>
+          <div class="border-t border-slate-800 pt-2 flex justify-between items-center">
+            <span class="text-sm font-bold text-white">กำไรสุทธิประมาณการ (Net Profit):</span>
+            <div class="text-right">
+              <span id="calc-net-profit" class="text-lg font-black mono text-emerald-400">+฿0.00</span>
+              <span id="calc-net-roi" class="block text-[11px] mono text-emerald-400 font-bold">(+0.00%)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex gap-1.5 flex-wrap">
+          <a id="calc-link-bk" href="#" target="_blank" class="flex-1 py-2 px-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs text-center transition">Bitkub ↗</a>
+          <a id="calc-link-bnth" href="#" target="_blank" class="flex-1 py-2 px-1 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs text-center transition">Binance TH ↗</a>
+          <a id="calc-link-bg" href="#" target="_blank" class="flex-1 py-2 px-1 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs text-center transition">Binance Global ↗</a>
+          <a id="calc-link-orb" href="#" target="_blank" class="flex-1 py-2 px-1 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs text-center transition">Orbix ↗</a>
+          <a id="calc-link-upb" href="#" target="_blank" class="flex-1 py-2 px-1 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs text-center transition">Upbit ↗</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOKEN MISMATCH & REBRANDING DICTIONARY MODAL -->
+  <div id="dict-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden items-center justify-center p-3 sm:p-5">
+    <div class="bg-[#0b1020] border border-slate-800 rounded-3xl max-w-3xl w-full p-5 sm:p-7 shadow-2xl relative max-h-[90vh] flex flex-col">
+      
+      <!-- Close button -->
+      <button onclick="closeDictionaryModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white p-2 rounded-xl bg-slate-800/60 hover:bg-slate-800 transition">✕</button>
+      
+      <!-- Modal Header -->
+      <div class="flex items-center gap-3.5 mb-4 pr-10">
+        <div class="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-2xl flex-shrink-0">
+          📖
+        </div>
+        <div>
+          <h3 class="text-lg sm:text-xl font-black text-white flex items-center gap-2">
+            พจนานุกรมชื่อเหรียญซ้ำ & Ticker สับสนในไทย
+            <span class="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold">Glossary</span>
+          </h3>
+          <p class="text-xs text-slate-400">
+            รวมรายการเหรียญที่ชื่อย่อซ้ำกัน, เหรียญที่ Rebrand, และเหรียญที่ย้ายเชน เพื่อป้องกันการเข้าใจผิดเรื่องราคาและโอนเหรียญผิด
+          </p>
+        </div>
+      </div>
+
+      <!-- Filter & Search Controls -->
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pb-4 border-b border-slate-800/80">
+        <div class="flex items-center gap-1.5 overflow-x-auto text-xs font-semibold">
+          <button onclick="setDictFilter('all')" id="dict-tab-all" class="dict-tab px-3 py-1.5 rounded-lg bg-amber-500 text-slate-950 font-bold transition">ทั้งหมด</button>
+          <button onclick="setDictFilter('high')" id="dict-tab-high" class="dict-tab px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">🔴 ชนชื่อโดยตรง</button>
+          <button onclick="setDictFilter('medium')" id="dict-tab-medium" class="dict-tab px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">🟡 Rebrand / ย้ายเชน</button>
+          <button onclick="setDictFilter('low')" id="dict-tab-low" class="dict-tab px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">🔵 ชื่อคล้ายกัน</button>
+        </div>
+
+        <div class="relative w-full sm:w-52">
+          <input 
+            type="text" 
+            id="dict-search" 
+            oninput="renderDictionaryList()" 
+            placeholder="ค้นหา เช่น VELO, LUNA, POL..." 
+            class="w-full bg-[#050811] border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+          >
+        </div>
+      </div>
+
+      <!-- Dictionary Items Container (Scrollable) -->
+      <div id="dict-items-list" class="flex-1 overflow-y-auto py-4 space-y-4 pr-1">
+        <!-- Rendered dynamically by JS -->
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="pt-3 border-t border-slate-800/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-slate-400">
+        <span>💡 ระบบกรองคู่เหรียญที่เสี่ยงต่อการเข้าใจผิดออกจากตาราง Arbitrage ให้อัตโนมัติ</span>
+        <button onclick="closeDictionaryModal()" class="px-4 py-1.5 rounded-xl bg-slate-800 text-slate-200 hover:bg-slate-700 font-bold transition self-end sm:self-auto">ปิดหน้าต่าง</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT ENGINE -->
+  <script>
+    const coinMap = new Map();
+    let tokenDictionary = [];
+    let dictFilter = 'all';
+    let usdtThbRate = 33.54;
+    let currentFilter = 'all';
+    let currentSort = 'real-spread-desc';
+    let searchQuery = '';
+    let isStreamActive = true;
+    let pollInterval = null;
+    let totalEvents = 0;
+    let previousPrices = {};
+    let selectedCoinForCalc = null;
+    let renderRequested = false;
+    let feeDeductionPct = 0.35; // Default Fee: 0.35%
+
+    function handleFeeChange() {
+      const val = parseFloat(document.getElementById('input-fee-rate').value);
+      feeDeductionPct = isNaN(val) ? 0 : Math.max(0, val);
+      updateFeePresetButtons();
+      requestRender();
+    }
+
+    function setFeeRate(val) {
+      feeDeductionPct = val;
+      const el = document.getElementById('input-fee-rate');
+      if (el) el.value = val.toFixed(2);
+      updateFeePresetButtons();
+      requestRender();
+    }
+
+    function updateFeePresetButtons() {
+      const presets = [0.35, 0.50, 0.20, 0.00];
+      const ids = ['035', '050', '020', '000'];
+      presets.forEach((p, idx) => {
+        const btn = document.getElementById(`btn-fee-${ids[idx]}`);
+        if (!btn) return;
+        if (Math.abs(feeDeductionPct - p) < 0.001) {
+          btn.className = 'px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 transition text-[11px] font-bold';
+        } else {
+          btn.className = 'px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition text-[11px]';
+        }
+      });
+    }
+
+    // Toggle States for Exchanges (including Binance Global)
+    const enabledExchanges = {
+      bitkub: true,
+      binance_th: true,
+      binance_global: true,
+      orbix: true,
+      upbit: true
+    };
+
+    const exNames = {
+      bitkub: 'Bitkub',
+      binance_th: 'Binance TH',
+      binance_global: 'Binance Global',
+      orbix: 'Orbix',
+      upbit: 'Upbit'
+    };
+
+    // Toggle Exchange On/Off
+    function toggleExchange(ex) {
+      enabledExchanges[ex] = !enabledExchanges[ex];
+      const btnMap = { bitkub: 'bk', binance_th: 'bnth', binance_global: 'bg', orbix: 'orb', upbit: 'upb' };
+      const idPrefix = btnMap[ex];
+      
+      const btn = document.getElementById(`toggle-${idPrefix}`);
+      const badge = document.getElementById(`badge-${idPrefix}`);
+      const th = document.getElementById(`th-${idPrefix}`);
+
+      const isOn = enabledExchanges[ex];
+      if (isOn) {
+        badge.innerText = 'ON';
+        if (ex === 'bitkub') btn.className = 'px-3 py-1.5 rounded-xl border font-bold text-xs flex items-center gap-2 transition bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-sm';
+        else if (ex === 'binance_th') btn.className = 'px-3 py-1.5 rounded-xl border font-bold text-xs flex items-center gap-2 transition bg-cyan-500/20 border-cyan-500 text-cyan-300 shadow-sm';
+        else if (ex === 'binance_global') btn.className = 'px-3 py-1.5 rounded-xl border font-bold text-xs flex items-center gap-2 transition bg-amber-500/20 border-amber-500 text-amber-300 shadow-sm';
+        else if (ex === 'orbix') btn.className = 'px-3 py-1.5 rounded-xl border font-bold text-xs flex items-center gap-2 transition bg-purple-500/20 border-purple-500 text-purple-300 shadow-sm';
+        else btn.className = 'px-3 py-1.5 rounded-xl border font-bold text-xs flex items-center gap-2 transition bg-blue-500/20 border-blue-500 text-blue-300 shadow-sm';
+      } else {
+        badge.innerText = 'OFF';
+        btn.className = 'px-3 py-1.5 rounded-xl border border-slate-800 font-bold text-xs flex items-center gap-2 transition bg-slate-900 text-slate-500 opacity-60';
+      }
+
+      if (th) th.style.display = isOn ? '' : 'none';
+      requestRender();
+    }
+
+    let filterStalePrices = true;
+
+    function toggleFilterStale() {
+      filterStalePrices = !filterStalePrices;
+      const cb = document.getElementById('cb-filter-stale');
+      if (cb) cb.checked = filterStalePrices;
+      requestRender();
+    }
+
+    function isExStale(coinData, ex) {
+      if (coinData.meta?.stale?.[ex]) return true;
+      if (coinData.meta?.[ex]?.stale) return true;
+      if (coinData.meta?.[ex]?.vol !== undefined && coinData.meta[ex].vol <= 0) return true;
+      return false;
+    }
+
+    // Dynamic Arbitrage calculation based on active toggles & stale filter
+    function computeActiveArbitrage(coinData) {
+      const p = coinData.prices;
+      const activePrices = {};
+      
+      const checkAndAdd = (ex) => {
+        if (!enabledExchanges[ex] || !(p[ex] > 0)) return;
+        if (filterStalePrices && isExStale(coinData, ex)) return;
+        activePrices[ex] = p[ex];
+      };
+
+      checkAndAdd('bitkub');
+      checkAndAdd('binance_th');
+      checkAndAdd('binance_global');
+      checkAndAdd('orbix');
+      checkAndAdd('upbit');
+
+      const keys = Object.keys(activePrices);
+      if (keys.length < 2) {
+        return {
+          valid: false,
+          best_buy_ex: keys[0] || '-',
+          best_sell_ex: keys[0] || '-',
+          best_buy_price: keys[0] ? activePrices[keys[0]] : 0,
+          best_sell_price: keys[0] ? activePrices[keys[0]] : 0,
+          spread_thb: 0,
+          spread_pct: 0,
+          signal: (filterStalePrices && coinData.is_stale_any) ? 'สภาพคล่องไม่พอ (มีราคาค้าง)' : 'ต้องเปิดอย่างน้อย 2 กระดาน'
+        };
+      }
+
+      const best_buy_ex = keys.reduce((min, k) => activePrices[k] < activePrices[min] ? k : min, keys[0]);
+      const best_sell_ex = keys.reduce((max, k) => activePrices[k] > activePrices[max] ? k : max, keys[0]);
+
+      const min_p = activePrices[best_buy_ex];
+      const max_p = activePrices[best_sell_ex];
+      const spread_thb = max_p - min_p;
+      const spread_pct = min_p > 0 ? (spread_thb / min_p) * 100 : 0;
+
+      let signal = 'Spread แคบ';
+      if (spread_pct > 0.35) {
+        signal = `ซื้อ ${exNames[best_buy_ex]} ➔ ขาย ${exNames[best_sell_ex]}`;
+      }
+
+      return {
+        valid: true,
+        best_buy_ex,
+        best_sell_ex,
+        best_buy_price: min_p,
+        best_sell_price: max_p,
+        spread_thb,
+        spread_pct,
+        signal
+      };
+    }
+
+    // High-Frequency Fetch Loop (~400ms)
+    async function fetchAllThaiExchanges() {
+      try {
+        const res = await fetch('/api/compare', { cache: 'no-store' });
+        const data = await res.json();
+        totalEvents++;
+
+        if (data.dictionary && tokenDictionary.length === 0) {
+          tokenDictionary = data.dictionary;
+        }
+
+        if (data.stats?.usdt_rate) {
+          usdtThbRate = data.stats.usdt_rate;
+          document.getElementById('rate-usdt-thb').innerText = `฿${usdtThbRate.toFixed(2)}`;
+        }
+
+        if (data.coins) {
+          data.coins.forEach(c => coinMap.set(c.symbol, c));
+        }
+
+        updateHeaderCards();
+        requestRender();
+      } catch (err) {
+        console.warn('Fetch error:', err);
+      }
+    }
+
+    function openDictionaryModal(targetId = null) {
+      const modal = document.getElementById('dict-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      if (targetId) {
+        const s = document.getElementById('dict-search');
+        if (s) s.value = targetId;
+      }
+      renderDictionaryList();
+    }
+
+    function closeDictionaryModal() {
+      const modal = document.getElementById('dict-modal');
+      modal.classList.remove('flex');
+      modal.classList.add('hidden');
+    }
+
+    function setDictFilter(filter) {
+      dictFilter = filter;
+      document.querySelectorAll('.dict-tab').forEach(b => {
+        b.className = 'dict-tab px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition';
+      });
+      const activeBtn = document.getElementById(`dict-tab-${filter}`);
+      if (activeBtn) {
+        activeBtn.className = 'dict-tab px-3 py-1.5 rounded-lg bg-amber-500 text-slate-950 font-bold transition';
+      }
+      renderDictionaryList();
+    }
+
+    function renderDictionaryList() {
+      const container = document.getElementById('dict-items-list');
+      if (!container) return;
+      const search = (document.getElementById('dict-search')?.value || '').toLowerCase().trim();
+
+      let items = tokenDictionary.slice();
+      if (dictFilter !== 'all') {
+        items = items.filter(x => x.severity === dictFilter);
+      }
+      if (search) {
+        items = items.filter(x => 
+          x.ticker.toLowerCase().includes(search) || 
+          x.summary.toLowerCase().includes(search) ||
+          x.issue_type.toLowerCase().includes(search)
+        );
+      }
+
+      if (items.length === 0) {
+        container.innerHTML = `<div class="text-center py-12 text-slate-400">ไม่พบรายการเหรียญที่ตรงกับคำค้นหา</div>`;
+        return;
+      }
+
+      container.innerHTML = items.map(item => {
+        const severityBg = item.severity === 'high' ? 'bg-red-500/10 border-red-500/30' : (item.severity === 'medium' ? 'bg-amber-500/10 border-amber-500/30' : 'bg-blue-500/10 border-blue-500/30');
+        const badgeColor = item.severity === 'high' ? 'text-red-400 bg-red-500/20' : (item.severity === 'medium' ? 'text-amber-400 bg-amber-500/20' : 'text-blue-400 bg-blue-500/20');
+
+        const exKeys = Object.keys(item.exchanges);
+        const exCols = exKeys.map(k => {
+          const ex = item.exchanges[k];
+          return `
+            <div class="bg-[#070b16] border border-slate-800 rounded-xl p-3 space-y-1.5">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-xs text-white">${ex.exchange_name}</span>
+                <span class="mono text-[10px] text-amber-300 font-bold">${ex.pair}</span>
+              </div>
+              <div class="text-xs font-bold text-emerald-400">${ex.project_name}</div>
+              <div class="text-[11px] text-slate-300"><span class="text-slate-500">บล็อกเชน:</span> <span class="font-mono text-cyan-300">${ex.network}</span></div>
+              <div class="text-[11px] text-slate-300"><span class="text-slate-500">ช่วงราคา:</span> <span class="font-mono text-emerald-300 font-bold">${ex.approx_price}</span></div>
+              <p class="text-[11px] text-slate-400 leading-snug pt-1">${ex.detail}</p>
+            </div>
+          `;
+        }).join('');
+
+        return `
+          <div class="border rounded-2xl p-4 space-y-3 ${severityBg}">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+              <div class="flex items-center gap-2">
+                <span class="text-lg font-black mono text-white">${item.ticker}</span>
+                <span class="text-xs px-2 py-0.5 rounded font-bold ${badgeColor}">${item.severity_label}</span>
+              </div>
+              <span class="text-xs text-slate-400 font-semibold">${item.issue_type}</span>
+            </div>
+
+            <p class="text-xs font-semibold text-slate-200">
+              📌 <span class="text-amber-300">${item.summary}</span>
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-${exKeys.length >= 2 ? '2' : '1'} gap-2.5">
+              ${exCols}
+            </div>
+
+            <div class="bg-red-950/40 border border-red-500/30 rounded-xl p-2.5 text-[11px] text-red-200 flex items-start gap-2">
+              <span class="text-sm">⚠️</span>
+              <span class="leading-relaxed">${item.warning}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function startStream() {
+      fetchAllThaiExchanges();
+      pollInterval = setInterval(() => {
+        if (isStreamActive) fetchAllThaiExchanges();
+      }, 400);
+    }
+
+    function toggleStream() {
+      isStreamActive = !isStreamActive;
+      const pulse = document.getElementById('stream-pulse');
+      const text = document.getElementById('stream-text');
+      if (isStreamActive) {
+        pulse.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
+        text.innerText = 'สตรีมสด';
+      } else {
+        pulse.className = 'w-2 h-2 rounded-full bg-slate-500';
+        text.innerText = 'หยุดชั่วคราว';
+      }
+    }
+
+    function requestRender() {
+      if (renderRequested) return;
+      renderRequested = true;
+      requestAnimationFrame(() => {
+        renderTable();
+        updateHeaderCards();
+        if (selectedCoinForCalc) runArbitrageCalculation();
+        renderRequested = false;
+      });
+    }
+
+    function updateHeaderCards() {
+      const coins = Array.from(coinMap.values());
+      
+      // Look for real executable orderbook arbs with positive net spread
+      const execArbs = coins
+        .filter(c => c.execution && c.execution.valid && c.execution.real_spread_pct < 35)
+        .map(c => {
+          const netSpread = c.execution.real_spread_pct - feeDeductionPct;
+          return { coin: c, exec: c.execution, netSpread };
+        })
+        .sort((a, b) => b.netSpread - a.netSpread);
+
+      if (execArbs.length > 0 && execArbs[0].netSpread > 0) {
+        const top = execArbs[0];
+        document.getElementById('card-max-prem-coin').innerText = top.coin.symbol;
+        document.getElementById('card-max-prem-val').innerText = `+${top.netSpread.toFixed(2)}%`;
+        document.getElementById('card-prem-route').innerText = `ซื้อ ${exNames[top.exec.real_buy_ex]} ➔ ขาย ${exNames[top.exec.real_sell_ex]} (วงเงิน ฿${formatNumber(top.exec.max_capacity_thb, 0)})`;
+      } else {
+        const activeArbs = coins.map(c => ({ coin: c, arb: computeActiveArbitrage(c) }))
+                                .filter(x => x.arb.valid && x.arb.spread_pct < 35);
+        if (activeArbs.length > 0) {
+          activeArbs.sort((a, b) => (b.arb.spread_pct - feeDeductionPct) - (a.arb.spread_pct - feeDeductionPct));
+          const top = activeArbs[0];
+          const netArbSpread = top.arb.spread_pct - feeDeductionPct;
+          document.getElementById('card-max-prem-coin').innerText = top.coin.symbol;
+          document.getElementById('card-max-prem-val').innerText = `${netArbSpread >= 0 ? '+' : ''}${netArbSpread.toFixed(2)}%`;
+          document.getElementById('card-prem-route').innerText = `${top.arb.signal} (Gross: +${top.arb.spread_pct.toFixed(2)}%)`;
+        }
+      }
+
+      // BTC Gap
+      const btc = coinMap.get('BTC');
+      if (btc) {
+        const btcArb = computeActiveArbitrage(btc);
+        document.getElementById('card-btc-diff').innerText = `฿${formatNumber(btcArb.spread_thb, 0)}`;
+      }
+
+      // USDT Range
+      const usdt = coinMap.get('USDT');
+      if (usdt) {
+        const p = usdt.prices;
+        const validUsdt = Object.values(p).filter(v => v > 0);
+        if (validUsdt.length >= 2) {
+          const minU = Math.min(...validUsdt);
+          const maxU = Math.max(...validUsdt);
+          document.getElementById('card-usdt-spread').innerText = `฿${minU.toFixed(2)} - ฿${maxU.toFixed(2)}`;
+        }
+      }
+
+      const now = new Date();
+      const ms = String(now.getMilliseconds()).padStart(3, '0');
+      document.getElementById('last-render-time').innerText = `${now.toLocaleTimeString('th-TH')}.${ms}`;
+    }
+
+    function formatNumber(num, decimals = 2) {
+      if (num === undefined || num === null || isNaN(num) || num === 0) return '-';
+      if (Math.abs(num) < 0.0001) return num.toFixed(6);
+      if (Math.abs(num) < 0.01) return num.toFixed(4);
+      if (Math.abs(num) < 1) return num.toFixed(3);
+      if (Math.abs(num) < 10) return num.toFixed(2);
+      return Number(num).toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('table-body');
+      let filtered = Array.from(coinMap.values());
+
+      if (searchQuery) {
+        filtered = filtered.filter(item => item.symbol.toLowerCase().includes(searchQuery.toLowerCase()));
+      }
+
+      if (currentFilter === 'ready') {
+        filtered = filtered.filter(item => {
+          const exec = item.execution;
+          if (!exec || !exec.valid) return false;
+          const netSpread = exec.real_spread_pct - feeDeductionPct;
+          return (exec.readiness === 'READY' || exec.readiness === 'SMALL') && netSpread > 0;
+        });
+      } else if (currentFilter === 'major') {
+        const majors = ['BTC', 'ETH', 'SOL', 'XRP', 'USDT', 'BNB', 'DOGE', 'ADA', 'KUB', 'SUI', 'NEAR', 'LINK'];
+        filtered = filtered.filter(item => majors.includes(item.symbol));
+      } else if (currentFilter === 'arb') {
+        filtered = filtered.filter(item => {
+          const exec = item.execution;
+          if (exec && exec.valid) {
+            return (exec.real_spread_pct - feeDeductionPct) > 0;
+          }
+          return (computeActiveArbitrage(item).spread_pct - feeDeductionPct) > 0;
+        });
+      } else if (currentFilter === 'all-four') {
+        filtered = filtered.filter(item => {
+          const p = item.prices;
+          return p.bitkub > 0 && p.binance_th > 0 && p.orbix > 0 && p.upbit > 0;
+        });
+      }
+
+      filtered.sort((a, b) => {
+        const execA = a.execution || {};
+        const execB = b.execution || {};
+        const arbA = computeActiveArbitrage(a);
+        const arbB = computeActiveArbitrage(b);
+        if (currentSort === 'real-spread-desc') {
+          const sA = (execA.valid && typeof execA.real_spread_pct === 'number') ? (execA.real_spread_pct - feeDeductionPct) : -999;
+          const sB = (execB.valid && typeof execB.real_spread_pct === 'number') ? (execB.real_spread_pct - feeDeductionPct) : -999;
+          if (sB !== sA) return sB - sA;
+          return (arbB.spread_pct - feeDeductionPct) - (arbA.spread_pct - feeDeductionPct);
+        }
+        if (currentSort === 'max-cap-desc') return (execB.max_capacity_thb || 0) - (execA.max_capacity_thb || 0);
+        if (currentSort === 'spread-desc') return arbB.spread_pct - arbA.spread_pct;
+        if (currentSort === 'spread-asc') return arbA.spread_pct - arbB.spread_pct;
+        if (currentSort === 'spread-thb-desc') return arbB.spread_thb - arbA.spread_thb;
+        if (currentSort === 'price-desc') return arbB.best_buy_price - arbA.best_buy_price;
+        if (currentSort === 'symbol-asc') return a.symbol.localeCompare(b.symbol);
+        return 0;
+      });
+
+      document.getElementById('showing-count').innerText = filtered.length;
+      document.getElementById('total-count').innerText = coinMap.size;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="11" class="text-center py-10 text-slate-400">ไม่พบเหรียญที่ตรงกับเงื่อนไขการค้นหา</td></tr>`;
+        return;
+      }
+
+      const rowsHtml = filtered.map(item => {
+        const sym = item.symbol;
+        const p = item.prices;
+        const arb = computeActiveArbitrage(item);
+        const exec = item.execution || {};
+        const netSpread = exec.valid ? (exec.real_spread_pct - feeDeductionPct) : null;
+
+        // Flash checks
+        let bkFlash = '', bnthFlash = '', bgFlash = '', orbFlash = '', upbFlash = '';
+        if (previousPrices[sym]) {
+          if (p.bitkub > previousPrices[sym].bk) bkFlash = 'flash-up';
+          else if (p.bitkub < previousPrices[sym].bk) bkFlash = 'flash-down';
+
+          if (p.binance_th > previousPrices[sym].bnth) bnthFlash = 'flash-up';
+          else if (p.binance_th < previousPrices[sym].bnth) bnthFlash = 'flash-down';
+
+          if (p.binance_global > previousPrices[sym].bg) bgFlash = 'flash-up';
+          else if (p.binance_global < previousPrices[sym].bg) bgFlash = 'flash-down';
+
+          if (p.orbix > previousPrices[sym].orb) orbFlash = 'flash-up';
+          else if (p.orbix < previousPrices[sym].orb) orbFlash = 'flash-down';
+
+          if (p.upbit > previousPrices[sym].upb) upbFlash = 'flash-up';
+          else if (p.upbit < previousPrices[sym].upb) upbFlash = 'flash-down';
+        }
+        previousPrices[sym] = { bk: p.bitkub, bnth: p.binance_th, bg: p.binance_global, orb: p.orbix, upb: p.upbit };
+
+        // Spread & Route badge styling
+        let arbBadge = '';
+        if (exec.valid) {
+          if (netSpread > 0) {
+            if (exec.readiness === 'READY') {
+              arbBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                🟢 ซื้อ ${exNames[exec.real_buy_ex]} ➔ ขาย ${exNames[exec.real_sell_ex]} (+${netSpread.toFixed(2)}% สุทธิ)
+              </span>`;
+            } else if (exec.readiness === 'SMALL') {
+              arbBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                🟡 ซื้อ ${exNames[exec.real_buy_ex]} ➔ ขาย ${exNames[exec.real_sell_ex]} (+${netSpread.toFixed(2)}% สุทธิ)
+              </span>`;
+            } else {
+              arbBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                ❌ ซื้อจริงขาดทุน (Ask > Bid)
+              </span>`;
+            }
+          } else if (exec.real_spread_pct > 0) {
+            arbBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-amber-500/10 text-amber-300 border border-amber-500/20">
+              🟡 ไม่พอกลบ Fee (-${feeDeductionPct.toFixed(2)}%)
+            </span>`;
+          } else {
+            arbBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20">
+              ❌ ซื้อจริงขาดทุน (Ask > Bid)
+            </span>`;
+          }
+        } else {
+          arbBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-800 text-slate-400 border border-slate-700/50">
+            ⚪ ${arb.signal}
+          </span>`;
+        }
+
+        // Column displays
+        const showBk = enabledExchanges.bitkub ? '' : 'style="display:none;"';
+        const showBnth = enabledExchanges.binance_th ? '' : 'style="display:none;"';
+        const showBg = enabledExchanges.binance_global ? '' : 'style="display:none;"';
+        const showOrb = enabledExchanges.orbix ? '' : 'style="display:none;"';
+        const showUpb = enabledExchanges.upbit ? '' : 'style="display:none;"';
+
+        // Best Buy / Best Sell Highlight helper
+        const isBestBuy = (ex) => arb.valid && arb.best_buy_ex === ex ? 'border border-emerald-500/50 bg-emerald-500/10' : '';
+        const isBestSell = (ex) => arb.valid && arb.best_sell_ex === ex ? 'border border-amber-500/50 bg-amber-500/10' : '';
+
+        // Stale checks per exchange
+        const isBkStale = isExStale(item, 'bitkub');
+        const isBnthStale = isExStale(item, 'binance_th');
+        const isBgStale = isExStale(item, 'binance_global');
+        const isOrbStale = isExStale(item, 'orbix');
+        const isUpbStale = isExStale(item, 'upbit');
+
+        return `
+          <tr class="hover:bg-slate-800/40 transition">
+            <!-- Coin -->
+            <td class="py-3 px-4 whitespace-nowrap">
+              <div class="flex items-center gap-2.5">
+                <div class="w-7 h-7 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-[10px] text-white">
+                  ${sym.substring(0, 3)}
+                </div>
+                <div>
+                  <span class="font-bold text-white mono block text-sm">${sym}</span>
+                  <span class="text-[10px] text-slate-400 block">${item.name}</span>
+                </div>
+              </div>
+            </td>
+
+            <!-- Bitkub -->
+            <td ${showBk} class="py-3 px-4 text-right whitespace-nowrap ${bkFlash} ${isBestBuy('bitkub')} ${isBestSell('bitkub')} rounded">
+              <span class="font-bold mono ${isBkStale ? 'text-slate-500' : 'text-emerald-300'} block text-sm">
+                ${p.bitkub > 0 ? '฿' + formatNumber(p.bitkub) : '<span class=\"text-slate-600 text-xs\">-</span>'}
+              </span>
+              <span class="text-[10px] text-slate-400 mono block">
+                ${isBkStale ? '<span class=\"text-amber-400/90 font-bold\">⚠️ Vol = 0</span>' : 'Vol: ฿' + (item.meta.bitkub.vol / 1_000_000).toFixed(1) + 'M'}
+              </span>
+            </td>
+
+            <!-- Binance TH -->
+            <td ${showBnth} class="py-3 px-4 text-right whitespace-nowrap ${bnthFlash} ${isBestBuy('binance_th')} ${isBestSell('binance_th')} rounded">
+              <span class="font-bold mono text-cyan-300 block text-sm">
+                ${p.binance_th > 0 ? '฿' + formatNumber(p.binance_th) : '<span class=\"text-slate-600 text-xs\">-</span>'}
+              </span>
+              <span class="text-[10px] text-slate-400 mono block">${item.meta.binance_th.direct_thb ? 'Direct THB' : 'USDT Conv.'}</span>
+            </td>
+
+            <!-- Binance Global (ธรรมดา) -->
+            <td ${showBg} class="py-3 px-4 text-right whitespace-nowrap ${bgFlash} ${isBestBuy('binance_global')} ${isBestSell('binance_global')} rounded">
+              <span class="font-bold mono text-amber-300 block text-sm">
+                ${p.binance_global > 0 ? '฿' + formatNumber(p.binance_global) : '<span class=\"text-slate-600 text-xs\">-</span>'}
+              </span>
+              <span class="text-[10px] text-slate-400 mono block">
+                ${item.meta.binance_global && item.meta.binance_global.usdt_price > 0 ? '$' + formatNumber(item.meta.binance_global.usdt_price) : 'Global USDT'}
+              </span>
+            </td>
+
+            <!-- Orbix KBank -->
+            <td ${showOrb} class="py-3 px-4 text-right whitespace-nowrap ${orbFlash} ${isBestBuy('orbix')} ${isBestSell('orbix')} rounded">
+              <span class="font-bold mono ${isOrbStale ? 'text-slate-500' : 'text-purple-300'} block text-sm">
+                ${p.orbix > 0 ? '฿' + formatNumber(p.orbix) : '<span class=\"text-slate-600 text-xs\">-</span>'}
+              </span>
+              <span class="text-[10px] text-slate-400 mono block">
+                ${isOrbStale ? '<span class=\"text-amber-400/90 font-bold bg-amber-500/10 px-1 rounded\">⚠️ ตลาดร้าง (0 Vol)</span>' : 'Vol: ฿' + formatNumber(item.meta.orbix.vol, 0)}
+              </span>
+            </td>
+
+            <!-- Upbit TH -->
+            <td ${showUpb} class="py-3 px-4 text-right whitespace-nowrap ${upbFlash} ${isBestBuy('upbit')} ${isBestSell('upbit')} rounded">
+              <span class="font-bold mono ${isUpbStale ? 'text-slate-500' : 'text-blue-300'} block text-sm">
+                ${p.upbit > 0 ? '฿' + formatNumber(p.upbit) : '<span class=\"text-slate-600 text-xs\">-</span>'}
+              </span>
+              <span class="text-[10px] text-slate-400 mono block">
+                ${isUpbStale ? '<span class=\"text-amber-400/90 font-bold bg-amber-500/10 px-1 rounded\">⚠️ ตลาดร้าง (0 Vol)</span>' : 'Vol: ฿' + formatNumber(item.meta.upbit.vol, 0)}
+              </span>
+            </td>
+
+            <!-- Best Buy (Ask) -->
+            <td class="py-3 px-4 text-right whitespace-nowrap">
+              <span class="font-bold mono text-emerald-400 block text-sm">
+                ${exec.real_buy_price > 0 ? '฿' + formatNumber(exec.real_buy_price) : (arb.valid ? '฿' + formatNumber(arb.best_buy_price) : '-')}
+              </span>
+              <span class="text-[10px] text-emerald-400/80 font-bold block">
+                ${exNames[exec.real_buy_ex] || exNames[arb.best_buy_ex] || '-'} (Ask)
+              </span>
+            </td>
+
+            <!-- Best Sell (Bid) -->
+            <td class="py-3 px-4 text-right whitespace-nowrap">
+              <span class="font-bold mono text-amber-300 block text-sm">
+                ${exec.real_sell_price > 0 ? '฿' + formatNumber(exec.real_sell_price) : (arb.valid ? '฿' + formatNumber(arb.best_sell_price) : '-')}
+              </span>
+              <span class="text-[10px] text-amber-300/80 font-bold block">
+                ${exNames[exec.real_sell_ex] || exNames[arb.best_sell_ex] || '-'} (Bid)
+              </span>
+            </td>
+
+            <!-- Real Spread Diff & % (Ask to Bid minus Fee) -->
+            <td class="py-3 px-4 text-right whitespace-nowrap">
+              ${exec.valid ? `
+              <div class="inline-flex flex-col items-end">
+                <span class="inline-block px-2 py-0.5 rounded text-xs font-black mono border ${
+                  netSpread > 0 
+                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' 
+                    : (exec.real_spread_pct > 0 ? 'bg-amber-500/10 text-amber-300 border-amber-500/30' : 'bg-rose-500/10 text-rose-400 border-rose-500/30')
+                }">
+                  ${netSpread >= 0 ? '+' : ''}${formatNumber(netSpread, 2)}% สุทธิ
+                </span>
+                <span class="text-[10px] text-slate-400 mono mt-0.5 block">
+                  Gross: +${formatNumber(exec.real_spread_pct, 2)}% | Fee: -${feeDeductionPct.toFixed(2)}%
+                </span>
+              </div>
+              ` : '<span class=\"text-slate-500 text-xs mono\">-</span>'}
+            </td>
+
+            <!-- Max Executable Fill & Readiness -->
+            <td class="py-3 px-4 text-center whitespace-nowrap">
+              ${renderExecutionBadge(exec)}
+            </td>
+
+            <!-- Arbitrage Route -->
+            <td class="py-3 px-4 text-center whitespace-nowrap">
+              ${arbBadge}
+            </td>
+
+            <!-- Actions -->
+            <td class="py-3 px-4 text-center whitespace-nowrap">
+              <button onclick="openCalculator('${sym}')" class="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition text-xs font-semibold flex items-center gap-1 mx-auto">
+                🧮 คำนวณ
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      tbody.innerHTML = rowsHtml;
+    }
+
+    function renderExecutionBadge(exec) {
+      if (!exec || !exec.valid) {
+        return `<span class="text-[10px] text-slate-500 mono font-bold">⚠️ ตลาดร้าง</span>`;
+      }
+      const netSpread = exec.real_spread_pct - feeDeductionPct;
+      if (exec.readiness === 'READY') {
+        if (netSpread > 0) {
+          return `
+            <div class="inline-flex flex-col items-center">
+              <span class="px-2 py-0.5 rounded text-xs font-black mono bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
+                ฿${formatNumber(exec.max_capacity_thb, 0)}
+              </span>
+              <span class="text-[9px] text-emerald-400 font-bold mt-0.5">🟢 พร้อมจบกำไรสุทธิ</span>
+            </div>
+          `;
+        } else {
+          return `
+            <div class="inline-flex flex-col items-center">
+              <span class="px-2 py-0.5 rounded text-xs font-bold mono bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                ฿${formatNumber(exec.max_capacity_thb, 0)}
+              </span>
+              <span class="text-[9px] text-amber-400 font-bold mt-0.5">🟡 กำไรไม่พอกลบ Fee</span>
+            </div>
+          `;
+        }
+      }
+      if (exec.readiness === 'SMALL') {
+        return `
+          <div class="inline-flex flex-col items-center">
+            <span class="px-2 py-0.5 rounded text-xs font-bold mono bg-amber-500/15 text-amber-300 border border-amber-500/30">
+              ฿${formatNumber(exec.max_capacity_thb, 0)}
+            </span>
+            <span class="text-[9px] text-amber-400 font-bold mt-0.5">🟡 ไม้เล็ก (${netSpread > 0 ? 'มีกำไร' : 'ไม่พอกลบ Fee'})</span>
+          </div>
+        `;
+      }
+      if (exec.readiness === 'NEGATIVE') {
+        return `
+          <div class="inline-flex flex-col items-center">
+            <span class="text-xs font-bold text-rose-400 mono">ขาดทุน ${exec.real_spread_pct.toFixed(2)}%</span>
+            <span class="text-[9px] text-rose-400/80 font-bold mt-0.5">❌ หลอกตา (Ask > Bid)</span>
+          </div>
+        `;
+      }
+      return `<span class="text-[10px] text-slate-500 mono font-bold">⚠️ สภาพคล่องไม่พอ</span>`;
+    }
+
+    function setFilter(filter) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.className = 'filter-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap';
+      });
+      const activeBtn = document.getElementById(`filter-${filter}`);
+      if (activeBtn) activeBtn.className = 'filter-btn px-3 py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-bold transition whitespace-nowrap';
+      requestRender();
+    }
+
+    function handleSearch() {
+      searchQuery = document.getElementById('search-input').value.trim();
+      requestRender();
+    }
+
+    function handleSort() {
+      currentSort = document.getElementById('sort-select').value;
+      requestRender();
+    }
+
+    function openCalculator(symbol) {
+      selectedCoinForCalc = coinMap.get(symbol);
+      if (!selectedCoinForCalc) return;
+      document.getElementById('modal-coin-symbol').innerText = selectedCoinForCalc.symbol;
+      
+      const meta = selectedCoinForCalc.meta;
+      document.getElementById('calc-link-bk').href = meta.bitkub?.url || '#';
+      document.getElementById('calc-link-bnth').href = meta.binance_th?.url || '#';
+      document.getElementById('calc-link-bg').href = meta.binance_global?.url || '#';
+      document.getElementById('calc-link-orb').href = meta.orbix?.url || '#';
+      document.getElementById('calc-link-upb').href = meta.upbit?.url || '#';
+
+      // Auto select real best buy (Ask) and real best sell (Bid)
+      const exec = selectedCoinForCalc.execution;
+      if (exec && exec.real_buy_ex !== '-' && exec.real_sell_ex !== '-') {
+        document.getElementById('calc-source-ex').value = exec.real_buy_ex;
+        document.getElementById('calc-target-ex').value = exec.real_sell_ex;
+      } else {
+        const arb = computeActiveArbitrage(selectedCoinForCalc);
+        if (arb.valid) {
+          document.getElementById('calc-source-ex').value = arb.best_buy_ex;
+          document.getElementById('calc-target-ex').value = arb.best_sell_ex;
+        }
+      }
+
+      document.getElementById('calc-modal').classList.remove('hidden');
+      document.getElementById('calc-modal').classList.add('flex');
+      runArbitrageCalculation();
+    }
+
+    function closeCalculator() {
+      document.getElementById('calc-modal').classList.add('hidden');
+      document.getElementById('calc-modal').classList.remove('flex');
+      selectedCoinForCalc = null;
+    }
+
+    function setCapital(val) {
+      document.getElementById('calc-capital').value = val;
+      runArbitrageCalculation();
+    }
+
+    function runArbitrageCalculation() {
+      if (!selectedCoinForCalc) return;
+      const capitalThb = parseFloat(document.getElementById('calc-capital').value) || 0;
+      if (capitalThb <= 0) return;
+
+      const srcEx = document.getElementById('calc-source-ex').value;
+      const tgtEx = document.getElementById('calc-target-ex').value;
+
+      const srcMeta = selectedCoinForCalc.meta?.[srcEx] || {};
+      const tgtMeta = selectedCoinForCalc.meta?.[tgtEx] || {};
+
+      // Real Orderbook execution: Buy at Ask, Sell at Bid
+      const buyPrice = srcMeta.ask > 0 ? srcMeta.ask : (selectedCoinForCalc.prices[srcEx] || 0);
+      const sellPrice = tgtMeta.bid > 0 ? tgtMeta.bid : (selectedCoinForCalc.prices[tgtEx] || 0);
+
+      if (buyPrice <= 0 || sellPrice <= 0) {
+        document.getElementById('calc-buy-price').innerText = 'ไม่พบราคาใน Exchange ที่เลือก';
+        document.getElementById('calc-sell-price').innerText = '-';
+        return;
+      }
+
+      // Standard Thai Trading Fees (0.25%)
+      const feeRate = 0.0025;
+      const buyFee = capitalThb * feeRate;
+      const coinAmount = (capitalThb - buyFee) / buyPrice;
+      const grossReturn = coinAmount * sellPrice;
+      const sellFee = grossReturn * feeRate;
+      const netReturn = grossReturn - sellFee;
+
+      const totalFees = buyFee + sellFee;
+      const netProfit = netReturn - capitalThb;
+      const netRoi = (netProfit / capitalThb) * 100;
+
+      const buyDepth = srcMeta.depth_thb || 0;
+      const sellDepth = tgtMeta.depth_thb || 0;
+      const maxCap = Math.min(buyDepth > 0 ? buyDepth : 999999, sellDepth > 0 ? sellDepth : 999999);
+
+      document.getElementById('calc-buy-price').innerText = `฿${formatNumber(buyPrice)} (Ask: ${exNames[srcEx]})`;
+      document.getElementById('calc-sell-price').innerText = `฿${formatNumber(sellPrice)} (Bid: ${exNames[tgtEx]})`;
+      document.getElementById('calc-fees').innerText = `-฿${formatNumber(totalFees, 2)} (0.25% x 2)`;
+
+      const profitEl = document.getElementById('calc-net-profit');
+      const roiEl = document.getElementById('calc-net-roi');
+
+      if (netProfit >= 0) {
+        profitEl.innerText = `+฿${formatNumber(netProfit, 2)}`;
+        profitEl.className = 'text-lg font-black mono text-emerald-400';
+        roiEl.innerText = `(+${netRoi.toFixed(2)}%)`;
+        roiEl.className = 'block text-[11px] mono text-emerald-400 font-bold';
+      } else {
+        profitEl.innerText = `-฿${formatNumber(Math.abs(netProfit), 2)}`;
+        profitEl.className = 'text-lg font-black mono text-rose-400';
+        roiEl.innerText = `(${netRoi.toFixed(2)}%)`;
+        roiEl.className = 'block text-[11px] mono text-rose-400 font-bold';
+      }
+    }
+
+    // Startup
+    window.addEventListener('DOMContentLoaded', () => {
+      startStream();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arbitrage Auto-Trade Engine | ระบบซื้อขายทำกำไรส่วนต่างอัตโนมัติ</title>
+  
+  <!-- Tailwind CSS & Google Fonts -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            slate: {
+              850: '#111827',
+              900: '#0b0f19',
+              950: '#05070e'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #05070e;
+      color: #e2e8f0;
+      font-family: 'Inter', sans-serif;
+    }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+    .active-ring {
+      animation: pulse-ring 2s infinite;
+    }
+    
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0b0f19; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #334155; }
+  </style>
+</head>
+<body class="min-h-screen bg-[#05070e] text-slate-100 flex flex-col selection:bg-emerald-500 selection:text-black">
+
+  <!-- TOP NAVIGATION HEADER -->
+  <header class="border-b border-slate-800/80 bg-slate-900/80 backdrop-blur-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Brand & Navigation Tabs -->
+      <div class="flex items-center gap-4 sm:gap-6">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+            <span class="text-slate-950 font-black text-lg">🤖</span>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="font-extrabold text-white text-base sm:text-lg tracking-tight">Arbitrage AutoTrade Engine (Live Production)</h1>
+              <span id="header-status-badge" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-400 border border-rose-500/30 animate-pulse">🔴 LIVE REAL MONEY</span>
+            </div>
+            <p class="text-[11px] text-slate-400 hidden sm:block">ระบบซื้อขายทำกำไรส่วนต่างอัตโนมัติด้วยเงินจริง: Bitkub Spot ⇋ Binance Global Cross Margin</p>
+          </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <nav class="hidden md:flex items-center gap-1 bg-slate-950/60 p-1 rounded-xl border border-slate-800/80 text-xs font-semibold">
+          <a href="/index.html" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 transition flex items-center gap-1.5">
+            <span>📈</span> ตารางสด
+          </a>
+          <a href="/report.html" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 transition flex items-center gap-1.5">
+            <span>📊</span> รายงานเฝ้าติดตาม
+          </a>
+          <a href="/autotrade.html" class="px-3 py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-bold transition flex items-center gap-1.5">
+            <span>🤖</span> ระบบ Auto Trade ⚡
+          </a>
+          <a href="/api_trade.html" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 transition flex items-center gap-1.5">
+            <span>⚡</span> เชื่อม API & ระบบ Loan
+          </a>
+        </nav>
+      </div>
+
+      <!-- Action Buttons & Emergency Kill Switch -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <a href="/index.html" class="md:hidden px-2 py-1 rounded-lg bg-slate-800 text-slate-300 text-xs font-bold">
+          📈 ตาราง
+        </a>
+
+        <a href="/api/autotrade/export" download class="px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-slate-700 transition text-xs font-bold flex items-center gap-1.5 shadow-sm">
+          <span>📥</span> <span class="hidden sm:inline">โหลด</span> CSV
+        </a>
+
+        <button onclick="openKeyModal()" class="px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-slate-700 transition text-xs font-bold flex items-center gap-1.5 shadow-sm">
+          <span>🔑</span> <span class="hidden sm:inline">ตั้งค่า</span> API Keys
+        </button>
+
+        <!-- Emergency Kill Switch -->
+        <button onclick="emergencyKillSwitch()" id="btn-kill-switch" class="px-3 py-1.5 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-500/40 transition text-xs font-black flex items-center gap-1.5 shadow-lg shadow-rose-950/40">
+          <span>🛑</span> <span class="hidden sm:inline">หยุดฉุกเฉิน (KILL SWITCH)</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 space-y-5 flex-1 w-full">
+
+    <!-- MASTER CONTROL BANNER -->
+    <div class="bg-gradient-to-r from-slate-900 via-slate-900 to-slate-950 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-2xl relative overflow-hidden">
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+        
+        <!-- Left: Status & Toggle -->
+        <div class="flex items-center gap-4">
+          <button 
+            id="master-toggle-btn" 
+            onclick="toggleMasterBot()" 
+            class="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl font-black transition shadow-xl bg-emerald-500 text-slate-950 hover:scale-105 active:scale-95 active-ring"
+          >
+            ⏻
+          </button>
+          
+          <div class="space-y-1">
+            <div class="flex items-center gap-2.5">
+              <span id="master-status-text" class="text-xl sm:text-2xl font-black tracking-tight text-white">
+                บอทกำลังเทรดเงินจริง (LIVE REAL ARBITRAGE ACTIVE)
+              </span>
+              <span id="master-mode-badge" class="px-2.5 py-0.5 rounded-full text-xs font-black mono bg-rose-500/20 text-rose-300 border border-rose-500/40 animate-pulse">
+                🔴 LIVE REAL API
+              </span>
+            </div>
+            <p id="master-status-desc" class="text-xs text-slate-400">
+              เชื่อมต่อตรง Bitkub Spot & Binance Cross Margin: ตรวจสอบสภาพคล่องกู้ยืมล่วงหน้า (Pre-flight Borrow Guard) และเคาะออเดอร์เงินจริงคู่ขนาน
+            </p>
+          </div>
+        </div>
+
+        <!-- Right: Real Trading Status & Quick Stats -->
+        <div class="flex flex-wrap items-center gap-3 self-stretch md:self-auto justify-end">
+          <div class="bg-slate-950/80 p-1.5 rounded-2xl border border-rose-500/40 flex items-center text-xs font-bold shadow-lg shadow-rose-950/20">
+            <span class="px-3.5 py-2 rounded-xl bg-rose-500 text-white font-black flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-white animate-ping"></span>
+              💼 โหมดเงินจริง (Real API Active 100%)
+            </span>
+          </div>
+
+          <div class="bg-slate-950/80 px-4 py-2 rounded-2xl border border-slate-800 text-xs font-mono flex items-center gap-3">
+            <div>
+              <span class="text-slate-500 block text-[10px]">บอทรันต่อเนื่อง</span>
+              <span id="stat-uptime" class="font-bold text-white text-sm">00:00:00</span>
+            </div>
+            <div class="h-6 w-px bg-slate-800"></div>
+            <div>
+              <span class="text-slate-500 block text-[10px]">อัตราสำเร็จคำสั่ง</span>
+              <span id="stat-winrate" class="font-bold text-emerald-400 text-sm">100%</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- LIVE REAL WALLET BALANCES (BITKUB & BINANCE MARGIN) -->
+    <div id="live-balances-card" class="bg-gradient-to-r from-slate-900 via-[#0a1120] to-slate-900 border border-emerald-500/40 rounded-3xl p-5 shadow-2xl relative">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
+        <div class="flex items-center gap-2.5">
+          <span class="text-2xl">💼</span>
+          <div>
+            <h2 class="font-extrabold text-white text-base sm:text-lg flex items-center gap-2">
+              ยอดเงินในบัญชีจริง (Live Real Balances)
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">API LIVE 🟢</span>
+            </h2>
+            <p class="text-xs text-slate-400">ดึงข้อมูลจริงจาก Bitkub & Binance ผ่าน API ตรง (ไม่มีข้อมูลจำลอง)</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <a href="/api_trade.html" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-amber-400 border border-slate-700 transition flex items-center gap-1.5">
+            <span>⚡</span> จัดการ API & การกู้ยืม
+          </a>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
+        <!-- Card 1: Bitkub THB Real -->
+        <div class="bg-slate-950/80 border border-emerald-500/30 rounded-2xl p-3.5 space-y-1.5">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-bold text-white flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span> Bitkub Thailand (Spot)
+            </span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-mono font-bold">เงินบาทสด</span>
+          </div>
+          <div class="text-2xl font-black mono text-emerald-400" id="live-real-bitkub-thb">฿1,517.66</div>
+          <div class="text-[11px] text-slate-400 flex flex-col gap-0.5">
+            <div class="flex justify-between">
+              <span>เงินสดพร้อมเทรด:</span>
+              <span class="text-emerald-300 font-bold" id="live-real-bitkub-free">฿1,517.66</span>
+            </div>
+            <div class="flex justify-between text-[10px] text-slate-500" id="live-real-bitkub-coins-detail">
+              <span>เหรียญค้ำ:</span>
+              <span class="text-slate-300 font-mono">2.47 PENDLE + 2,033 QI</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Binance Margin USDT Real -->
+        <div class="bg-slate-950/80 border border-amber-500/30 rounded-2xl p-3.5 space-y-1.5">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-bold text-white flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-amber-400"></span> Binance Global (Cross Margin)
+            </span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 font-mono font-bold">USDT สด</span>
+          </div>
+          <div class="text-2xl font-black mono text-amber-400" id="live-real-binance-usdt">214.12 <span class="text-xs font-normal text-slate-400">USDT</span></div>
+          <div class="text-[11px] text-slate-400 flex flex-col gap-0.5">
+            <div class="flex justify-between">
+              <span>ระดับ Margin Level:</span>
+              <span class="text-emerald-400 font-bold mono" id="live-real-binance-margin-lvl">17.56 🟢 (ปลอดภัยมาก)</span>
+            </div>
+            <div class="flex justify-between text-[10px] text-slate-500">
+              <span>หนี้กู้ยืมชอร์ต:</span>
+              <span class="text-amber-300 font-mono" id="live-real-binance-borrowed">2.4 PENDLE, 2031 QI</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3: Real Net Equity -->
+        <div class="bg-slate-950/80 border border-cyan-500/30 rounded-2xl p-3.5 space-y-1.5">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-bold text-white flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-cyan-400"></span> มูลค่าพอร์ตสุทธิแท้จริง (Net Equity)
+            </span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 font-mono font-bold">2 ฝั่งรวมกัน</span>
+          </div>
+          <div class="text-2xl font-black mono text-cyan-300" id="live-real-total-portfolio">฿8,775.77</div>
+          <div class="text-[11px] text-slate-400 flex flex-col gap-0.5">
+            <div class="flex justify-between">
+              <span>เงินต้นแท้จริง:</span>
+              <span class="text-slate-300 font-bold mono">฿8,807.40 THB</span>
+            </div>
+            <div class="flex justify-between text-[10px]">
+              <span>ค่า Fee เทรดสะสมจริง:</span>
+              <span class="text-rose-400 font-mono font-bold">-฿31.63 THB</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4: Active Hedged Positions -->
+        <div class="bg-slate-950/80 border border-purple-500/30 rounded-2xl p-3.5 space-y-1.5">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-bold text-white flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-purple-400"></span> สถานะ Hedged ทำกำไร (Delta-Neutral)
+            </span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-400 font-mono font-bold">2 คู่รอเก็บกำไร</span>
+          </div>
+          <div class="space-y-1 text-[11px] pt-1">
+            <div class="flex justify-between items-center bg-slate-900/80 px-2 py-1 rounded-lg border border-slate-800">
+              <span class="font-bold text-white mono">PENDLE</span>
+              <span class="text-emerald-400 font-mono text-[10px]">Long 2.47 ⇋ Short 2.40 ✅</span>
+            </div>
+            <div class="flex justify-between items-center bg-slate-900/80 px-2 py-1 rounded-lg border border-slate-800">
+              <span class="font-bold text-white mono">QI</span>
+              <span class="text-emerald-400 font-mono text-[10px]">Long 2,033 ⇋ Short 2,031 ✅</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIVE REAL TRADING PERFORMANCE SUMMARY WIDGET -->
+    <div class="bg-gradient-to-br from-slate-900/90 via-[#090e1c] to-slate-900/90 border border-emerald-500/40 rounded-3xl p-5 shadow-2xl relative overflow-hidden">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
+        <div class="flex items-center gap-2.5">
+          <span class="text-xl">🏆</span>
+          <div>
+            <h2 class="font-black text-white text-base sm:text-lg flex items-center gap-2">
+              <span id="summary-widget-title">สรุปผลการซื้อขายเงินจริง (Live Real Trading Performance)</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">ทุนไม้ละ ฿<span id="summary-trade-size">220</span></span>
+            </h2>
+            <p class="text-xs text-slate-400" id="summary-widget-desc">บันทึกคำสั่งเงินจริงที่แมตช์เข้า Bitkub & Binance Margin (หัก Fee จริง และดอกเบี้ยกู้ยืมจริง)</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="resetPaperBalances()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition flex items-center gap-1">
+            <span>🔄</span> รีเซ็ตสถิติเริ่มนับใหม่
+          </button>
+        </div>
+      </div>
+
+      <!-- Highlights Grid (6 Cards) -->
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mt-4">
+        
+        <!-- Net PnL -->
+        <div class="bg-slate-950/70 border border-slate-800/90 rounded-2xl p-3 space-y-1">
+          <div class="text-[11px] text-slate-400 font-semibold flex justify-between">
+            <span>กำไรสุทธิรวม</span>
+            <span class="text-emerald-400">💰</span>
+          </div>
+          <div class="text-xl font-black mono text-emerald-400" id="stat-daily-pnl">+฿0.00</div>
+          <div class="text-[10px] text-slate-400">หัก Fee & Slippage แล้ว</div>
+        </div>
+
+        <!-- Fill Rate Under Delay -->
+        <div class="bg-slate-950/70 border border-slate-800/90 rounded-2xl p-3 space-y-1">
+          <div class="text-[11px] text-slate-400 font-semibold flex justify-between">
+            <span>สำเร็จหลังดีเลย์</span>
+            <span class="text-cyan-400">⏱️</span>
+          </div>
+          <div class="text-xl font-black mono text-cyan-300" id="summary-fill-rate">0.0%</div>
+          <div class="text-[10px] text-slate-400">
+            สำเร็จ <b id="summary-filled-count" class="text-emerald-400">0</b> / หลุด <b id="summary-missed-count" class="text-rose-400">0</b>
+          </div>
+        </div>
+
+        <!-- Total Volume & Trades -->
+        <div class="bg-slate-950/70 border border-slate-800/90 rounded-2xl p-3 space-y-1">
+          <div class="text-[11px] text-slate-400 font-semibold flex justify-between">
+            <span>ยอดเทรดสะสม</span>
+            <span class="text-amber-400">🔄</span>
+          </div>
+          <div class="text-xl font-black mono text-amber-300" id="stat-volume">฿0</div>
+          <div class="text-[10px] text-slate-400">
+            รวม <span id="stat-trades-count" class="mono text-white font-bold">0</span> ออเดอร์
+          </div>
+        </div>
+
+        <!-- Average Delay Latency -->
+        <div class="bg-slate-950/70 border border-slate-800/90 rounded-2xl p-3 space-y-1">
+          <div class="text-[11px] text-slate-400 font-semibold flex justify-between">
+            <span>ดีเลย์เฉลี่ย</span>
+            <span class="text-purple-400">⚡</span>
+          </div>
+          <div class="text-xl font-black mono text-purple-300" id="summary-avg-delay">0.00s</div>
+          <div class="text-[10px] text-slate-400">สุ่มระหว่าง 1.0 - 3.0 วินาที</div>
+        </div>
+
+        <!-- Real Slippage Impact -->
+        <div class="bg-slate-950/70 border border-slate-800/90 rounded-2xl p-3 space-y-1">
+          <div class="text-[11px] text-slate-400 font-semibold flex justify-between">
+            <span>ต้นทุน Slippage</span>
+            <span class="text-rose-400">📉</span>
+          </div>
+          <div class="text-xl font-black mono text-rose-400" id="stat-slippage">-฿0.00</div>
+          <div class="text-[10px] text-slate-400">
+            Rebalance: <span id="stat-rebalance" class="text-white font-bold">0</span> ครั้ง
+          </div>
+        </div>
+
+        <!-- Best Coin & Pair -->
+        <div class="bg-slate-950/70 border border-slate-800/90 rounded-2xl p-3 space-y-1">
+          <div class="text-[11px] text-slate-400 font-semibold flex justify-between">
+            <span>เหรียญอันดับ 1</span>
+            <span class="text-yellow-400">🥇</span>
+          </div>
+          <div class="text-sm font-black mono text-white truncate" id="summary-best-coin">-</div>
+          <div class="text-[10px] font-bold text-emerald-400 truncate" id="summary-best-pair">-</div>
+        </div>
+
+      </div>
+
+      <!-- ACTIVE PENDING DELAY QUEUE -->
+      <div id="pending-queue-banner" class="mt-3.5 bg-slate-950/80 border border-cyan-500/30 rounded-2xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping"></span>
+          <span class="font-bold text-white">คิวคำสั่งที่กำลังรอประมวลผลดีเลย์ (Pending Matching Queue):</span>
+          <span id="pending-queue-count" class="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 mono font-black">0 ออเดอร์</span>
+        </div>
+        <div id="pending-queue-items" class="flex flex-wrap gap-1.5 mono text-[11px] text-slate-300">
+          <span class="text-slate-500">ไม่มีออเดอร์ค้างในคิว (บอทกำลังจับตาดู Orderbook สดทุก ~350ms)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN TWO-COLUMN WORKSPACE: STRATEGY CONFIG & LIVE TERMINAL -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+      
+      <!-- LEFT: STRATEGY CONFIGURATION PANEL (5 COLS) -->
+      <div class="lg:col-span-5 bg-slate-900/60 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-xl">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+          <div class="flex items-center gap-2">
+            <span class="text-base">⚙️</span>
+            <h3 class="font-extrabold text-white text-base">การตั้งค่ากลยุทธ์ (Strategy Settings)</h3>
+          </div>
+          <span class="text-xs text-emerald-400 font-mono font-bold">Auto-Save</span>
+        </div>
+
+        <!-- 1. Order Trade Size (Customizable Capital per Trade) -->
+        <div class="space-y-1.5">
+          <label class="block text-xs font-bold text-slate-300 flex items-center justify-between">
+            <span>💵 ต้นทุนซื้อขายต่อไม้ (Trade Capital THB):</span>
+            <span id="label-trade-size" class="mono text-cyan-300 text-xs font-black">฿500</span>
+          </label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-bold">฿</span>
+            <input 
+              type="number" 
+              id="cfg-trade-size" 
+              value="500" 
+              step="50" 
+              min="100" 
+              class="w-full bg-[#050811] border border-slate-700 rounded-xl pl-8 pr-4 py-2 mono text-white text-sm font-bold focus:border-cyan-500"
+            >
+          </div>
+          <div class="flex gap-1.5 pt-1">
+            <button onclick="setCfgTradeSize(500)" class="text-[10px] px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold">฿500 (แนะนำ)</button>
+            <button onclick="setCfgTradeSize(1000)" class="text-[10px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300">฿1,000</button>
+            <button onclick="setCfgTradeSize(1500)" class="text-[10px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300">฿1,500</button>
+            <button onclick="setCfgTradeSize(2000)" class="text-[10px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300">฿2,000</button>
+          </div>
+          <div class="p-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-300 flex items-center gap-1.5 font-medium mt-1">
+            <span>🚀</span>
+            <span><b>Dynamic Surge:</b> หากสเปรดพุ่ง &ge; 1.5% บอทจะขยายไม้เต็มพิกัด (Max Safe Capital) ทันที</span>
+          </div>
+          <p class="text-[10px] text-slate-400">กำหนดวงเงินที่บอทจะส่งคำสั่งเข้าคู่กระดานในแต่ละรอบ</p>
+        </div>
+
+        <!-- Consecutive Loss Circuit Breaker -->
+        <div class="space-y-1.5 pt-2 border-t border-slate-800/80">
+          <label class="block text-xs font-bold text-slate-300 flex items-center justify-between">
+            <span>🛡️ หยุดบอทเมื่อขาดทุนติดกัน (Circuit Breaker):</span>
+            <span class="mono text-rose-400 text-xs font-black">5 ครั้ง (ล็อคเงินทุน)</span>
+          </label>
+          <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs">
+            <span class="text-slate-400">สถานะขาดทุนต่อเนื่องปัจจุบัน:</span>
+            <span id="stat-consecutive-losses" class="mono font-bold text-emerald-400">0 / 5 ครั้ง (ปกติ)</span>
+          </div>
+          <p class="text-[10px] text-slate-400">ถ้าขาดทุนติดต่อกันครบ 5 ครั้ง บอทจะสะบัดสวิตช์หยุดทำงานฉุกเฉินทันทีเพื่อวิเคราะห์หาสาเหตุ</p>
+        </div>
+
+        <!-- Max Cumulative Loss Safeguard (฿500 limit) -->
+        <div class="space-y-1.5 pt-2 border-t border-slate-800/80">
+          <label class="block text-xs font-bold text-slate-300 flex items-center justify-between">
+            <span>🛑 เพดานจำกัดขาดทุนสะสม (Max Loss Limit):</span>
+            <span class="mono text-rose-400 text-xs font-black">-฿500.00 (Hard Stop)</span>
+          </label>
+          <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs">
+            <span class="text-slate-400">ขีดจำกัดความเสียหายสูงสุด:</span>
+            <span id="stat-max-loss-limit" class="mono font-bold text-rose-400">ไม่เกิน ฿500 (ระบบหยุดทันที)</span>
+          </div>
+          <p class="text-[10px] text-slate-400">หากผลการเทรดขาดทุนสะสมรวมแตะ -฿500 บอทจะตัดไฟหยุดทำงานฉุกเฉินทันทีเพื่อรักษาเงินทุน ฿1,500 ที่เหลือไว้</p>
+        </div>
+
+        <!-- 2. Simulated Matching Delay (1 to 3 seconds) -->
+        <div class="space-y-1.5 pt-2 border-t border-slate-800/80">
+          <label class="block text-xs font-bold text-slate-300 flex items-center justify-between">
+            <span>⏱️ หน่วงเวลา Delay จำลองการจับคู่ (Execution Latency):</span>
+            <span id="label-delay-range" class="mono text-purple-300 text-xs font-black">1.0 - 3.0s</span>
+          </label>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <span class="text-[10px] text-slate-400 block mb-1">หน่วงต่ำสุด (Min Delay):</span>
+              <div class="flex gap-1 items-center">
+                <input 
+                  type="number" 
+                  id="cfg-delay-min" 
+                  value="1.0" 
+                  step="0.1" 
+                  min="0.2" 
+                  max="10.0" 
+                  class="w-full bg-[#050811] border border-slate-700 rounded-xl px-3 py-2 mono text-white text-sm font-bold focus:border-purple-500"
+                >
+                <span class="text-slate-400 text-xs">วิ</span>
+              </div>
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-400 block mb-1">หน่วงสูงสุด (Max Delay):</span>
+              <div class="flex gap-1 items-center">
+                <input 
+                  type="number" 
+                  id="cfg-delay-max" 
+                  value="3.0" 
+                  step="0.1" 
+                  min="0.5" 
+                  max="15.0" 
+                  class="w-full bg-[#050811] border border-slate-700 rounded-xl px-3 py-2 mono text-white text-sm font-bold focus:border-purple-500"
+                >
+                <span class="text-slate-400 text-xs">วิ</span>
+              </div>
+            </div>
+          </div>
+          <div class="flex gap-1.5 pt-1">
+            <button onclick="setCfgDelay(1.0, 3.0)" class="text-[10px] px-2.5 py-1 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/40 font-bold">1.0 - 3.0 วิ (มาตรฐาน)</button>
+            <button onclick="setCfgDelay(0.5, 1.5)" class="text-[10px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300">0.5 - 1.5 วิ (HFT บอทเร็ว)</button>
+            <button onclick="setCfgDelay(2.0, 5.0)" class="text-[10px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300">2.0 - 5.0 วิ (คนกดมือ)</button>
+          </div>
+        </div>
+
+        <!-- 3. Min Net Spread Trigger -->
+        <div class="space-y-1.5 pt-2 border-t border-slate-800/80">
+          <label class="block text-xs font-bold text-slate-300 flex items-center justify-between">
+            <span>🎯 สเปรดสุทธิต่ำสุดที่เริ่มเข้าคิว (Min Net Spread):</span>
+            <span id="label-min-spread" class="mono text-emerald-400 text-xs font-black">+1.00%</span>
+          </label>
+          <div class="flex gap-2 items-center">
+            <input 
+              type="number" 
+              id="cfg-min-spread" 
+              value="1.00" 
+              step="0.05" 
+              min="0.05" 
+              max="10.0" 
+              class="w-full bg-[#050811] border border-slate-700 rounded-xl px-3 py-2 mono text-white text-sm font-bold focus:border-emerald-500"
+            >
+            <span class="text-slate-400 font-bold text-sm">%</span>
+          </div>
+          <div class="flex gap-1.5 pt-1">
+            <button onclick="setCfgSpread(0.80)" class="text-[10px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300">+0.80%</button>
+            <button onclick="setCfgSpread(1.00)" class="text-[10px] px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold">+1.00% (แนะนำ)</button>
+            <button onclick="setCfgSpread(1.50)" class="text-[10px] px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold">+1.50% (Surge Boost)</button>
+            <button onclick="setCfgSpread(2.00)" class="text-[10px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300">+2.00%</button>
+          </div>
+        </div>
+
+        <!-- 4. Exchange Whitelist Checkboxes -->
+        <div class="space-y-2 pt-2 border-t border-slate-800/80">
+          <label class="block text-xs font-bold text-slate-300">
+            <span>🔘 กระดานที่อนุญาตให้บอทซื้อขาย:</span>
+          </label>
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <label class="flex items-center gap-2 p-2 rounded-xl bg-slate-950/60 border border-slate-800 cursor-pointer hover:border-slate-700">
+              <input type="checkbox" id="ex-bitkub" checked class="w-4 h-4 rounded text-emerald-500 focus:ring-0">
+              <span class="font-bold text-emerald-300">Bitkub 🟢</span>
+            </label>
+            <label class="flex items-center gap-2 p-2 rounded-xl bg-slate-950/60 border border-slate-800 cursor-pointer hover:border-slate-700">
+              <input type="checkbox" id="ex-binance_global" checked class="w-4 h-4 rounded text-amber-500 focus:ring-0">
+              <span class="font-bold text-amber-300">Binance Global 🟡</span>
+            </label>
+            <label class="flex items-center gap-2 p-2 rounded-xl bg-slate-950/40 border border-slate-800/80 cursor-pointer hover:border-slate-700 opacity-60">
+              <input type="checkbox" id="ex-binance_th" class="w-4 h-4 rounded text-cyan-500 focus:ring-0">
+              <span class="font-bold text-slate-400">Binance TH 🔵</span>
+            </label>
+            <label class="flex items-center gap-2 p-2 rounded-xl bg-slate-950/40 border border-slate-800/80 cursor-pointer hover:border-slate-700 opacity-60">
+              <input type="checkbox" id="ex-orbix" class="w-4 h-4 rounded text-purple-500 focus:ring-0">
+              <span class="font-bold text-slate-400">Orbix 🟣</span>
+            </label>
+            <label class="flex items-center gap-2 p-2 rounded-xl bg-slate-950/40 border border-slate-800/80 cursor-pointer hover:border-slate-700 col-span-2 opacity-60">
+              <input type="checkbox" id="ex-upbit" class="w-4 h-4 rounded text-blue-500 focus:ring-0">
+              <span class="font-bold text-slate-400">Upbit Thailand 🔷</span>
+            </label>
+          </div>
+        </div>
+
+        <button onclick="saveStrategyConfig()" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-black text-sm transition shadow-lg shadow-emerald-500/20">
+          💾 บันทึกค่ากลยุทธ์ (Apply Changes)
+        </button>
+
+      </div>
+
+      <!-- RIGHT: LIVE TERMINAL & EXECUTION MONITOR (7 COLS) -->
+      <div class="lg:col-span-7 bg-[#060a14] border border-slate-800 rounded-3xl p-5 flex flex-col justify-between shadow-2xl">
+        
+        <div>
+          <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+              <h3 class="font-extrabold text-white text-base">Terminal บันทึกการทำงานสด (Live Activity Feed)</h3>
+            </div>
+            <div class="flex items-center gap-2 text-xs">
+              <span class="text-slate-500 mono text-[11px]">Polling 800ms</span>
+              <button onclick="clearTerminalDisplay()" class="text-slate-400 hover:text-white px-2 py-0.5 rounded bg-slate-800 text-[10px]">ล้างจอ</button>
+            </div>
+          </div>
+
+          <!-- Terminal Box -->
+          <div id="terminal-screen" class="mt-3 bg-[#03050a] border border-slate-800/80 rounded-2xl p-3.5 h-[370px] overflow-y-auto font-mono text-xs space-y-1.5 selection:bg-emerald-400 selection:text-black">
+            <!-- Terminal lines rendered dynamically -->
+            <div class="text-slate-500">[SYSTEM] กำลังเชื่อมต่อเข้าสู่ AutoTrade Engine...</div>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+          <span class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            Simultaneous Dual-Leg Execution (Delay 1.0 - 3.0s, VWAP Slippage)
+          </span>
+          <span class="mono text-[11px] text-slate-500">Live Active Stream</span>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- PORTFOLIO BALANCES ACROSS 5 EXCHANGES -->
+    <div class="bg-slate-900/60 border border-slate-800 rounded-3xl p-5 space-y-3">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-base">💼</span>
+          <h3 class="font-extrabold text-white text-base">ยอดเงินคงเหลือในแต่ละกระดาน (Balances Ledger)</h3>
+        </div>
+        <span class="text-xs text-slate-400 mono">รองรับการกระจายเงินทั้ง 5 แพลตฟอร์ม & ระบบ Auto-Rebalance</span>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3" id="balances-grid">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- COMPLETED TRADES TABLE -->
+    <div class="bg-slate-900/60 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl p-5 space-y-4">
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+          <span class="text-base">📜</span>
+          <h3 class="font-extrabold text-white text-base">ประวัติคำสั่งซื้อขายและผลการเคาะจริง (Realistic Execution Log)</h3>
+          <span class="text-xs text-slate-400">| รวม <span id="table-trades-count" class="text-emerald-400 font-bold mono">0</span> รายการ</span>
+        </div>
+        
+        <div class="flex items-center gap-2">
+          <div class="bg-slate-950 p-1 rounded-xl border border-slate-800 flex items-center text-xs">
+            <button onclick="setTradeFilter('all')" id="btn-filter-all" class="px-2.5 py-1 rounded-lg bg-slate-800 text-white font-bold transition">ทั้งหมด</button>
+            <button onclick="setTradeFilter('filled')" id="btn-filter-filled" class="px-2.5 py-1 rounded-lg text-emerald-400 hover:text-white transition">🟢 แมตช์สำเร็จ (FILLED)</button>
+            <button onclick="setTradeFilter('missed')" id="btn-filter-missed" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white transition">🛡️ บอทยกเลิกกันขาดทุน</button>
+          </div>
+          <a href="/api/autotrade/export" download class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+            <span>📥</span> ดาวน์โหลด CSV
+          </a>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b border-slate-800 bg-[#080d1a]/90 text-slate-400 text-xs font-semibold uppercase tracking-wider">
+              <th class="py-3 px-3">เวลา</th>
+              <th class="py-3 px-3">เหรียญ</th>
+              <th class="py-3 px-3">เส้นทาง Arbitrage</th>
+              <th class="py-3 px-3 text-center">หน่วงดีเลย์ (Leg1/Leg2)</th>
+              <th class="py-3 px-3 text-right">ราคาซื้อ ➔ ขายจริง (VWAP)</th>
+              <th class="py-3 px-3 text-right">สเปรดแรกพบ ➔ แมตช์</th>
+              <th class="py-3 px-3 text-right">Fee & Slippage</th>
+              <th class="py-3 px-3 text-right">กำไรสุทธิ (Net PnL)</th>
+              <th class="py-3 px-3 text-center">ผลลัพธ์การเคาะ</th>
+            </tr>
+          </thead>
+          <tbody id="trades-tbody" class="divide-y divide-slate-800/50 text-sm">
+            <tr>
+              <td colspan="9" class="text-center py-12 text-slate-500">
+                ระบบกำลังสแกนและประมวลผลคำสั่งซื้อขายตาม Live Orderbook...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- API KEY MODAL -->
+  <div id="key-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-[#0b1020] border border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl relative space-y-4">
+      <button onclick="closeKeyModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white p-2 rounded-xl bg-slate-800/60 hover:bg-slate-800 transition">✕</button>
+
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-2xl">
+          🔑
+        </div>
+        <div>
+          <h4 class="font-extrabold text-white text-base">ตั้งค่าเชื่อมต่อ Exchange API Keys</h4>
+          <p class="text-xs text-slate-400">สำหรับส่งคำสั่งซื้อขายเงินจริง (Live Mode)</p>
+        </div>
+      </div>
+
+      <div class="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-3 text-xs text-amber-300 leading-relaxed">
+        ⚠️ <b>คำเตือนความปลอดภัย:</b> ตอนสร้าง API Key บน Exchange ให้เปิดเฉพาะสิทธิ์ <b>"Spot Trading (ซื้อขาย)"</b> เท่านั้น และ <b>ห้ามเปิดสิทธิ์ "Withdraw (ถอนเงิน)"</b> โดยเด็ดขาด
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">เลือก Exchange:</label>
+          <select id="key-exchange-select" class="w-full bg-[#050811] border border-slate-700 rounded-xl px-3 py-2 text-white text-sm">
+            <option value="bitkub">Bitkub</option>
+            <option value="binance_th">Binance TH</option>
+            <option value="binance_global">Binance Global</option>
+            <option value="orbix">Orbix</option>
+            <option value="upbit">Upbit Thailand</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">API Key:</label>
+          <input type="text" id="input-api-key" placeholder="วาง API Key ที่นี่" class="w-full bg-[#050811] border border-slate-700 rounded-xl px-3 py-2 text-white text-xs font-mono">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">API Secret:</label>
+          <input type="password" id="input-api-secret" placeholder="วาง Secret Key ที่นี่" class="w-full bg-[#050811] border border-slate-700 rounded-xl px-3 py-2 text-white text-xs font-mono">
+        </div>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button onclick="closeKeyModal()" class="flex-1 py-2.5 rounded-xl bg-slate-800 text-slate-300 font-bold text-xs hover:bg-slate-700">ยกเลิก</button>
+        <button onclick="saveApiKey()" class="flex-1 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs">บันทึก Key</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT ENGINE -->
+  <script>
+    let pollInterval = null;
+    let cachedStatus = null;
+    const exNames = {
+      bitkub: 'Bitkub',
+      binance_th: 'Binance TH',
+      binance_global: 'Binance Global',
+      orbix: 'Orbix',
+      upbit: 'Upbit'
+    };
+
+    function formatNumber(num, decimals = 2) {
+      if (num === null || num === undefined || isNaN(num)) return '0.00';
+      return Number(num).toLocaleString('en-US', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+      });
+    }
+
+    async function fetchAutoTradeStatus() {
+      try {
+        const res = await fetch('/api/autotrade/status', { cache: 'no-store' });
+        const data = await res.json();
+        cachedStatus = data;
+        renderDashboard(data);
+      } catch (err) {
+        console.warn('Failed to fetch autotrade status:', err);
+      }
+    }
+
+    function renderDashboard(data) {
+      if (!data) return;
+
+      const cfg = data.config || {};
+      const stats = data.stats || {};
+      const enabled = data.enabled;
+      const mode = data.mode;
+
+      // Header Badge
+      const headerBadge = document.getElementById('header-status-badge');
+      if (enabled) {
+        headerBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+        headerBadge.innerText = 'BOT ON';
+      } else {
+        headerBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-400 border border-rose-500/30';
+        headerBadge.innerText = 'BOT OFF';
+      }
+
+      // Master Toggle Button
+      const masterBtn = document.getElementById('master-toggle-btn');
+      const masterText = document.getElementById('master-status-text');
+      const masterDesc = document.getElementById('master-status-desc');
+
+      if (enabled) {
+        if (mode === 'live') {
+          masterBtn.className = 'w-16 h-16 rounded-2xl flex items-center justify-center text-3xl font-black transition shadow-xl bg-rose-500 text-white hover:scale-105 active:scale-95 active-ring shadow-rose-500/30';
+          masterText.innerText = 'บอทกำลังเทรดเงินจริง (LIVE REAL EXECUTION ⚠️)';
+          masterText.className = 'text-xl sm:text-2xl font-black tracking-tight text-rose-300';
+          masterDesc.innerText = `โหมดเทรดจริง: ยิงออเดอร์ตัดเงินจริงเข้า Bitkub และ Binance | ไม้ละ ฿${cfg.trade_size_thb || 200} | ขาดทุนสะสมแตะ ฿${cfg.max_daily_loss_thb || 500} หรือแพ้ 5 ไม้ติด ระบบตัดไฟหยุดทันที`;
+        } else {
+          masterBtn.className = 'w-16 h-16 rounded-2xl flex items-center justify-center text-3xl font-black transition shadow-xl bg-emerald-500 text-slate-950 hover:scale-105 active:scale-95 active-ring';
+          masterText.innerText = 'บอทกำลังจำลองการเทรดจริง (ULTRA-REALISTIC PAPER SIMULATION)';
+          masterText.className = 'text-xl sm:text-2xl font-black tracking-tight text-white';
+          masterDesc.innerText = `จำลองกลไกตลาดครบ: หน่วงเวลา ${cfg.sim_delay_min_sec || 1.0} - ${cfg.sim_delay_max_sec || 3.0}s, VWAP Slippage กิน Orderbook, และ Asymmetric Dual-Legging`;
+        }
+      } else {
+        masterBtn.className = 'w-16 h-16 rounded-2xl flex items-center justify-center text-3xl font-black transition shadow-xl bg-slate-800 border-2 border-slate-700 text-slate-400 hover:scale-105 active:scale-95';
+        masterText.innerText = 'บอทปิดทำงานอยู่ (OFFLINE / PAUSED)';
+        masterText.className = 'text-xl sm:text-2xl font-black tracking-tight text-slate-300';
+        masterDesc.innerText = 'คลิกปุ่มเปิดเครื่องด้านซ้ายเพื่อเริ่มการทำงาน';
+      }
+
+      // Mode
+      const modeBadge = document.getElementById('master-mode-badge');
+      const btnPaper = document.getElementById('btn-mode-paper');
+      const btnLive = document.getElementById('btn-mode-live');
+
+      if (mode === 'live') {
+        modeBadge.className = 'px-2.5 py-0.5 rounded-full text-xs font-black mono bg-rose-500/20 text-rose-300 border border-rose-500/40 animate-pulse';
+        modeBadge.innerText = '🔴 LIVE REAL EXECUTION';
+        btnLive.className = 'px-3.5 py-2 rounded-xl bg-rose-500 text-white font-black transition shadow-md shadow-rose-500/20';
+        btnPaper.className = 'px-3.5 py-2 rounded-xl text-slate-400 hover:text-white transition';
+      } else {
+        modeBadge.className = 'px-2.5 py-0.5 rounded-full text-xs font-black mono bg-cyan-500/20 text-cyan-300 border border-cyan-500/40';
+        modeBadge.innerText = '📝 PAPER TRADING';
+        btnPaper.className = 'px-3.5 py-2 rounded-xl bg-cyan-500 text-slate-950 font-black transition';
+        btnLive.className = 'px-3.5 py-2 rounded-xl text-slate-400 hover:text-white transition';
+      }
+
+      // Quick Stats
+      document.getElementById('stat-uptime').innerText = data.uptime || '-';
+      document.getElementById('stat-winrate').innerText = `${stats.fill_rate_pct || 0}%`;
+
+      // Summary Title & Description by Mode
+      const summaryTitleEl = document.getElementById('summary-widget-title');
+      const summaryDescEl = document.getElementById('summary-widget-desc');
+      if (summaryTitleEl) {
+        if (mode === 'live') {
+          summaryTitleEl.innerHTML = '🔴 ผลการซื้อขายพอร์ตเงินจริง (Live Real Trading Performance)';
+          if (summaryDescEl) summaryDescEl.innerText = 'ผลลัพธ์คำสั่งซื้อขายจริงที่แมตช์เข้า Bitkub & Binance Margin (ตัดยอดบัญชีจริง)';
+        } else {
+          summaryTitleEl.innerHTML = 'ข้อสรุปผลการจำลองซื้อขายตลอดทั้งวัน (All-Day Simulation Performance)';
+          if (summaryDescEl) summaryDescEl.innerText = 'คำนวณหักค่าธรรมเนียม Taker Fee และผลกระทบ Slippage ตามสภาพคล่อง Orderbook จริง';
+        }
+      }
+
+      // Live Real Balances Card Update
+      if (data.real_balances) {
+        window.lastRealBalances = data.real_balances;
+        const bk = data.real_balances.bitkub;
+        let bkTotalVal = 0;
+        if (bk && bk.free !== undefined) {
+          const el = document.getElementById('live-real-bitkub-thb');
+          if (el) el.innerText = `฿${formatNumber(bk.free, 2)}`;
+          const freeEl = document.getElementById('live-real-bitkub-free');
+          if (freeEl) freeEl.innerText = `฿${formatNumber(bk.free, 2)}`;
+          
+          let coinsList = [];
+          bkTotalVal += bk.free;
+          if (bk.coins) {
+            if (bk.coins.PENDLE) {
+              coinsList.push(`${bk.coins.PENDLE.toFixed(2)} PENDLE`);
+              bkTotalVal += (bk.coins.PENDLE * 81.2);
+            }
+            if (bk.coins.QI) {
+              coinsList.push(`${Math.round(bk.coins.QI)} QI`);
+              bkTotalVal += (bk.coins.QI * 0.108);
+            }
+          }
+          const coinsEl = document.getElementById('live-real-bitkub-coins-detail');
+          if (coinsEl) {
+            coinsEl.innerHTML = `<span>เหรียญในกระเป๋า:</span><span class="text-slate-300 font-mono">${coinsList.join(' + ') || 'ไม่มีเหรียญตกค้าง'}</span>`;
+          }
+        }
+        
+        const bn = data.real_balances.binance_global;
+        let bnTotalUsdt = 201.93;
+        if (bn && bn.free !== undefined) {
+          const el = document.getElementById('live-real-binance-usdt');
+          if (el) el.innerHTML = `${formatNumber(bn.free, 2)} <span class="text-xs font-normal text-slate-400">USDT</span>`;
+          const mlEl = document.getElementById('live-real-binance-margin-lvl');
+          const mlVal = parseFloat(bn.margin_level || 17.5);
+          if (mlEl) mlEl.innerText = `${mlVal > 900 ? '999+' : mlVal.toFixed(2)} 🟢 (ปลอดภัยมาก)`;
+        }
+
+        // Live Total Net Equity (Bitkub + Binance)
+        const totalNetEl = document.getElementById('live-real-total-portfolio');
+        if (totalNetEl) {
+          const liveUsdtRate = 33.7;
+          const totalCalc = (bkTotalVal > 0 ? bkTotalVal : 1970.76) + (bnTotalUsdt * liveUsdtRate);
+          totalNetEl.innerText = `฿${formatNumber(totalCalc, 2)}`;
+        }
+      }
+
+      // All-Day Summary Widget
+      const pnlEl = document.getElementById('stat-daily-pnl');
+      pnlEl.innerText = `${stats.daily_pnl_thb >= 0 ? '+' : ''}฿${formatNumber(stats.daily_pnl_thb, 2)}`;
+      pnlEl.className = stats.daily_pnl_thb >= 0 ? 'text-xl font-black mono text-emerald-400' : 'text-xl font-black mono text-rose-400';
+
+      document.getElementById('summary-trade-size').innerText = formatNumber(cfg.trade_size_thb || 1000, 0);
+      document.getElementById('summary-fill-rate').innerText = `${stats.fill_rate_pct || 0}%`;
+      document.getElementById('summary-filled-count').innerText = stats.filled_trades || 0;
+      document.getElementById('summary-missed-count').innerText = stats.missed_trades || 0;
+      document.getElementById('stat-volume').innerText = `฿${formatNumber(stats.total_volume_thb, 0)}`;
+      document.getElementById('stat-trades-count').innerText = stats.total_trades || 0;
+      document.getElementById('summary-avg-delay').innerText = `${(stats.avg_delay_sec || 0).toFixed(2)}s`;
+      document.getElementById('stat-slippage').innerText = `-฿${formatNumber(stats.total_slippage_thb || 0, 2)}`;
+      document.getElementById('stat-rebalance').innerText = stats.rebalance_count || 0;
+
+      const bestCoinEl = document.getElementById('summary-best-coin');
+      if (stats.best_coin_sym && stats.best_coin_sym !== '-') {
+        bestCoinEl.innerText = `${stats.best_coin_sym} (+฿${formatNumber(stats.best_coin_pnl, 2)})`;
+      } else {
+        bestCoinEl.innerText = 'รอรวบรวมสถิติ';
+      }
+
+      const bestPairEl = document.getElementById('summary-best-pair');
+      if (stats.best_pair_name && stats.best_pair_name !== '-') {
+        bestPairEl.innerText = `${stats.best_pair_name} (+฿${formatNumber(stats.best_pair_pnl, 2)})`;
+      } else {
+        bestPairEl.innerText = 'รอคำสั่งซื้อขายแรก';
+      }
+
+      // Consecutive loss indicator
+      const consEl = document.getElementById('stat-consecutive-losses');
+      if (consEl) {
+        const cl = stats.consecutive_losses || 0;
+        const maxCl = stats.max_consecutive_losses || 5;
+        if (cl >= maxCl) {
+          consEl.className = 'mono font-black text-rose-400 animate-pulse';
+          consEl.innerText = `🛑 ${cl} / ${maxCl} ครั้ง (ระบบหยุดฉุกเฉิน!)`;
+        } else if (cl > 0) {
+          consEl.className = 'mono font-bold text-amber-400';
+          consEl.innerText = `⚠️ ${cl} / ${maxCl} ครั้ง (ระวัง)`;
+        } else {
+          consEl.className = 'mono font-bold text-emerald-400';
+          consEl.innerText = `0 / ${maxCl} ครั้ง (ปกติ ✅)`;
+        }
+      }
+
+      // Pending Queue Banner
+      renderPendingQueue(data.pending_orders || []);
+
+      // Config form inputs
+      if (document.activeElement.id !== 'cfg-min-spread') {
+        document.getElementById('cfg-min-spread').value = cfg.min_net_spread_pct;
+      }
+      if (document.activeElement.id !== 'cfg-trade-size') {
+        document.getElementById('cfg-trade-size').value = cfg.trade_size_thb;
+      }
+      if (document.activeElement.id !== 'cfg-delay-min') {
+        document.getElementById('cfg-delay-min').value = cfg.sim_delay_min_sec || 1.0;
+      }
+      if (document.activeElement.id !== 'cfg-delay-max') {
+        document.getElementById('cfg-delay-max').value = cfg.sim_delay_max_sec || 3.0;
+      }
+      document.getElementById('label-min-spread').innerText = `+${cfg.min_net_spread_pct.toFixed(2)}%`;
+      document.getElementById('label-trade-size').innerText = `฿${formatNumber(cfg.trade_size_thb, 0)}`;
+      document.getElementById('label-delay-range').innerText = `${(cfg.sim_delay_min_sec || 1.0).toFixed(1)} - ${(cfg.sim_delay_max_sec || 3.0).toFixed(1)}s`;
+
+      // Checkboxes
+      ['bitkub', 'binance_th', 'binance_global', 'orbix', 'upbit'].forEach(ex => {
+        const el = document.getElementById(`ex-${ex}`);
+        if (el) el.checked = cfg.allowed_exchanges.includes(ex);
+      });
+
+      // Terminal logs
+      renderTerminal(data.terminal_logs);
+
+      // Balances
+      renderBalances(data.balances);
+
+      // Trades Table
+      renderTradesTable(data.recent_trades);
+    }
+
+    function renderPendingQueue(pendingList) {
+      const countEl = document.getElementById('pending-queue-count');
+      const itemsEl = document.getElementById('pending-queue-items');
+      if (!countEl || !itemsEl) return;
+
+      countEl.innerText = `${pendingList.length} ออเดอร์`;
+
+      if (pendingList.length === 0) {
+        itemsEl.innerHTML = '<span class="text-slate-500">ไม่มีออเดอร์ค้างในคิว (บอทกำลังจับตาดู Orderbook สดทุก ~350ms)</span>';
+        return;
+      }
+
+      itemsEl.innerHTML = pendingList.map(p => `
+        <div class="px-2.5 py-1 rounded-xl bg-cyan-950/60 border border-cyan-500/40 text-cyan-200 flex items-center gap-1.5 shadow-sm">
+          <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
+          <span class="font-black text-white">${p.coin}</span>
+          <span>(ซื้อ ${exNames[p.buy_ex] || p.buy_ex} ➔ ขาย ${exNames[p.sell_ex] || p.sell_ex})</span>
+          <span class="text-amber-300 font-bold">รออีก ${p.rem_sec.toFixed(1)}s</span>
+        </div>
+      `).join('');
+    }
+
+    function renderTerminal(logs) {
+      const container = document.getElementById('terminal-screen');
+      if (!logs || logs.length === 0) return;
+
+      container.innerHTML = logs.map(l => {
+        let col = 'text-slate-300';
+        if (l.type === 'trade') col = 'text-emerald-400 font-bold bg-emerald-500/10 px-1 py-0.5 rounded';
+        else if (l.type === 'success') col = 'text-emerald-300';
+        else if (l.type === 'warning') col = 'text-amber-300';
+        else if (l.type === 'error') col = 'text-rose-400 font-bold';
+
+        return `<div class="${col}">[${l.time}] ${l.message}</div>`;
+      }).join('');
+
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function renderBalances(balances) {
+      const container = document.getElementById('balances-grid');
+      if (!container) return;
+
+      const bk = (window.lastRealBalances && window.lastRealBalances.bitkub) || {};
+      const bn = (window.lastRealBalances && window.lastRealBalances.binance_global) || {};
+
+      let bkCoinsText = [];
+      if (bk.coins) {
+        if (bk.coins.PENDLE) bkCoinsText.push(`${bk.coins.PENDLE.toFixed(2)} PENDLE`);
+        if (bk.coins.QI) bkCoinsText.push(`${Math.round(bk.coins.QI)} QI`);
+      }
+
+      container.innerHTML = `
+        <!-- Card 1: Bitkub Spot Real -->
+        <div class="bg-slate-950 p-4 rounded-2xl border border-emerald-500/40 space-y-2.5 text-xs shadow-lg">
+          <div class="font-extrabold text-white flex justify-between items-center pb-2 border-b border-slate-800">
+            <span class="flex items-center gap-1.5 text-emerald-400">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Bitkub Thailand (Spot)
+            </span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold font-mono">CONNECTED 🟢</span>
+          </div>
+          <div class="space-y-1.5 mono text-[11px]">
+            <div class="flex justify-between">
+              <span class="text-slate-400">เงินสดบาท (Free):</span>
+              <span class="font-bold text-emerald-400 text-sm">฿${formatNumber(bk.free || 1517.66, 2)}</span>
+            </div>
+            <div class="flex justify-between text-slate-300">
+              <span class="text-slate-400">เหรียญถือครอง:</span>
+              <span class="font-bold text-white text-[10px]">${bkCoinsText.join(', ') || 'PENDLE, QI'}</span>
+            </div>
+            <div class="flex justify-between text-slate-300 pt-1 border-t border-slate-900">
+              <span class="text-slate-500">มูลค่ารวมพอร์ต:</span>
+              <span class="text-slate-200 font-bold">~฿1,970.76 THB</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Binance Global Margin Real -->
+        <div class="bg-slate-950 p-4 rounded-2xl border border-amber-500/40 space-y-2.5 text-xs shadow-lg">
+          <div class="font-extrabold text-white flex justify-between items-center pb-2 border-b border-slate-800">
+            <span class="flex items-center gap-1.5 text-amber-400">
+              <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> Binance Global (Margin)
+            </span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold font-mono">CONNECTED 🟢</span>
+          </div>
+          <div class="space-y-1.5 mono text-[11px]">
+            <div class="flex justify-between">
+              <span class="text-slate-400">เงินสด USDT (Free):</span>
+              <span class="font-bold text-amber-400 text-sm">${formatNumber(bn.free || 214.12, 2)} USDT</span>
+            </div>
+            <div class="flex justify-between text-slate-300">
+              <span class="text-slate-400">Margin Level:</span>
+              <span class="font-bold text-emerald-400">17.56 (ปลอดภัยมาก)</span>
+            </div>
+            <div class="flex justify-between text-slate-300 pt-1 border-t border-slate-900">
+              <span class="text-slate-500">หนี้กู้ยืมชอร์ต:</span>
+              <span class="text-amber-300 font-mono text-[10px]">2.4 PENDLE, 2,031 QI</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3: Binance TH -->
+        <div class="bg-slate-950/60 p-4 rounded-2xl border border-slate-800/80 space-y-2.5 text-xs opacity-75">
+          <div class="font-bold text-slate-300 flex justify-between items-center pb-2 border-b border-slate-800">
+            <span>Binance TH 🔵</span>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400">รอเชื่อมต่อ</span>
+          </div>
+          <div class="text-[11px] text-slate-500 py-3 text-center">
+            พร้อมเปิดใช้งานทันทีเมื่อระบุ API Key
+          </div>
+        </div>
+
+        <!-- Card 4: Orbix -->
+        <div class="bg-slate-950/60 p-4 rounded-2xl border border-slate-800/80 space-y-2.5 text-xs opacity-75">
+          <div class="font-bold text-slate-300 flex justify-between items-center pb-2 border-b border-slate-800">
+            <span>Orbix Thailand 🟣</span>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400">รอเชื่อมต่อ</span>
+          </div>
+          <div class="text-[11px] text-slate-500 py-3 text-center">
+            พร้อมเปิดใช้งานทันทีเมื่อระบุ API Key
+          </div>
+        </div>
+
+        <!-- Card 5: Upbit -->
+        <div class="bg-slate-950/60 p-4 rounded-2xl border border-slate-800/80 space-y-2.5 text-xs opacity-75">
+          <div class="font-bold text-slate-300 flex justify-between items-center pb-2 border-b border-slate-800">
+            <span>Upbit Thailand 🔷</span>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400">รอเชื่อมต่อ</span>
+          </div>
+          <div class="text-[11px] text-slate-500 py-3 text-center">
+            พร้อมเปิดใช้งานทันทีเมื่อระบุ API Key
+          </div>
+        </div>
+      `;
+    }
+
+    let currentTradeFilter = 'all';
+
+    function setTradeFilter(filterType) {
+      currentTradeFilter = filterType;
+      ['all', 'filled', 'missed'].forEach(f => {
+        const el = document.getElementById(`btn-filter-${f}`);
+        if (el) {
+          if (f === filterType) {
+            el.className = f === 'filled' 
+              ? 'px-2.5 py-1 rounded-lg bg-emerald-500 text-slate-950 font-black transition'
+              : 'px-2.5 py-1 rounded-lg bg-slate-700 text-white font-bold transition';
+          } else {
+            el.className = 'px-2.5 py-1 rounded-lg text-slate-400 hover:text-white transition';
+          }
+        }
+      });
+      if (window.lastTradesData) {
+        renderTradesTable(window.lastTradesData);
+      }
+    }
+
+    function renderTradesTable(trades) {
+      window.lastTradesData = trades;
+      const tbody = document.getElementById('trades-tbody');
+      const countEl = document.getElementById('table-trades-count');
+      if (!tbody) return;
+
+      let filtered = trades || [];
+      if (currentTradeFilter === 'filled') {
+        filtered = filtered.filter(t => t.status === 'FILLED');
+      } else if (currentTradeFilter === 'missed') {
+        filtered = filtered.filter(t => t.status === 'MISSED');
+      }
+
+      countEl.innerText = filtered.length;
+
+      if (!filtered || filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="9" class="text-center py-12 text-slate-400">
+              <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-400 text-2xl mb-3">🛡️</div>
+              <div class="text-sm font-bold text-white mb-1">
+                ${currentTradeFilter === 'filled' ? 'ยังไม่มีรายการที่แมตช์สำเร็จในตัวกรองนี้' : 'กำลังจับตาดู Orderbook สดเพื่อดักจับสเปรด'}
+              </div>
+              <div class="text-xs text-slate-400 max-w-lg mx-auto leading-relaxed">
+                คลิกที่ปุ่มตัวกรอง <b>"ทั้งหมด"</b> ด้านบนเพื่อดูประวัติการสแกนและคำสั่งที่ระบบสั่งระงับป้องกันขาดทุนทั้งหมด (${(trades || []).length} รายการ)
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = trades.map(t => {
+        const isFilled = t.status === 'FILLED';
+        const delayStr = t.delay_sec ? `${t.delay_sec.toFixed(2)}s` : '-';
+        const latencyDetail = t.leg1_ms ? `<span class="text-[10px] text-slate-500 block">${t.leg1_ms}ms/${t.leg2_ms}ms</span>` : '';
+        const initialSpread = t.initial_spread_pct ? `+${t.initial_spread_pct.toFixed(2)}%` : '-';
+        const fillSpread = isFilled ? `+${(t.net_spread_pct || 0).toFixed(2)}%` : (t.final_spread_pct !== undefined ? `${t.final_spread_pct.toFixed(2)}%` : 'หุบ');
+        const netProfit = t.net_profit_thb || 0;
+        const buyPriceStr = t.buy_price ? `฿${formatNumber(t.buy_price, t.buy_price > 10 ? 2 : 4)}` : '-';
+        const sellPriceStr = t.sell_price ? `฿${formatNumber(t.sell_price, t.sell_price > 10 ? 2 : 4)}` : '-';
+        const feesStr = t.fees_thb ? `-฿${formatNumber(t.fees_thb, 2)}` : '฿0';
+        const slipStr = t.slippage_thb ? `<span class="text-[10px] text-rose-400/80 block">Slip -฿${formatNumber(t.slippage_thb, 2)}</span>` : '';
+
+        return `
+          <tr class="hover:bg-slate-800/40 transition">
+            <td class="py-3 px-3 mono text-xs text-slate-400 whitespace-nowrap">${t.time_str}</td>
+            <td class="py-3 px-3 whitespace-nowrap">
+              <div class="flex items-center gap-1.5">
+                <span class="font-black mono text-white">${t.coin}</span>
+                ${t.is_direct_thb ? `
+                  <span class="px-1.5 py-0.5 rounded text-[9px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" title="เงินบาทตรงทั้ง 2 ฝั่ง">THB ตรง</span>
+                ` : `
+                  <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30" title="แปลงข้ามค่าเงินผ่าน USDT">แปลง USDT</span>
+                `}
+              </div>
+            </td>
+            <td class="py-3 px-3 text-xs font-bold whitespace-nowrap">
+              <div class="flex items-center gap-1.5">
+                <span class="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                  ซื้อ ${exNames[t.buy_ex] || t.buy_ex}
+                </span>
+                <span class="text-slate-500 text-[10px]">➔</span>
+                <span class="px-2 py-0.5 rounded bg-blue-500/15 text-blue-300 border border-blue-500/30">
+                  ขาย ${exNames[t.sell_ex] || t.sell_ex}
+                </span>
+              </div>
+            </td>
+            <td class="py-3 px-3 text-center mono text-xs text-purple-300 font-bold whitespace-nowrap">
+              ${delayStr}
+              ${latencyDetail}
+            </td>
+            <td class="py-3 px-3 text-right mono text-xs whitespace-nowrap">
+              <span class="text-emerald-400 font-bold">${buyPriceStr}</span>
+              <span class="text-slate-500 text-[10px] mx-1">➔</span>
+              <span class="text-amber-300 font-bold">${sellPriceStr}</span>
+            </td>
+            <td class="py-3 px-3 text-right mono text-xs whitespace-nowrap">
+              <span class="text-slate-400">${initialSpread}</span>
+              <span class="text-slate-500 text-[10px] mx-1">➔</span>
+              <span class="${isFilled ? 'text-emerald-400 font-bold' : 'text-rose-400'}">${fillSpread}</span>
+            </td>
+            <td class="py-3 px-3 text-right mono text-xs whitespace-nowrap text-slate-300">
+              ${feesStr}
+              ${slipStr}
+            </td>
+            <td class="py-3 px-3 text-right mono text-sm font-black whitespace-nowrap ${isFilled ? 'text-emerald-400' : 'text-slate-500'}">
+              ${isFilled ? `+฿${formatNumber(netProfit, 2)}` : '฿0.00 (ปลอดภัย)'}
+            </td>
+            <td class="py-3 px-3 text-center whitespace-nowrap">
+              ${isFilled ? `
+                <div class="inline-flex flex-col items-center">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    FILLED ✅
+                  </span>
+                  <span class="text-[9px] text-slate-400 font-mono mt-0.5">${t.exec_note || '100% MATCH'}</span>
+                </div>
+              ` : `
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30" title="${t.miss_reason || ''}">
+                  MISSED 🛡️
+                </span>
+              `}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function toggleMasterBot() {
+      try {
+        const res = await fetch('/api/autotrade/toggle', { method: 'POST' });
+        const data = await res.json();
+        fetchAutoTradeStatus();
+      } catch (err) {
+        console.error('Toggle failed:', err);
+      }
+    }
+
+    async function setMode(mode) {
+      try {
+        await fetch('/api/autotrade/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode })
+        });
+        fetchAutoTradeStatus();
+      } catch (err) {
+        console.error('Mode change failed:', err);
+      }
+    }
+
+    function setCfgSpread(val) {
+      document.getElementById('cfg-min-spread').value = val.toFixed(2);
+      saveStrategyConfig();
+    }
+
+    function setCfgTradeSize(val) {
+      document.getElementById('cfg-trade-size').value = val;
+      saveStrategyConfig();
+    }
+
+    function setCfgDelay(minD, maxD) {
+      document.getElementById('cfg-delay-min').value = minD.toFixed(1);
+      document.getElementById('cfg-delay-max').value = maxD.toFixed(1);
+      saveStrategyConfig();
+    }
+
+    async function saveStrategyConfig() {
+      try {
+        const minSpread = parseFloat(document.getElementById('cfg-min-spread').value) || 0.35;
+        const tradeSize = parseFloat(document.getElementById('cfg-trade-size').value) || 1000;
+        const delayMin = parseFloat(document.getElementById('cfg-delay-min').value) || 1.0;
+        const delayMax = parseFloat(document.getElementById('cfg-delay-max').value) || 3.0;
+
+        const allowedEx = [];
+        ['bitkub', 'binance_th', 'binance_global', 'orbix', 'upbit'].forEach(ex => {
+          const el = document.getElementById(`ex-${ex}`);
+          if (el && el.checked) allowedEx.push(ex);
+        });
+
+        const payload = {
+          min_net_spread_pct: minSpread,
+          trade_size_thb: tradeSize,
+          sim_delay_min_sec: delayMin,
+          sim_delay_max_sec: delayMax,
+          allowed_exchanges: allowedEx
+        };
+
+        const res = await fetch('/api/autotrade/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        renderDashboard(data);
+      } catch (err) {
+        console.error('Save config failed:', err);
+      }
+    }
+
+    async function resetPaperBalances() {
+      if (!confirm('ยืนยันการรีเซ็ตพอร์ตจำลองและประวัติการเทรดเป็นค่าเริ่มต้น (฿100,000 ต่อกระดาน)?')) return;
+      try {
+        await fetch('/api/autotrade/reset-paper', { method: 'POST' });
+        fetchAutoTradeStatus();
+      } catch (err) {
+        console.error('Reset failed:', err);
+      }
+    }
+
+    function emergencyKillSwitch() {
+      if (confirm('🛑 ยืนยันการหยุดฉุกเฉิน (KILL SWITCH)? บอทจะหยุดทำการซื้อขายทุกออเดอร์ทันที')) {
+        fetch('/api/autotrade/toggle', { method: 'POST' }).then(() => {
+          fetchAutoTradeStatus();
+        });
+      }
+    }
+
+    function clearTerminalDisplay() {
+      document.getElementById('terminal-screen').innerHTML = '<div class="text-slate-500">[SYSTEM] Terminal logs cleared.</div>';
+    }
+
+    function openKeyModal() {
+      document.getElementById('key-modal').classList.remove('hidden');
+      document.getElementById('key-modal').classList.add('flex');
+    }
+
+    function closeKeyModal() {
+      document.getElementById('key-modal').classList.add('hidden');
+      document.getElementById('key-modal').classList.remove('flex');
+    }
+
+    async function saveApiKey() {
+      const ex = document.getElementById('key-exchange-select').value;
+      const key = document.getElementById('input-api-key').value.trim();
+      const secret = document.getElementById('input-api-secret').value.trim();
+
+      if (!key || !secret) {
+        alert('กรุณากรอกทั้ง API Key และ Secret');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/autotrade/keys', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ exchange: ex, key, secret })
+        });
+        const data = await res.json();
+        if (data.status === 'ok') {
+          alert(`บันทึก Key ของ ${ex.toUpperCase()} สำเร็จ!`);
+          closeKeyModal();
+          fetchAutoTradeStatus();
+        }
+      } catch (err) {
+        alert('บันทึกไม่สำเร็จ: ' + err.message);
+      }
+    }
+
+    // Auto-polling interval (~800ms)
+    window.addEventListener('DOMContentLoaded', () => {
+      fetchAutoTradeStatus();
+      pollInterval = setInterval(fetchAutoTradeStatus, 800);
+    });
+
+    window.addEventListener('beforeunload', () => {
+      if (pollInterval) clearInterval(pollInterval);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: crypto-arbitrage-bot
+    runtime: python
+    buildCommand: ""
+    startCommand: python server.py
+    plan: free
+    autoDeploy: true
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"

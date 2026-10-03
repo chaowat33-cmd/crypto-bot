@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arbitrage Opportunity Tracker & Persistence Report | สถิติเฝ้าติดตาม Spread</title>
+  
+  <!-- Tailwind CSS & Google Fonts -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            slate: {
+              850: '#111827',
+              900: '#0b0f19',
+              950: '#05070e'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #05070e;
+      color: #e2e8f0;
+      font-family: 'Inter', sans-serif;
+    }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    
+    @keyframes pulse-subtle {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.85; transform: scale(1.02); }
+    }
+    .live-pulse {
+      animation: pulse-subtle 2s infinite ease-in-out;
+    }
+    
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0b0f19; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #334155; }
+  </style>
+</head>
+<body class="min-h-screen bg-[#05070e] text-slate-100 flex flex-col selection:bg-emerald-500 selection:text-black">
+
+  <!-- TOP NAVIGATION HEADER -->
+  <header class="border-b border-slate-800/80 bg-slate-900/80 backdrop-blur-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Brand & Navigation Tabs -->
+      <div class="flex items-center gap-4 sm:gap-6">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+            <span class="text-slate-950 font-black text-lg">⚡</span>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="font-extrabold text-white text-base sm:text-lg tracking-tight">Arbitrage Persistence Report</h1>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">24/7 TRACKER</span>
+            </div>
+            <p class="text-[11px] text-slate-400 hidden sm:block">ระบบเฝ้าติดตามและจับเวลาระยะเวลาคงอยู่ของ Spread + เพื่อประเมินความเป็นไปได้ในการทำกำไรจริง</p>
+          </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <nav class="hidden md:flex items-center gap-1 bg-slate-950/60 p-1 rounded-xl border border-slate-800/80 text-xs font-semibold">
+          <a href="/index.html" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 transition flex items-center gap-1.5">
+            <span>📈</span> ตารางเปรียบเทียบสด
+          </a>
+          <a href="/report.html" class="px-3 py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-bold transition flex items-center gap-1.5">
+            <span>📊</span> รายงานเฝ้าติดตาม Spread
+          </a>
+          <a href="/autotrade.html" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 transition flex items-center gap-1.5">
+            <span>🤖</span> ระบบ Auto Trade ⚡
+          </a>
+          <a href="/api_trade.html" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 transition flex items-center gap-1.5">
+            <span>⚡</span> เชื่อม API & ระบบ Loan
+          </a>
+        </nav>
+      </div>
+
+      <!-- Live Heartbeat & Actions -->
+      <div class="flex items-center gap-3">
+        <a href="/autotrade.html" class="md:hidden px-2.5 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs font-bold hover:bg-emerald-500/30 border border-emerald-500/30">
+          🤖 Auto Trade
+        </a>
+
+        <div class="flex items-center gap-2 bg-slate-800/50 border border-slate-700/60 rounded-xl px-3 py-1.5 text-xs">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+          <span class="text-slate-300 font-mono text-[11px] hidden sm:inline">Server Clock:</span>
+          <span id="server-time" class="text-emerald-400 font-bold mono text-[11px]">กำลังเชื่อมต่อ...</span>
+        </div>
+
+        <a href="/api/report/export" download class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition text-xs font-bold flex items-center gap-1.5 shadow-sm">
+          <span>📥</span> <span class="hidden sm:inline">ดาวน์โหลด</span> CSV
+        </a>
+
+        <button onclick="confirmClearHistory()" class="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 transition text-xs font-bold flex items-center gap-1">
+          <span>🗑️</span> <span class="hidden sm:inline">ล้างประวัติ</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 flex-1 w-full">
+    
+    <!-- EXPLANATION BANNER -->
+    <div class="bg-gradient-to-r from-emerald-950/30 via-slate-900 to-slate-900 border border-emerald-500/30 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div class="space-y-1">
+        <div class="flex items-center gap-2 text-emerald-400 font-bold text-sm">
+          <span>🎯</span> วัตถุประสงค์ของการสังเกตการณ์:
+        </div>
+        <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+          ระบบจะบันทึกทันทีเมื่อมีคู่เหรียญใดมี <b>Spread เป็นบวก (+)</b> และจับเวลาในแต่ละช่วงสเปรดอย่างละเอียด 
+          (เช่น <code class="text-emerald-300 bg-slate-950 px-1 rounded">+1.0% นาน 3 วิ</code> ➔ <code class="text-amber-300 bg-slate-950 px-1 rounded">0.8% นาน 3 วิ</code> ➔ <code class="text-slate-400 bg-slate-950 px-1 rounded">0.3% นาน 2 วิ</code>) 
+          เพื่อให้คุณเปิดจอทิ้งไว้ทั้งวัน แล้วกลับมาวิเคราะห์ได้ว่ามีโอกาส Arbitrage เกิดขึ้นจริงกี่ครั้ง และเปิดนานพอให้เก็บกำไรได้ทันหรือไม่
+        </p>
+      </div>
+      <div class="flex-shrink-0 flex items-center gap-2 bg-slate-950/80 px-3 py-2 rounded-xl border border-slate-800 text-xs mono">
+        <span class="text-slate-400">หัก Fee เทียบเคียง:</span>
+        <span class="text-amber-300 font-bold">-0.35% (Net)</span>
+      </div>
+    </div>
+
+    <!-- METRICS OVERVIEW CARDS -->
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+      
+      <!-- Total Recorded -->
+      <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 relative overflow-hidden">
+        <div class="text-xs text-slate-400 font-semibold mb-1 flex items-center justify-between">
+          <span>โอกาสทั้งหมดวันนี้</span>
+          <span class="text-emerald-400">📊</span>
+        </div>
+        <div class="text-2xl sm:text-3xl font-black mono text-white" id="stat-total">0</div>
+        <div class="text-[11px] text-slate-400 mt-1">บันทึกทุกรอบที่ Spread > 0</div>
+      </div>
+
+      <!-- Actionable for Humans (> 5s) -->
+      <div class="bg-slate-900/70 border border-emerald-500/40 rounded-2xl p-4 relative overflow-hidden bg-gradient-to-br from-emerald-950/20 to-slate-900">
+        <div class="text-xs text-emerald-400 font-bold mb-1 flex items-center justify-between">
+          <span>🟢 คนทำทัน (&gt; 5 วิ)</span>
+          <span class="text-xs font-black mono bg-emerald-500/20 text-emerald-300 px-1.5 py-0.2 rounded">ACTIONABLE</span>
+        </div>
+        <div class="text-2xl sm:text-3xl font-black mono text-emerald-400" id="stat-5s">0</div>
+        <div class="text-[11px] text-emerald-400/80 mt-1">ค้างนานพอให้คนกดทัน</div>
+      </div>
+
+      <!-- Moderate / Bot (2s - 5s) -->
+      <div class="bg-slate-900/70 border border-amber-500/30 rounded-2xl p-4 relative overflow-hidden">
+        <div class="text-xs text-amber-300 font-semibold mb-1 flex items-center justify-between">
+          <span>🟡 บอททำทัน (2 - 5 วิ)</span>
+          <span class="text-amber-400">⚡</span>
+        </div>
+        <div class="text-2xl sm:text-3xl font-black mono text-amber-300" id="stat-2s">0</div>
+        <div class="text-[11px] text-slate-400 mt-1">ต้องใช้บอทช่วยเคาะออเดอร์</div>
+      </div>
+
+      <!-- Flash Spikes (< 2s) -->
+      <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 relative overflow-hidden">
+        <div class="text-xs text-slate-400 font-semibold mb-1 flex items-center justify-between">
+          <span>⚪ เสี้ยววินาที (&lt; 2 วิ)</span>
+          <span class="text-slate-500">⏱️</span>
+        </div>
+        <div class="text-2xl sm:text-3xl font-black mono text-slate-300" id="stat-flash">0</div>
+        <div class="text-[11px] text-slate-400 mt-1">Flash Spikes / บอท HFT ช้อน</div>
+      </div>
+
+      <!-- Max Duration & Net Spread -->
+      <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 relative overflow-hidden col-span-2 lg:col-span-1 space-y-2">
+        <div class="text-xs text-slate-400 font-semibold flex items-center justify-between">
+          <span>สถิติสูงสุดที่พบ</span>
+          <span class="text-cyan-400">🏆</span>
+        </div>
+        <div>
+          <div class="flex items-baseline justify-between">
+            <span class="text-lg font-black mono text-cyan-300" id="stat-max-dur">0.0s</span>
+            <span class="text-xs text-slate-400">ค้างนานสุด</span>
+          </div>
+          <div class="text-[11px] text-cyan-200 font-medium truncate mt-0.5" id="stat-max-dur-route">-</div>
+        </div>
+        <div class="pt-1.5 border-t border-slate-800/80">
+          <div class="flex items-baseline justify-between">
+            <span class="text-lg font-black mono text-emerald-400" id="stat-max-net">+0.00%</span>
+            <span class="text-xs text-slate-400">กำไรสุทธิสูงสุด</span>
+          </div>
+          <div class="text-[11px] text-emerald-200 font-medium truncate mt-0.5" id="stat-max-net-route">-</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- TOP EXCHANGE ROUTES SUMMARY BAR -->
+    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-3.5 sm:p-4 shadow-lg backdrop-blur-sm">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
+        <div class="flex items-center gap-2">
+          <span class="text-base">🌐</span>
+          <h3 class="text-xs font-bold text-white uppercase tracking-wider">คู่กระดานที่เกิดโอกาสบ่อยที่สุด (Top Arbitrage Routes)</h3>
+        </div>
+        <span class="text-[11px] text-slate-400">สถิติสะสมชี้เป้าว่าเว็บไหนทำกำไรคู่กันได้ดีที่สุด</span>
+      </div>
+      <div id="top-routes-container" class="flex flex-wrap gap-2 text-xs">
+        <div class="text-slate-500 text-xs py-1">กำลังคำนวณสถิติความถี่คู่เว็บ...</div>
+      </div>
+    </div>
+
+    <!-- LIVE ACTIVE ARBITRAGE (กำลังเกิดขึ้นสดๆ ตอนนี้) -->
+    <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-emerald-500 live-pulse"></span>
+          <h2 class="font-black text-white text-base sm:text-lg flex items-center gap-2">
+            กำลังเปิดโอกาสอยู่สดๆ ตอนนี้ (Live Active Arbitrage)
+            <span id="badge-active-count" class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 mono font-bold">0 โอกาส</span>
+          </h2>
+        </div>
+        <div class="text-xs text-slate-400 mono">Auto-update ~1s</div>
+      </div>
+
+      <!-- Live Cards Container -->
+      <div id="live-active-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Rendered dynamically -->
+        <div class="col-span-full py-8 text-center text-slate-500 bg-slate-950/40 rounded-xl border border-slate-800/60">
+          <div class="inline-block animate-pulse text-2xl mb-1">📡</div>
+          <div class="text-xs">ขณะนี้ยังไม่มี Arbitrage ที่กำไรสุทธิเป็นบวกค้างอยู่ (ระบบกำลังสแกน Orderbook ทั้ง 4 กระดานตลอดเวลา)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORICAL DETAILED OPPORTUNITIES TABLE -->
+    <div class="bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl space-y-4 p-4 sm:p-5">
+      
+      <!-- Table Controls -->
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+        
+        <div class="flex items-center gap-2 flex-wrap">
+          <h3 class="font-extrabold text-white text-base flex items-center gap-2">
+            <span>📋</span> ประวัติการตรวจจับโอกาสทั้งหมด (History Log)
+          </h3>
+          <span class="text-xs text-slate-400">| รวม <span id="table-total-count" class="text-white font-bold mono">0</span> รายการ</span>
+        </div>
+
+        <div class="flex items-center gap-2 flex-wrap text-xs">
+          <!-- Filter Duration -->
+          <select id="filter-dur" onchange="loadReportData()" class="bg-[#050811] border border-slate-700 rounded-xl px-3 py-1.5 text-slate-200 focus:outline-none focus:border-emerald-500">
+            <option value="0" selected>ระยะเวลา: ทั้งหมด</option>
+            <option value="5">🟢 คนทำทัน (&gt; 5 วินาที)</option>
+            <option value="2">🟡 บอททำทัน (&gt; 2 วินาที)</option>
+            <option value="1">⏱️ &gt; 1 วินาที</option>
+          </select>
+
+          <!-- Search Coin -->
+          <input 
+            type="text" 
+            id="search-coin" 
+            oninput="handleSearchCoin()" 
+            placeholder="ค้นหาเหรียญ เช่น BTC, SOL..." 
+            class="w-36 bg-[#050811] border border-slate-700 rounded-xl px-3 py-1.5 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 uppercase"
+          >
+
+          <!-- Refresh Button -->
+          <button onclick="loadReportData()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold transition flex items-center gap-1">
+            <span>🔄</span> รีเฟรช
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Opportunities Table -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b border-slate-800 bg-[#080d1a]/90 text-slate-400 text-xs font-semibold uppercase tracking-wider">
+              <th class="py-3 px-4">เวลาที่เริ่ม - จบ</th>
+              <th class="py-3 px-4">เหรียญ (Coin)</th>
+              <th class="py-3 px-4">เส้นทาง Arbitrage (Route)</th>
+              <th class="py-3 px-4 text-right">Spread สุทธิสูงสุด</th>
+              <th class="py-3 px-4 text-center">ระยะเวลาที่ค้าง</th>
+              <th class="py-3 px-4">ไทม์ไลน์แจกแจงละเอียด (Stage Breakdown)</th>
+              <th class="py-3 px-4 text-right">วงเงินสูงสุด</th>
+              <th class="py-3 px-4 text-center">ผลการประเมิน</th>
+            </tr>
+          </thead>
+          <tbody id="history-tbody" class="divide-y divide-slate-800/50 text-sm">
+            <tr>
+              <td colspan="8" class="text-center py-12 text-slate-500">
+                <div class="inline-block animate-spin w-6 h-6 border-2 border-emerald-400 border-t-transparent rounded-full mb-2"></div>
+                <div class="mono text-xs">กำลังโหลดประวัติโอกาส Arbitrage...</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Footer Info -->
+      <div class="pt-3 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-400">
+        <div>
+          💡 ระบบจับเวลาระดับมิลลิวินาทีจากความถี่ Ticker สด เพื่อให้เห็นการเปลี่ยนแปลงของราคาในแต่ละขั้นอย่างแท้จริง
+        </div>
+        <div class="mono text-[11px] text-slate-500">
+          Auto-polling Every 1,000ms
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- CONFIRM CLEAR MODAL -->
+  <div id="clear-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-[#0b1020] border border-slate-800 rounded-3xl max-w-sm w-full p-6 shadow-2xl text-center space-y-4">
+      <div class="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-2xl mx-auto">
+        🗑️
+      </div>
+      <div>
+        <h4 class="font-bold text-white text-base">ยืนยันการล้างประวัติ?</h4>
+        <p class="text-xs text-slate-400 mt-1">ประวัติการบันทึก Arbitrage ทั้งหมดที่บันทึกไว้ในระบบจะถูกลบและเริ่มนับใหม่</p>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="closeClearModal()" class="flex-1 py-2 rounded-xl bg-slate-800 text-slate-300 font-bold text-xs hover:bg-slate-700">ยกเลิก</button>
+        <button onclick="executeClearHistory()" class="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs">ล้างประวัติ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT ENGINE -->
+  <script>
+    let pollInterval = null;
+    let cachedReport = null;
+    const exNames = {
+      bitkub: 'Bitkub',
+      binance_th: 'Binance TH',
+      binance_global: 'Binance Global',
+      orbix: 'Orbix',
+      upbit: 'Upbit'
+    };
+
+    async function loadReportData() {
+      try {
+        const minDur = document.getElementById('filter-dur').value || 0;
+        const sym = (document.getElementById('search-coin').value || '').trim();
+        
+        let url = `/api/report/opportunities?min_duration=${minDur}`;
+        if (sym) url += `&symbol=${encodeURIComponent(sym)}`;
+
+        const res = await fetch(url, { cache: 'no-store' });
+        const data = await res.json();
+        cachedReport = data;
+
+        updateStats(data.stats);
+        renderLiveActive(data.live_active);
+        renderHistoryTable(data.history);
+      } catch (err) {
+        console.warn('Failed to load report data:', err);
+      }
+    }
+
+    function updateStats(stats) {
+      if (!stats) return;
+      document.getElementById('server-time').innerText = stats.server_time || '-';
+      document.getElementById('stat-total').innerText = stats.total_recorded || 0;
+      document.getElementById('stat-5s').innerText = stats.actionable_5s_count || 0;
+      document.getElementById('stat-2s').innerText = stats.actionable_2s_count || 0;
+      document.getElementById('stat-flash').innerText = stats.flash_sub2s_count || 0;
+      document.getElementById('stat-max-dur').innerText = `${(stats.max_duration_sec || 0).toFixed(1)}s`;
+      document.getElementById('stat-max-net').innerText = `+${(stats.max_net_spread || 0).toFixed(2)}%`;
+      document.getElementById('badge-active-count').innerText = `${stats.active_now_count || 0} โอกาสสด`;
+
+      // Detailed highest stats with Route and Coin
+      const durRouteEl = document.getElementById('stat-max-dur-route');
+      if (durRouteEl) {
+        if (stats.max_duration_coin && stats.max_duration_coin !== '-') {
+          durRouteEl.innerHTML = `เหรียญ <b class="text-white">${stats.max_duration_coin}</b> (${stats.max_duration_route})`;
+        } else {
+          durRouteEl.innerText = '-';
+        }
+      }
+
+      const netRouteEl = document.getElementById('stat-max-net-route');
+      if (netRouteEl) {
+        if (stats.max_net_coin && stats.max_net_coin !== '-') {
+          netRouteEl.innerHTML = `เหรียญ <b class="text-white">${stats.max_net_coin}</b> (${stats.max_net_route})`;
+        } else {
+          netRouteEl.innerText = '-';
+        }
+      }
+
+      // Render Top Arbitrage Routes Summary
+      const routesContainer = document.getElementById('top-routes-container');
+      if (routesContainer) {
+        if (stats.top_routes && stats.top_routes.length > 0) {
+          routesContainer.innerHTML = stats.top_routes.map((r, idx) => `
+            <div class="px-3 py-1.5 rounded-xl bg-slate-950/90 border border-slate-800/90 flex items-center gap-2 shadow-sm">
+              <span class="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-black flex items-center justify-center">${idx + 1}</span>
+              <span class="font-bold text-slate-200">${r.route}</span>
+              <span class="text-emerald-400 font-mono font-black">${r.count} ครั้ง</span>
+              <span class="text-slate-500 text-[10px]">(${r.pct}%)</span>
+            </div>
+          `).join('');
+        } else {
+          routesContainer.innerHTML = '<span class="text-slate-500 text-xs py-1">ยังไม่มีข้อมูลคู่กระดานที่บันทึกได้</span>';
+        }
+      }
+    }
+
+    function renderLiveActive(activeList) {
+      const container = document.getElementById('live-active-container');
+      if (!container) return;
+
+      if (!activeList || activeList.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full py-8 text-center text-slate-500 bg-slate-950/40 rounded-xl border border-slate-800/60">
+            <div class="inline-block animate-pulse text-2xl mb-1">📡</div>
+            <div class="text-xs">ขณะนี้ยังไม่มีคู่เหรียญที่ Spread เป็นบวกเปิดค้างอยู่ (ระบบกำลังสแกนและบันทึกประวัติให้ตลอด 24 ชม.)</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = activeList.map(item => {
+        const netSpread = item.peak_net_spread;
+        const dur = item.total_duration_sec;
+        const stages = item.live_stages || [];
+
+        return `
+          <div class="bg-gradient-to-br from-emerald-950/40 via-slate-900 to-slate-900 border-2 border-emerald-500/60 rounded-2xl p-4 shadow-xl shadow-emerald-950/30 relative overflow-hidden">
+            
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-emerald-400 animate-ping"></span>
+                <span class="text-lg font-black mono text-white">${item.symbol}</span>
+                <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 mono font-bold">🔴 LIVE ACTIVE</span>
+              </div>
+              <div class="text-right">
+                <span class="text-xs text-slate-400 block">ค้างอยู่แล้ว:</span>
+                <span class="text-sm font-black mono text-emerald-300">⏱️ ${dur.toFixed(1)} วินาที</span>
+              </div>
+            </div>
+
+            <!-- Route -->
+            <div class="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800 mb-3 space-y-1.5 text-xs">
+              <div class="flex justify-between items-center">
+                <span class="text-slate-400">เส้นทาง:</span>
+                <div class="flex items-center gap-1 font-bold">
+                  <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    ซื้อ ${exNames[item.buy_ex] || item.buy_ex}
+                  </span>
+                  <span class="text-slate-500 text-[10px]">➔</span>
+                  <span class="px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                    ขาย ${exNames[item.sell_ex] || item.sell_ex}
+                  </span>
+                </div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-slate-400">Spread สุทธิสูงสุด:</span>
+                <span class="font-black mono text-emerald-400 text-sm">+${netSpread.toFixed(2)}% สุทธิ</span>
+              </div>
+              <div class="flex justify-between items-center text-[11px]">
+                <span class="text-slate-500">Gross: +${item.peak_gross_spread.toFixed(2)}%</span>
+                <span class="text-slate-400 font-mono">วงเงินพร้อมซื้อ: ฿${formatNumber(item.max_fill_thb, 0)}</span>
+              </div>
+            </div>
+
+            <!-- Live Stages Timeline -->
+            <div class="space-y-1.5">
+              <div class="text-[11px] text-slate-400 font-semibold flex items-center justify-between">
+                <span>ไทม์ไลน์ช่วงสเปรด (Step Breakdown):</span>
+                <span class="text-emerald-400 text-[10px]">${stages.length} ขั้น</span>
+              </div>
+              <div class="flex flex-wrap gap-1.5">
+                ${stages.map((st, idx) => `
+                  <div class="px-2 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-[10px] mono flex items-center gap-1 font-bold">
+                    <span class="text-white">+${st.spread_pct.toFixed(2)}%</span>
+                    <span class="text-emerald-300">(${st.duration_sec.toFixed(1)}s)</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderHistoryTable(history) {
+      const tbody = document.getElementById('history-tbody');
+      const countEl = document.getElementById('table-total-count');
+      if (!tbody) return;
+
+      countEl.innerText = history ? history.length : 0;
+
+      if (!history || history.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" class="text-center py-12 text-slate-500">
+              ยังไม่มีประวัติที่ตรงกับเงื่อนไขการค้นหา (ระบบจะบันทึกอัตโนมัติเมื่อพบ Spread +)
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = history.map(item => {
+        const dur = item.total_duration_sec;
+        const netSpread = item.peak_net_spread;
+        const stages = item.stages || [];
+
+        // Verdict Badge
+        let verdictBadge = '';
+        if (dur >= 5.0 && netSpread > 0) {
+          verdictBadge = `
+            <span class="inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+              🟢 คนทำทัน (${dur.toFixed(1)}s)
+            </span>
+          `;
+        } else if (dur >= 2.0 && netSpread > 0) {
+          verdictBadge = `
+            <span class="inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+              🟡 บอททำทัน (${dur.toFixed(1)}s)
+            </span>
+          `;
+        } else {
+          verdictBadge = `
+            <span class="inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-medium bg-slate-800 text-slate-400 border border-slate-700/60">
+              ⚪ แวบเดียว (${dur.toFixed(1)}s)
+            </span>
+          `;
+        }
+
+        // Stepper Stage Breakdown
+        const stagesHtml = stages.length > 0 ? stages.map(s => {
+          const isHigh = s.spread_pct >= 0.8;
+          const isMed = s.spread_pct >= 0.4;
+          const bgCol = isHigh ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300' : (isMed ? 'bg-amber-500/15 border-amber-500/30 text-amber-300' : 'bg-slate-800/80 border-slate-700 text-slate-300');
+          return `
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] mono font-bold border ${bgCol}">
+              <span>+${s.spread_pct.toFixed(2)}%</span>
+              <span class="text-[10px] opacity-80 font-normal">(${s.duration_sec.toFixed(1)}วิ)</span>
+            </span>
+          `;
+        }).join('<span class="text-slate-600 text-xs self-center">➔</span>') : '<span class="text-slate-500 text-xs">-</span>';
+
+        return `
+          <tr class="hover:bg-slate-800/40 transition">
+            <!-- Timestamp -->
+            <td class="py-3 px-4 whitespace-nowrap mono text-xs text-slate-400">
+              <span class="text-slate-200 font-bold block">${item.start_iso || '-'}</span>
+              <span class="text-[10px] text-slate-500">ถึง ${item.end_iso || '-'}</span>
+            </td>
+
+            <!-- Coin -->
+            <td class="py-3 px-4 whitespace-nowrap">
+              <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-[9px] text-white">
+                  ${item.symbol.substring(0, 3)}
+                </div>
+                <span class="font-extrabold text-white mono">${item.symbol}</span>
+              </div>
+            </td>
+
+            <!-- Route -->
+            <td class="py-3 px-4 whitespace-nowrap text-xs">
+              <div class="flex items-center gap-1.5 font-bold">
+                <span class="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                  ซื้อ ${exNames[item.buy_ex] || item.buy_ex}
+                </span>
+                <span class="text-slate-500 text-[10px]">➔</span>
+                <span class="px-2 py-0.5 rounded bg-blue-500/15 text-blue-300 border border-blue-500/30">
+                  ขาย ${exNames[item.sell_ex] || item.sell_ex}
+                </span>
+              </div>
+            </td>
+
+            <!-- Peak Net Spread -->
+            <td class="py-3 px-4 text-right whitespace-nowrap">
+              <span class="px-2 py-0.5 rounded text-xs font-black mono border ${
+                netSpread > 0.35 
+                  ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' 
+                  : (netSpread > 0 ? 'bg-amber-500/15 text-amber-300 border-amber-500/30' : 'bg-slate-800 text-slate-400 border-slate-700')
+              }">
+                ${netSpread >= 0 ? '+' : ''}${netSpread.toFixed(2)}% สุทธิ
+              </span>
+              <span class="text-[10px] text-slate-400 mono block mt-0.5">
+                Gross: +${item.peak_gross_spread.toFixed(2)}%
+              </span>
+            </td>
+
+            <!-- Total Duration -->
+            <td class="py-3 px-4 text-center whitespace-nowrap">
+              <span class="font-black mono text-white text-xs block">
+                ⏱️ ${dur.toFixed(1)} วินาที
+              </span>
+              <span class="text-[10px] text-slate-400 mono">
+                ${stages.length} ขั้นตอน
+              </span>
+            </td>
+
+            <!-- Stage Breakdown -->
+            <td class="py-3 px-4">
+              <div class="flex flex-wrap items-center gap-1.5">
+                ${stagesHtml}
+              </div>
+            </td>
+
+            <!-- Max Fill -->
+            <td class="py-3 px-4 text-right whitespace-nowrap mono text-xs font-bold text-slate-300">
+              ฿${formatNumber(item.max_fill_thb, 0)}
+            </td>
+
+            <!-- Verdict -->
+            <td class="py-3 px-4 text-center whitespace-nowrap">
+              ${verdictBadge}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function formatNumber(num, decimals = 2) {
+      if (num === undefined || num === null || isNaN(num) || num === 0) return '-';
+      return Number(num).toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    }
+
+    function handleSearchCoin() {
+      loadReportData();
+    }
+
+    function confirmClearHistory() {
+      document.getElementById('clear-modal').classList.remove('hidden');
+      document.getElementById('clear-modal').classList.add('flex');
+    }
+
+    function closeClearModal() {
+      document.getElementById('clear-modal').classList.add('hidden');
+      document.getElementById('clear-modal').classList.remove('flex');
+    }
+
+    async function executeClearHistory() {
+      try {
+        await fetch('/api/report/clear', { method: 'POST' });
+        closeClearModal();
+        loadReportData();
+      } catch (err) {
+        console.error('Clear failed:', err);
+      }
+    }
+
+    // Startup & 1-second auto-poll
+    window.addEventListener('DOMContentLoaded', () => {
+      loadReportData();
+      pollInterval = setInterval(loadReportData, 1000);
+    });
+  </script>
+</body>
+</html>

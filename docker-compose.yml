@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  arbitrage-bot:
+    build: .
+    container_name: crypto-arbitrage-bot
+    restart: always
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./autotrade_state.json:/app/autotrade_state.json
+      - ./autotrade_keys.json:/app/autotrade_keys.json
+      - ./arbitrage_history.json:/app/arbitrage_history.json
+    environment:
+      - PORT=5000
