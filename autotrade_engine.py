@@ -80,7 +80,7 @@ class AutoTradeEngine:
         self.mode = "paper"   # Realistic Paper Trading
         
         # Strategy Parameters
-        self.min_net_spread_pct = 1.0       # Minimum net profit after fees (e.g. +1.00%)
+        self.min_net_spread_pct = 0.5       # Minimum net profit after fees (e.g. +0.50%)
         self.trade_size_thb = 500.0         # Default safe trade size: ฿500 per order
         self.max_daily_loss_thb = 500.0     # Strict circuit breaker: stop bot if total loss reaches ฿500
         self.max_consecutive_losses = 5     # Stop bot immediately if 5 consecutive losses occur
