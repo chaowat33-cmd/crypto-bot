@@ -383,73 +383,25 @@ def upbit_worker():
         time.sleep(0.5)
 
 def binance_global_worker():
-    """Worker for Binance Global bookTicker with intelligent fallback to Binance Cloud bookTicker (~1.5s)"""
+    """Worker for Binance Global orderbook sourced via Binance Cloud orderbook (~400ms)
+    Keeps api.binance.com request weight 0 so private account/trading endpoints are never rate limited.
+    """
     global raw_binance_global, cache
-    endpoints = [
-        "https://data-api.binance.vision/api/v3/ticker/bookTicker",
-        "https://api1.binance.com/api/v3/ticker/bookTicker",
-        "https://api.binance.com/api/v3/ticker/bookTicker"
-    ]
-    curr_idx = 0
-    direct_ban_until = 0.0
-
     while True:
-        now = time.time()
-        success = False
-
-        # If not currently in cooldown/ban period, try direct Binance Global endpoints
-        if now >= direct_ban_until:
-            url = endpoints[curr_idx]
-            t0 = time.time()
-            try:
-                bg_data = fetch_json(url, timeout=4.0)
-                latency = int((time.time() - t0) * 1000)
-                if bg_data and isinstance(bg_data, list):
-                    m = {}
-                    for item in bg_data:
-                        sym = item.get("symbol", "")
-                        bid_p = float(item.get("bidPrice", 0))
-                        bid_q = float(item.get("bidQty", 0))
-                        ask_p = float(item.get("askPrice", 0))
-                        ask_q = float(item.get("askQty", 0))
-                        mid_p = (bid_p + ask_p) / 2 if (bid_p > 0 and ask_p > 0) else (ask_p or bid_p)
-                        m[sym] = {
-                            "price": mid_p,
-                            "bid": bid_p,
-                            "bid_qty": bid_q,
-                            "ask": ask_p,
-                            "ask_qty": ask_q
-                        }
-                    raw_binance_global = m
-                    success = True
-                    with cache_lock:
-                        cache["latency_ms"]["binance_global"] = latency
-                        cache["status"]["binance_global"] = "online"
-                    recompute_thb_comparison()
-            except Exception as e:
-                err_str = str(e)
-                curr_idx = (curr_idx + 1) % len(endpoints)
-                if "418" in err_str or "429" in err_str:
-                    # Cloudflare / Binance IP rate limit triggered; cool down for 60 seconds
-                    direct_ban_until = now + 60.0
-
-        # If direct failed or is in cooldown, seamlessly source USDT orderbook from Binance Cloud (raw_binance_th)
-        if not success:
-            with cache_lock:
-                th_data = raw_binance_th
-            if th_data:
-                m = {}
-                for sym, info in th_data.items():
-                    if sym.endswith("USDT"):
-                        m[sym] = info
-                if m:
-                    raw_binance_global = m
-                    with cache_lock:
-                        cache["latency_ms"]["binance_global"] = cache["latency_ms"].get("binance_th", 200)
-                        cache["status"]["binance_global"] = "online"
-                    recompute_thb_comparison()
-
-        time.sleep(1.5)
+        with cache_lock:
+            th_data = raw_binance_th
+        if th_data:
+            m = {}
+            for sym, info in th_data.items():
+                if sym.endswith("USDT"):
+                    m[sym] = info
+            if m:
+                raw_binance_global = m
+                with cache_lock:
+                    cache["latency_ms"]["binance_global"] = cache["latency_ms"].get("binance_th", 200)
+                    cache["status"]["binance_global"] = "online"
+                recompute_thb_comparison()
+        time.sleep(0.4)
 
 HISTORY_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "arbitrage_history.json")
 
