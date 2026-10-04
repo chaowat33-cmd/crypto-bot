@@ -9,6 +9,7 @@ import datetime
 import uuid
 import io
 import csv
+import base64
 from autotrade_engine import autotrade_engine
 
 PORT = int(os.environ.get("PORT", 5000))
@@ -1047,7 +1048,35 @@ class CryptoHandler(SimpleHTTPRequestHandler):
         self.send_response(200)
         self.end_headers()
 
+    def check_auth(self):
+        auth_pass = os.environ.get("DASHBOARD_PASS", "").strip()
+        if not auth_pass:
+            return True
+        auth_header = self.headers.get("Authorization")
+        if not auth_header:
+            return False
+        try:
+            auth_type, encoded = auth_header.split(" ", 1)
+            if auth_type.lower() != "basic":
+                return False
+            decoded = base64.b64decode(encoded.strip()).decode("utf-8")
+            u, p = decoded.split(":", 1)
+            expected_u = os.environ.get("DASHBOARD_USER", "admin").strip()
+            return u == expected_u and p == auth_pass
+        except Exception:
+            return False
+
+    def require_auth(self):
+        self.send_response(401)
+        self.send_header("WWW-Authenticate", 'Basic realm="Crypto Arbitrage Dashboard Login"')
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.end_headers()
+        self.wfile.write(b"<h1>401 Unauthorized</h1><p>Username and Password required to access this dashboard.</p>")
+
     def do_POST(self):
+        if not self.check_auth():
+            self.require_auth()
+            return
         if self.path.startswith("/api/report/clear"):
             tracker.clear_history()
             self.send_response(200)
@@ -1164,6 +1193,9 @@ class CryptoHandler(SimpleHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
+        if not self.check_auth():
+            self.require_auth()
+            return
         if self.path.startswith("/api/dictionary"):
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
