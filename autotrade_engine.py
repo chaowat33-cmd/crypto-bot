@@ -57,6 +57,22 @@ def calculate_vwap_slippage(price, trade_val, book_depth, is_buy=True):
         
     return filled_price, slippage_pct
 
+def send_telegram_alert(text):
+    token = os.environ.get("TELEGRAM_BOT_TOKEN", "8223980053:AAEB7EY61T55TjAhVDs7R5T-bzUzStzEpKY").strip()
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
+    if not token or not chat_id:
+        return
+    def _send():
+        try:
+            url = f"https://api.telegram.org/bot{token}/sendMessage"
+            payload = json.dumps({"chat_id": chat_id, "text": text, "parse_mode": "HTML"}).encode('utf-8')
+            req = urllib.request.Request(url, data=payload, headers={"Content-Type": "application/json"})
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                pass
+        except Exception as e:
+            print(f"[Telegram Alert Error] {e}")
+    threading.Thread(target=_send, daemon=True).start()
+
 class AutoTradeEngine:
     def __init__(self):
         self.lock = threading.RLock()
@@ -713,6 +729,12 @@ class AutoTradeEngine:
                                         f"🎉 [UNWIND SUCCESS] ปิดสถานะ {hedged_sym} สำเร็จทั้ง 2 ฝั่ง! รับเงินบาทและ USDT คืนเข้าพอร์ตพร้อมกำไร",
                                         "success"
                                     )
+                                    send_telegram_alert(
+                                        f"💎 <b>[AUTO-UNWIND SUCCESS] ปิดสถานะรับเงินสดสำเร็จ!</b>\n\n"
+                                        f"🪙 เหรียญ: <b>{hedged_sym}</b> ({hedged_amt})\n"
+                                        f"📈 สเปรดพลิกกลับมา: +{net_unwind:.2f}%\n"
+                                        f"💵 สถานะ: ปิดหนี้ Margin + รับเงินสด THB เข้าพอร์ตแล้ว 100% 🟢"
+                                    )
                                     threading.Thread(target=self.refresh_real_balances, daemon=True).start()
                                 else:
                                     self.log(
@@ -1061,6 +1083,17 @@ class AutoTradeEngine:
             f"[Fee -฿{total_fees:.2f} | Slippage -฿{slippage_cost_thb:.2f} | {execution_note}]"
         )
         self.log(msg, "trade")
+
+        if live_executed:
+            send_telegram_alert(
+                f"🎉 <b>[LIVE TRADE FILLED] บอททำกำไรสำเร็จ!</b>\n\n"
+                f"🪙 เหรียญ: <b>{coin}</b>\n"
+                f"🔄 เส้นทาง: {ex_names.get(buy_ex, buy_ex)} ➔ {ex_names.get(sell_ex, sell_ex)}\n"
+                f"💵 ทุนเทรด: ฿{trade_val_thb:,.0f} THB\n"
+                f"📊 สเปรดสุทธิ: +{actual_roi_pct:.2f}%\n"
+                f"💰 <b>กำไรสุทธิ: +฿{net_profit_thb:,.2f} THB</b>\n"
+                f"⏱️ เวลา: {trade_record['time_str']}"
+            )
 
     def record_missed_trade(self, p, reason, reason_th, final_spread, delay_actual):
         trade_id = p["order_id"]
