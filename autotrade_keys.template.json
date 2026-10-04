@@ -1,0 +1,27 @@
+{
+  "bitkub": {
+    "key": "",
+    "secret": "",
+    "connected": false
+  },
+  "binance_th": {
+    "key": "",
+    "secret": "",
+    "connected": false
+  },
+  "binance_global": {
+    "key": "",
+    "secret": "",
+    "connected": false
+  },
+  "orbix": {
+    "key": "",
+    "secret": "",
+    "connected": false
+  },
+  "upbit": {
+    "key": "",
+    "secret": "",
+    "connected": false
+  }
+}

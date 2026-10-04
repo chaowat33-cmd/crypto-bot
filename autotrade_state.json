@@ -30,9 +30,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 1.19,
+      "accrued_interest_thb": 16.3,
       "auto_triggered": true,
-      "elapsed_hours": 1.67
+      "elapsed_hours": 22.97
     },
     {
       "id": "LN-2B1E02",
@@ -49,9 +49,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.06,
+      "accrued_interest_thb": 0.64,
       "auto_triggered": true,
-      "elapsed_hours": 2.15
+      "elapsed_hours": 23.44
     },
     {
       "id": "LN-44EBF7",
@@ -68,9 +68,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.0,
+      "accrued_interest_thb": 0.03,
       "auto_triggered": true,
-      "elapsed_hours": 2.24
+      "elapsed_hours": 23.53
     },
     {
       "id": "LN-17ABFB",
@@ -87,9 +87,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.06,
+      "accrued_interest_thb": 0.65,
       "auto_triggered": true,
-      "elapsed_hours": 2.25
+      "elapsed_hours": 23.55
     },
     {
       "id": "LN-D25EE7",
@@ -106,9 +106,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.0,
+      "accrued_interest_thb": 0.03,
       "auto_triggered": true,
-      "elapsed_hours": 2.28
+      "elapsed_hours": 23.57
     },
     {
       "id": "LN-884551",
@@ -125,9 +125,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.06,
+      "accrued_interest_thb": 0.66,
       "auto_triggered": true,
-      "elapsed_hours": 2.31
+      "elapsed_hours": 23.6
     },
     {
       "id": "LN-7FF7FB",
@@ -144,9 +144,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.07,
+      "accrued_interest_thb": 0.66,
       "auto_triggered": true,
-      "elapsed_hours": 2.39
+      "elapsed_hours": 23.68
     },
     {
       "id": "LN-8F54C7",
@@ -163,9 +163,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 1.6,
+      "accrued_interest_thb": 14.32,
       "auto_triggered": true,
-      "elapsed_hours": 2.67
+      "elapsed_hours": 23.97
     },
     {
       "id": "LN-0D4416",
@@ -182,9 +182,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.07,
       "auto_triggered": true,
-      "elapsed_hours": 3.11
+      "elapsed_hours": 24.41
     },
     {
       "id": "LN-B53AB4",
@@ -201,9 +201,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.38,
+      "accrued_interest_thb": 2.95,
       "auto_triggered": true,
-      "elapsed_hours": 3.11
+      "elapsed_hours": 24.41
     },
     {
       "id": "LN-3858F6",
@@ -220,9 +220,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.38,
+      "accrued_interest_thb": 2.95,
       "auto_triggered": true,
-      "elapsed_hours": 3.13
+      "elapsed_hours": 24.42
     },
     {
       "id": "LN-35423D",
@@ -239,9 +239,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.05,
       "auto_triggered": true,
-      "elapsed_hours": 3.13
+      "elapsed_hours": 24.42
     },
     {
       "id": "LN-68BE40",
@@ -258,9 +258,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.07,
       "auto_triggered": true,
-      "elapsed_hours": 3.18
+      "elapsed_hours": 24.47
     },
     {
       "id": "LN-384715",
@@ -277,9 +277,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.38,
+      "accrued_interest_thb": 2.95,
       "auto_triggered": true,
-      "elapsed_hours": 3.18
+      "elapsed_hours": 24.47
     },
     {
       "id": "LN-267300",
@@ -296,9 +296,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.07,
       "auto_triggered": true,
-      "elapsed_hours": 3.18
+      "elapsed_hours": 24.48
     },
     {
       "id": "LN-70A3EE",
@@ -315,9 +315,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.38,
+      "accrued_interest_thb": 2.95,
       "auto_triggered": true,
-      "elapsed_hours": 3.18
+      "elapsed_hours": 24.48
     },
     {
       "id": "LN-959BCE",
@@ -334,9 +334,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.07,
       "auto_triggered": true,
-      "elapsed_hours": 3.19
+      "elapsed_hours": 24.48
     },
     {
       "id": "LN-D42833",
@@ -353,9 +353,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.05,
+      "accrued_interest_thb": 0.42,
       "auto_triggered": true,
-      "elapsed_hours": 3.19
+      "elapsed_hours": 24.48
     },
     {
       "id": "LN-270EDB",
@@ -372,9 +372,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.38,
+      "accrued_interest_thb": 2.95,
       "auto_triggered": true,
-      "elapsed_hours": 3.19
+      "elapsed_hours": 24.48
     },
     {
       "id": "LN-6B97DC",
@@ -391,9 +391,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.07,
       "auto_triggered": true,
-      "elapsed_hours": 3.19
+      "elapsed_hours": 24.49
     },
     {
       "id": "LN-165DBC",
@@ -410,9 +410,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.38,
+      "accrued_interest_thb": 2.95,
       "auto_triggered": true,
-      "elapsed_hours": 3.19
+      "elapsed_hours": 24.49
     },
     {
       "id": "LN-CD8805",
@@ -429,9 +429,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.07,
       "auto_triggered": true,
-      "elapsed_hours": 3.2
+      "elapsed_hours": 24.49
     },
     {
       "id": "LN-249D22",
@@ -448,9 +448,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.39,
+      "accrued_interest_thb": 2.95,
       "auto_triggered": true,
-      "elapsed_hours": 3.2
+      "elapsed_hours": 24.49
     },
     {
       "id": "LN-1E8FEA",
@@ -467,9 +467,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.07,
       "auto_triggered": true,
-      "elapsed_hours": 3.2
+      "elapsed_hours": 24.5
     },
     {
       "id": "LN-D581FD",
@@ -486,9 +486,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.39,
+      "accrued_interest_thb": 2.95,
       "auto_triggered": true,
-      "elapsed_hours": 3.2
+      "elapsed_hours": 24.5
     },
     {
       "id": "LN-79F80E",
@@ -505,9 +505,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.07,
       "auto_triggered": true,
-      "elapsed_hours": 3.21
+      "elapsed_hours": 24.5
     },
     {
       "id": "LN-460CEF",
@@ -524,9 +524,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.07,
       "auto_triggered": true,
-      "elapsed_hours": 3.21
+      "elapsed_hours": 24.51
     },
     {
       "id": "LN-358B7A",
@@ -543,9 +543,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.07,
       "auto_triggered": true,
-      "elapsed_hours": 3.22
+      "elapsed_hours": 24.51
     },
     {
       "id": "LN-ECF184",
@@ -562,9 +562,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.04,
+      "accrued_interest_thb": 0.3,
       "auto_triggered": true,
-      "elapsed_hours": 3.22
+      "elapsed_hours": 24.51
     },
     {
       "id": "LN-29B308",
@@ -581,9 +581,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.06,
       "auto_triggered": true,
-      "elapsed_hours": 3.22
+      "elapsed_hours": 24.52
     },
     {
       "id": "LN-FBADC4",
@@ -600,9 +600,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.04,
+      "accrued_interest_thb": 0.3,
       "auto_triggered": true,
-      "elapsed_hours": 3.22
+      "elapsed_hours": 24.52
     },
     {
       "id": "LN-061532",
@@ -619,9 +619,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.39,
+      "accrued_interest_thb": 2.96,
       "auto_triggered": true,
-      "elapsed_hours": 3.23
+      "elapsed_hours": 24.52
     },
     {
       "id": "LN-148EDB",
@@ -638,9 +638,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.05,
       "auto_triggered": true,
-      "elapsed_hours": 3.23
+      "elapsed_hours": 24.52
     },
     {
       "id": "LN-E62FF3",
@@ -657,9 +657,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.04,
+      "accrued_interest_thb": 0.3,
       "auto_triggered": true,
-      "elapsed_hours": 3.23
+      "elapsed_hours": 24.52
     },
     {
       "id": "LN-2EDD3C",
@@ -676,9 +676,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.39,
+      "accrued_interest_thb": 2.96,
       "auto_triggered": true,
-      "elapsed_hours": 3.23
+      "elapsed_hours": 24.52
     },
     {
       "id": "LN-433BEB",
@@ -695,9 +695,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.07,
       "auto_triggered": true,
-      "elapsed_hours": 3.23
+      "elapsed_hours": 24.53
     },
     {
       "id": "LN-E7FAC9",
@@ -714,9 +714,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.04,
+      "accrued_interest_thb": 0.3,
       "auto_triggered": true,
-      "elapsed_hours": 3.23
+      "elapsed_hours": 24.53
     },
     {
       "id": "LN-276C78",
@@ -733,9 +733,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.39,
+      "accrued_interest_thb": 2.96,
       "auto_triggered": true,
-      "elapsed_hours": 3.24
+      "elapsed_hours": 24.53
     },
     {
       "id": "LN-E2482B",
@@ -752,9 +752,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.07,
       "auto_triggered": true,
-      "elapsed_hours": 3.24
+      "elapsed_hours": 24.53
     },
     {
       "id": "LN-A8765D",
@@ -771,9 +771,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.39,
+      "accrued_interest_thb": 2.97,
       "auto_triggered": true,
-      "elapsed_hours": 3.24
+      "elapsed_hours": 24.53
     },
     {
       "id": "LN-214552",
@@ -790,9 +790,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.07,
       "auto_triggered": true,
-      "elapsed_hours": 3.24
+      "elapsed_hours": 24.54
     },
     {
       "id": "LN-688EA9",
@@ -809,9 +809,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.04,
+      "accrued_interest_thb": 0.3,
       "auto_triggered": true,
-      "elapsed_hours": 3.24
+      "elapsed_hours": 24.54
     },
     {
       "id": "LN-082B4C",
@@ -828,9 +828,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.39,
+      "accrued_interest_thb": 2.96,
       "auto_triggered": true,
-      "elapsed_hours": 3.25
+      "elapsed_hours": 24.54
     },
     {
       "id": "LN-3A627B",
@@ -847,9 +847,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.07,
       "auto_triggered": true,
-      "elapsed_hours": 3.25
+      "elapsed_hours": 24.54
     },
     {
       "id": "LN-44B706",
@@ -866,9 +866,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.04,
+      "accrued_interest_thb": 0.3,
       "auto_triggered": true,
-      "elapsed_hours": 3.25
+      "elapsed_hours": 24.54
     },
     {
       "id": "LN-A720D7",
@@ -885,9 +885,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.39,
+      "accrued_interest_thb": 2.97,
       "auto_triggered": true,
-      "elapsed_hours": 3.25
+      "elapsed_hours": 24.54
     },
     {
       "id": "LN-739FD7",
@@ -904,9 +904,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.07,
       "auto_triggered": true,
-      "elapsed_hours": 3.25
+      "elapsed_hours": 24.55
     },
     {
       "id": "LN-7352D6",
@@ -923,9 +923,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.04,
+      "accrued_interest_thb": 0.3,
       "auto_triggered": true,
-      "elapsed_hours": 3.25
+      "elapsed_hours": 24.55
     },
     {
       "id": "LN-4DBBB6",
@@ -942,9 +942,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.39,
+      "accrued_interest_thb": 2.97,
       "auto_triggered": true,
-      "elapsed_hours": 3.25
+      "elapsed_hours": 24.55
     },
     {
       "id": "LN-8E03C6",
@@ -961,9 +961,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.07,
       "auto_triggered": true,
-      "elapsed_hours": 3.26
+      "elapsed_hours": 24.55
     },
     {
       "id": "LN-141610",
@@ -980,9 +980,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.04,
+      "accrued_interest_thb": 0.3,
       "auto_triggered": true,
-      "elapsed_hours": 3.26
+      "elapsed_hours": 24.55
     },
     {
       "id": "LN-2B410B",
@@ -999,9 +999,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.39,
+      "accrued_interest_thb": 2.96,
       "auto_triggered": true,
-      "elapsed_hours": 3.26
+      "elapsed_hours": 24.55
     },
     {
       "id": "LN-D07CC9",
@@ -1018,9 +1018,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.26,
+      "accrued_interest_thb": 1.95,
       "auto_triggered": true,
-      "elapsed_hours": 3.26
+      "elapsed_hours": 24.56
     },
     {
       "id": "LN-7BF477",
@@ -1037,9 +1037,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.07,
       "auto_triggered": true,
-      "elapsed_hours": 3.26
+      "elapsed_hours": 24.56
     },
     {
       "id": "LN-759B17",
@@ -1056,9 +1056,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.04,
+      "accrued_interest_thb": 0.3,
       "auto_triggered": true,
-      "elapsed_hours": 3.26
+      "elapsed_hours": 24.56
     },
     {
       "id": "LN-A6B5A2",
@@ -1075,9 +1075,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.39,
+      "accrued_interest_thb": 2.96,
       "auto_triggered": true,
-      "elapsed_hours": 3.27
+      "elapsed_hours": 24.56
     },
     {
       "id": "LN-F01FAA",
@@ -1094,9 +1094,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.26,
+      "accrued_interest_thb": 1.96,
       "auto_triggered": true,
-      "elapsed_hours": 3.27
+      "elapsed_hours": 24.56
     },
     {
       "id": "LN-98057B",
@@ -1113,9 +1113,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.07,
       "auto_triggered": true,
-      "elapsed_hours": 3.27
+      "elapsed_hours": 24.56
     },
     {
       "id": "LN-789E0F",
@@ -1132,9 +1132,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.04,
+      "accrued_interest_thb": 0.3,
       "auto_triggered": true,
-      "elapsed_hours": 3.27
+      "elapsed_hours": 24.56
     },
     {
       "id": "LN-2106A6",
@@ -1151,9 +1151,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.39,
+      "accrued_interest_thb": 2.96,
       "auto_triggered": true,
-      "elapsed_hours": 3.27
+      "elapsed_hours": 24.56
     },
     {
       "id": "LN-8003E1",
@@ -1170,9 +1170,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.07,
       "auto_triggered": true,
-      "elapsed_hours": 3.27
+      "elapsed_hours": 24.57
     },
     {
       "id": "LN-712ABC",
@@ -1189,9 +1189,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.04,
+      "accrued_interest_thb": 0.3,
       "auto_triggered": true,
-      "elapsed_hours": 3.27
+      "elapsed_hours": 24.57
     },
     {
       "id": "LN-4D5B80",
@@ -1208,9 +1208,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.39,
+      "accrued_interest_thb": 2.96,
       "auto_triggered": true,
-      "elapsed_hours": 3.28
+      "elapsed_hours": 24.57
     },
     {
       "id": "LN-0C54BD",
@@ -1227,9 +1227,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.07,
       "auto_triggered": true,
-      "elapsed_hours": 3.28
+      "elapsed_hours": 24.57
     },
     {
       "id": "LN-735A20",
@@ -1246,9 +1246,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.04,
+      "accrued_interest_thb": 0.3,
       "auto_triggered": true,
-      "elapsed_hours": 3.28
+      "elapsed_hours": 24.57
     },
     {
       "id": "LN-06EABA",
@@ -1265,9 +1265,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.4,
+      "accrued_interest_thb": 2.96,
       "auto_triggered": true,
-      "elapsed_hours": 3.28
+      "elapsed_hours": 24.57
     },
     {
       "id": "LN-EC2AB8",
@@ -1284,9 +1284,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.07,
       "auto_triggered": true,
-      "elapsed_hours": 3.28
+      "elapsed_hours": 24.58
     },
     {
       "id": "LN-BF4E7F",
@@ -1303,9 +1303,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.4,
+      "accrued_interest_thb": 2.97,
       "auto_triggered": true,
-      "elapsed_hours": 3.28
+      "elapsed_hours": 24.58
     },
     {
       "id": "LN-0CA8CB",
@@ -1322,9 +1322,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.07,
       "auto_triggered": true,
-      "elapsed_hours": 3.29
+      "elapsed_hours": 24.58
     },
     {
       "id": "LN-3757DC",
@@ -1341,9 +1341,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.4,
+      "accrued_interest_thb": 2.96,
       "auto_triggered": true,
-      "elapsed_hours": 3.29
+      "elapsed_hours": 24.58
     },
     {
       "id": "LN-DA1401",
@@ -1360,9 +1360,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.07,
       "auto_triggered": true,
-      "elapsed_hours": 3.29
+      "elapsed_hours": 24.59
     },
     {
       "id": "LN-FCA0AD",
@@ -1379,9 +1379,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.4,
+      "accrued_interest_thb": 2.96,
       "auto_triggered": true,
-      "elapsed_hours": 3.29
+      "elapsed_hours": 24.59
     },
     {
       "id": "LN-001999",
@@ -1398,9 +1398,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.07,
       "auto_triggered": true,
-      "elapsed_hours": 3.3
+      "elapsed_hours": 24.59
     },
     {
       "id": "LN-199976",
@@ -1417,9 +1417,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.4,
+      "accrued_interest_thb": 2.97,
       "auto_triggered": true,
-      "elapsed_hours": 3.3
+      "elapsed_hours": 24.59
     },
     {
       "id": "LN-4CCF08",
@@ -1436,9 +1436,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.07,
       "auto_triggered": true,
-      "elapsed_hours": 3.3
+      "elapsed_hours": 24.6
     },
     {
       "id": "LN-6E3CDA",
@@ -1455,9 +1455,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.4,
+      "accrued_interest_thb": 2.97,
       "auto_triggered": true,
-      "elapsed_hours": 3.3
+      "elapsed_hours": 24.6
     },
     {
       "id": "LN-C3FC4C",
@@ -1474,9 +1474,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.07,
       "auto_triggered": true,
-      "elapsed_hours": 3.31
+      "elapsed_hours": 24.6
     },
     {
       "id": "LN-605FC1",
@@ -1493,9 +1493,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.4,
+      "accrued_interest_thb": 2.97,
       "auto_triggered": true,
-      "elapsed_hours": 3.31
+      "elapsed_hours": 24.6
     },
     {
       "id": "LN-4F970B",
@@ -1512,9 +1512,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.07,
       "auto_triggered": true,
-      "elapsed_hours": 3.31
+      "elapsed_hours": 24.61
     },
     {
       "id": "LN-1FC9C7",
@@ -1531,9 +1531,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.4,
+      "accrued_interest_thb": 2.97,
       "auto_triggered": true,
-      "elapsed_hours": 3.31
+      "elapsed_hours": 24.61
     },
     {
       "id": "LN-60125C",
@@ -1550,9 +1550,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.07,
       "auto_triggered": true,
-      "elapsed_hours": 3.32
+      "elapsed_hours": 24.61
     },
     {
       "id": "LN-745C42",
@@ -1569,9 +1569,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.04,
+      "accrued_interest_thb": 0.3,
       "auto_triggered": true,
-      "elapsed_hours": 3.32
+      "elapsed_hours": 24.61
     },
     {
       "id": "LN-03BAEC",
@@ -1588,9 +1588,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.4,
+      "accrued_interest_thb": 2.97,
       "auto_triggered": true,
-      "elapsed_hours": 3.32
+      "elapsed_hours": 24.61
     },
     {
       "id": "LN-8808F6",
@@ -1607,9 +1607,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.07,
       "auto_triggered": true,
-      "elapsed_hours": 3.32
+      "elapsed_hours": 24.62
     },
     {
       "id": "LN-2CC184",
@@ -1626,9 +1626,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.04,
+      "accrued_interest_thb": 0.3,
       "auto_triggered": true,
-      "elapsed_hours": 3.32
+      "elapsed_hours": 24.62
     },
     {
       "id": "LN-0CBC2A",
@@ -1645,9 +1645,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.07,
       "auto_triggered": true,
-      "elapsed_hours": 3.33
+      "elapsed_hours": 24.62
     },
     {
       "id": "LN-8D615F",
@@ -1664,9 +1664,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.04,
+      "accrued_interest_thb": 0.3,
       "auto_triggered": true,
-      "elapsed_hours": 3.33
+      "elapsed_hours": 24.62
     },
     {
       "id": "LN-C52A50",
@@ -1683,9 +1683,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.4,
+      "accrued_interest_thb": 2.97,
       "auto_triggered": true,
-      "elapsed_hours": 3.33
+      "elapsed_hours": 24.62
     },
     {
       "id": "LN-1FCA14",
@@ -1702,9 +1702,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.07,
       "auto_triggered": true,
-      "elapsed_hours": 3.33
+      "elapsed_hours": 24.63
     },
     {
       "id": "LN-064AC1",
@@ -1721,9 +1721,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.4,
+      "accrued_interest_thb": 2.97,
       "auto_triggered": true,
-      "elapsed_hours": 3.33
+      "elapsed_hours": 24.63
     },
     {
       "id": "LN-11EDAA",
@@ -1740,9 +1740,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.04,
+      "accrued_interest_thb": 0.3,
       "auto_triggered": true,
-      "elapsed_hours": 3.34
+      "elapsed_hours": 24.63
     },
     {
       "id": "LN-03A534",
@@ -1759,9 +1759,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.07,
       "auto_triggered": true,
-      "elapsed_hours": 3.34
+      "elapsed_hours": 24.63
     },
     {
       "id": "LN-E2440F",
@@ -1778,9 +1778,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.4,
+      "accrued_interest_thb": 2.97,
       "auto_triggered": true,
-      "elapsed_hours": 3.34
+      "elapsed_hours": 24.63
     },
     {
       "id": "LN-8A8B3C",
@@ -1797,9 +1797,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.05,
       "auto_triggered": true,
-      "elapsed_hours": 3.34
+      "elapsed_hours": 24.64
     },
     {
       "id": "LN-EA71BF",
@@ -1816,9 +1816,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.4,
+      "accrued_interest_thb": 2.97,
       "auto_triggered": true,
-      "elapsed_hours": 3.34
+      "elapsed_hours": 24.64
     },
     {
       "id": "LN-903882",
@@ -1835,9 +1835,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.04,
+      "accrued_interest_thb": 0.3,
       "auto_triggered": true,
-      "elapsed_hours": 3.35
+      "elapsed_hours": 24.64
     },
     {
       "id": "LN-94181A",
@@ -1854,9 +1854,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.04,
+      "accrued_interest_thb": 0.3,
       "auto_triggered": true,
-      "elapsed_hours": 3.35
+      "elapsed_hours": 24.65
     },
     {
       "id": "LN-A22B94",
@@ -1873,9 +1873,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.4,
+      "accrued_interest_thb": 2.97,
       "auto_triggered": true,
-      "elapsed_hours": 3.35
+      "elapsed_hours": 24.65
     },
     {
       "id": "LN-59C88F",
@@ -1892,9 +1892,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.01,
+      "accrued_interest_thb": 0.07,
       "auto_triggered": true,
-      "elapsed_hours": 3.36
+      "elapsed_hours": 24.65
     },
     {
       "id": "LN-B80517",
@@ -1911,9 +1911,9 @@
       "hourly_rate_pct": 0.00104,
       "approx_usd_price": 1.0,
       "status": "ACTIVE",
-      "accrued_interest_thb": 0.41,
+      "accrued_interest_thb": 2.97,
       "auto_triggered": true,
-      "elapsed_hours": 3.36
+      "elapsed_hours": 24.66
     }
   ],
   "balances": {
@@ -1975,6 +1975,60 @@
     }
   },
   "trades": [
+    {
+      "trade_id": "ad07d60f",
+      "timestamp": 1791117959.0821064,
+      "time_str": "19:45:59",
+      "coin": "OPEN",
+      "buy_ex": "binance_global",
+      "sell_ex": "bitkub",
+      "buy_price": 4.102254,
+      "sell_price": 4.16,
+      "amount_coin": 0.0,
+      "trade_value_thb": 500.0,
+      "gross_spread_pct": 1.408,
+      "net_spread_pct": 0.0,
+      "initial_spread_pct": 1.058,
+      "final_spread_pct": 0.809,
+      "delay_sec": 1.68,
+      "slippage_thb": 0.0,
+      "exec_note": "ABORTED",
+      "gross_profit_thb": 0.0,
+      "fees_thb": 0.0,
+      "net_profit_thb": 0.0,
+      "mode": "PAPER",
+      "pair_type": "DIRECT_THB",
+      "is_direct_thb": true,
+      "status": "MISSED",
+      "miss_reason": "ราคาเปลี่ยนฝั่งระหว่างรอดีเลย์ 1-3 วิ"
+    },
+    {
+      "trade_id": "7ae912e3",
+      "timestamp": 1791117923.9333072,
+      "time_str": "19:45:23",
+      "coin": "OPEN",
+      "buy_ex": "binance_global",
+      "sell_ex": "bitkub",
+      "buy_price": 4.102254,
+      "sell_price": 4.16,
+      "amount_coin": 0.0,
+      "trade_value_thb": 174.35,
+      "gross_spread_pct": 1.408,
+      "net_spread_pct": 0.0,
+      "initial_spread_pct": 1.058,
+      "final_spread_pct": 1.058,
+      "delay_sec": 1.98,
+      "slippage_thb": 0.0,
+      "exec_note": "ABORTED",
+      "gross_profit_thb": 0.0,
+      "fees_thb": 0.0,
+      "net_profit_thb": 0.0,
+      "mode": "PAPER",
+      "pair_type": "DIRECT_THB",
+      "is_direct_thb": true,
+      "status": "MISSED",
+      "miss_reason": "ราคาเปลี่ยนฝั่งระหว่างรอดีเลย์ 1-3 วิ"
+    },
     {
       "trade_id": "d8244d11",
       "timestamp": 1791041275.259211,
@@ -4855,6 +4909,6 @@
   "total_volume_thb": 2460.0,
   "fees_paid_thb": 8.620898222105975,
   "total_slippage_thb": 5.383877976486758,
-  "total_triggered_count": 116,
+  "total_triggered_count": 118,
   "rebalance_count": 0
 }

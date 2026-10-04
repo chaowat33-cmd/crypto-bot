@@ -194,12 +194,26 @@ class AutoTradeEngine:
             self.terminal_logs.pop(0)
 
     def load_keys(self):
+        # 1. Environment variables (for Cloud / Render deployment)
+        bk_key = os.environ.get("BITKUB_API_KEY", "")
+        bk_sec = os.environ.get("BITKUB_API_SECRET", "")
+        bn_key = os.environ.get("BINANCE_API_KEY", "")
+        bn_sec = os.environ.get("BINANCE_API_SECRET", "")
+        if bk_key and bk_sec:
+            self.api_keys["bitkub"]["key"] = bk_key
+            self.api_keys["bitkub"]["secret"] = bk_sec
+            self.api_keys["bitkub"]["connected"] = True
+        if bn_key and bn_sec:
+            self.api_keys["binance_global"]["key"] = bn_key
+            self.api_keys["binance_global"]["secret"] = bn_sec
+            self.api_keys["binance_global"]["connected"] = True
+
         try:
             if os.path.exists(KEYS_FILE):
                 with open(KEYS_FILE, "r", encoding="utf-8") as f:
                     saved = json.load(f)
                     for ex, v in saved.items():
-                        if ex in self.api_keys:
+                        if ex in self.api_keys and not self.api_keys[ex]["key"]:
                             self.api_keys[ex]["key"] = v.get("key", "")
                             self.api_keys[ex]["secret"] = v.get("secret", "")
                             self.api_keys[ex]["connected"] = bool(v.get("key") and v.get("secret"))
