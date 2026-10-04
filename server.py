@@ -1184,11 +1184,13 @@ class CryptoHandler(SimpleHTTPRequestHandler):
             self.wfile.write(data)
         if self.path.startswith("/api/diag_bg"):
             results = {}
-            try:
-                my_ip = urllib.request.urlopen(urllib.request.Request("https://api.ipify.org", headers={"User-Agent": "Mozilla/5.0"}), timeout=3).read().decode()
-                results["outbound_ip"] = my_ip
-            except Exception as e:
-                results["outbound_ip"] = str(e)
+            for ip_svc in ["https://checkip.amazonaws.com", "https://icanhazip.com", "https://api.ipify.org"]:
+                try:
+                    my_ip = urllib.request.urlopen(urllib.request.Request(ip_svc, headers={"User-Agent": "Mozilla/5.0"}), timeout=3).read().decode().strip()
+                    results["outbound_ip"] = my_ip
+                    break
+                except Exception as e:
+                    results["outbound_ip"] = str(e)
 
             test_urls = [
                 "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT",
