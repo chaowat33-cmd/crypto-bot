@@ -39,7 +39,7 @@ class ExchangeAPIClient:
         Fetches account status, spot trading permissions, and non-zero balances.
         """
         start_t = time.time()
-        base_url = "https://api.binance.th" if is_th else "https://api.binance.com"
+        candidate_bases = ["https://api1.binance.com", "https://api2.binance.com", "https://api3.binance.com", "https://api.binance.com"] if not is_th else ["https://api.binance.th"]
         ex_label = "Binance TH" if is_th else "Binance Global"
 
         if not api_key or not api_secret:
@@ -72,106 +72,108 @@ class ExchangeAPIClient:
                 "message": f"✅ [DEMO/MOCK] จำลองการเชื่อมต่อ {ex_label} สำเร็จ (พร้อมสิทธิ์ Spot & Margin Loan)"
             }
 
-        try:
-            ts = cls.get_binance_synced_timestamp(is_th=is_th)
-            query_string = f"timestamp={ts}&recvWindow=60000"
-            signature = hmac.new(
-                api_secret.encode("utf-8"),
-                query_string.encode("utf-8"),
-                hashlib.sha256
-            ).hexdigest()
-
-            url = f"{base_url}/api/v3/account?{query_string}&signature={signature}"
-            req = urllib.request.Request(
-                url,
-                headers={
-                    "X-MBX-APIKEY": api_key,
-                    "User-Agent": "Antigravity-Arbitrage-Bot/2.0"
-                }
-            )
-
-            with urllib.request.urlopen(req, timeout=7) as resp:
-                elapsed_ms = int((time.time() - start_t) * 1000)
-                data = json.loads(resp.read().decode("utf-8"))
-
-                balances = {}
-                for b in data.get("balances", []):
-                    free = float(b.get("free", 0))
-                    locked = float(b.get("locked", 0))
-                    total = free + locked
-                    if total > 0.00001:
-                        balances[b.get("asset")] = {
-                            "free": free,
-                            "locked": locked,
-                            "total": total
-                        }
-
-                permissions = data.get("permissions", [])
-                can_trade = data.get("canTrade", False)
-
-                # Fetch Cross Margin Account collateral balances
-                margin_balances = {}
-                margin_level = "999"
-                if not is_th:
-                    try:
-                        ts_m = cls.get_binance_synced_timestamp(is_th=is_th)
-                        qs_m = f"timestamp={ts_m}&recvWindow=60000"
-                        sig_m = hmac.new(api_secret.encode("utf-8"), qs_m.encode("utf-8"), hashlib.sha256).hexdigest()
-                        m_req = urllib.request.Request(
-                            f"{base_url}/sapi/v1/margin/account?{qs_m}&signature={sig_m}",
-                            headers={"X-MBX-APIKEY": api_key, "User-Agent": "Antigravity-Arbitrage-Bot/2.0"}
-                        )
-                        with urllib.request.urlopen(m_req, timeout=5) as m_resp:
-                            m_data = json.loads(m_resp.read().decode("utf-8"))
-                            margin_level = str(m_data.get("marginLevel", "999"))
-                            for a in m_data.get("userAssets", []):
-                                free_amt = float(a.get("free", 0))
-                                net_amt = float(a.get("netAsset", 0))
-                                if free_amt > 0.0001 or net_amt > 0.0001:
-                                    margin_balances[a.get("asset")] = {
-                                        "free": free_amt,
-                                        "borrowed": float(a.get("borrowed", 0)),
-                                        "net": net_amt
-                                    }
-                    except Exception as me:
-                        pass
-
-                return {
-                    "success": True,
-                    "is_mock": False,
-                    "exchange": ex_label,
-                    "latency_ms": elapsed_ms,
-                    "can_trade": can_trade,
-                    "permissions": permissions,
-                    "balances": balances,
-                    "margin_balances": margin_balances,
-                    "margin_level": margin_level,
-                    "margin_loan_available": True if margin_balances else ("MARGIN" in permissions or not is_th),
-                    "message": f"✅ เชื่อมต่อ {ex_label} สำเร็จ ({elapsed_ms}ms) | Can Trade: {can_trade}"
-                }
-        except urllib.error.HTTPError as e:
-            elapsed_ms = int((time.time() - start_t) * 1000)
-            err_body = e.read().decode("utf-8", errors="ignore")
+        last_code = 0
+        last_msg = ""
+        for base_url in candidate_bases:
             try:
-                err_json = json.loads(err_body)
-                err_msg = err_json.get("msg", err_body)
-            except Exception:
-                err_msg = err_body
-            return {
-                "success": False,
-                "exchange": ex_label,
-                "latency_ms": elapsed_ms,
-                "http_code": e.code,
-                "message": f"❌ การเชื่อมต่อล้มเหลว HTTP {e.code}: {err_msg}"
-            }
-        except Exception as e:
-            elapsed_ms = int((time.time() - start_t) * 1000)
-            return {
-                "success": False,
-                "exchange": ex_label,
-                "latency_ms": elapsed_ms,
-                "message": f"❌ ไม่สามารถเชื่อมต่อไปยัง {ex_label}: {str(e)}"
-            }
+                ts = cls.get_binance_synced_timestamp(is_th=is_th)
+                query_string = f"timestamp={ts}&recvWindow=60000"
+                signature = hmac.new(
+                    api_secret.encode("utf-8"),
+                    query_string.encode("utf-8"),
+                    hashlib.sha256
+                ).hexdigest()
+
+                url = f"{base_url}/api/v3/account?{query_string}&signature={signature}"
+                req = urllib.request.Request(
+                    url,
+                    headers={
+                        "X-MBX-APIKEY": api_key,
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+                    }
+                )
+
+                with urllib.request.urlopen(req, timeout=6) as resp:
+                    elapsed_ms = int((time.time() - start_t) * 1000)
+                    data = json.loads(resp.read().decode("utf-8"))
+
+                    balances = {}
+                    for b in data.get("balances", []):
+                        free = float(b.get("free", 0))
+                        locked = float(b.get("locked", 0))
+                        total = free + locked
+                        if total > 0.00001:
+                            balances[b.get("asset")] = {
+                                "free": free,
+                                "locked": locked,
+                                "total": total
+                            }
+
+                    permissions = data.get("permissions", [])
+                    can_trade = data.get("canTrade", False)
+
+                    # Fetch Cross Margin Account collateral balances
+                    margin_balances = {}
+                    margin_level = "999"
+                    if not is_th:
+                        try:
+                            ts_m = cls.get_binance_synced_timestamp(is_th=is_th)
+                            qs_m = f"timestamp={ts_m}&recvWindow=60000"
+                            sig_m = hmac.new(api_secret.encode("utf-8"), qs_m.encode("utf-8"), hashlib.sha256).hexdigest()
+                            m_req = urllib.request.Request(
+                                f"{base_url}/sapi/v1/margin/account?{qs_m}&signature={sig_m}",
+                                headers={"X-MBX-APIKEY": api_key, "User-Agent": "Mozilla/5.0"}
+                            )
+                            with urllib.request.urlopen(m_req, timeout=5) as m_resp:
+                                m_data = json.loads(m_resp.read().decode("utf-8"))
+                                margin_level = str(m_data.get("marginLevel", "999"))
+                                for a in m_data.get("userAssets", []):
+                                    free_amt = float(a.get("free", 0))
+                                    net_amt = float(a.get("netAsset", 0))
+                                    if free_amt > 0.0001 or net_amt > 0.0001:
+                                        margin_balances[a.get("asset")] = {
+                                            "free": free_amt,
+                                            "borrowed": float(a.get("borrowed", 0)),
+                                            "net": net_amt
+                                        }
+                        except Exception:
+                            pass
+
+                    return {
+                        "success": True,
+                        "is_mock": False,
+                        "exchange": ex_label,
+                        "latency_ms": elapsed_ms,
+                        "can_trade": can_trade,
+                        "permissions": permissions,
+                        "balances": balances,
+                        "margin_balances": margin_balances,
+                        "margin_level": margin_level,
+                        "margin_loan_available": True if margin_balances else ("MARGIN" in permissions or not is_th),
+                        "message": f"✅ เชื่อมต่อ {ex_label} สำเร็จ ({elapsed_ms}ms) | Margin USDT: {margin_balances.get('USDT', {}).get('free', 0.0):,.2f}"
+                    }
+            except urllib.error.HTTPError as e:
+                last_code = e.code
+                err_body = e.read().decode("utf-8", errors="ignore")
+                try:
+                    err_json = json.loads(err_body)
+                    last_msg = err_json.get("msg", err_body)
+                except Exception:
+                    last_msg = err_body
+                if last_code == 401:
+                    break
+                continue
+            except Exception as e:
+                last_msg = str(e)
+                continue
+
+        return {
+            "success": False,
+            "exchange": ex_label,
+            "latency_ms": int((time.time() - start_t) * 1000),
+            "http_code": last_code,
+            "message": f"❌ การเชื่อมต่อล้มเหลว HTTP {last_code}: {last_msg}"
+        }
 
     @staticmethod
     def test_bitkub(api_key, api_secret):
