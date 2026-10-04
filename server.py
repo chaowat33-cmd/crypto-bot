@@ -1218,20 +1218,36 @@ class CryptoHandler(SimpleHTTPRequestHandler):
             self.wfile.write(data)
         if self.path.startswith("/api/diag_bg"):
             results = {}
+            try:
+                my_ip = urllib.request.urlopen(urllib.request.Request("https://api.ipify.org", headers={"User-Agent": "Mozilla/5.0"}), timeout=3).read().decode()
+                results["outbound_ip"] = my_ip
+            except Exception as e:
+                results["outbound_ip"] = str(e)
+
             test_urls = [
-                "https://data-api.binance.vision/api/v3/ticker/bookTicker",
-                "https://api1.binance.com/api/v3/ticker/bookTicker",
-                "https://api2.binance.com/api/v3/ticker/bookTicker",
-                "https://api3.binance.com/api/v3/ticker/bookTicker",
-                "https://api.binance.com/api/v3/ticker/bookTicker",
-                "https://api-gcp.binance.com/api/v3/ticker/bookTicker"
+                "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT",
+                "https://data-api.binance.vision/api/v3/ticker/price?symbol=BTCUSDT",
+                "https://fapi.binance.com/fapi/v1/ticker/price?symbol=BTCUSDT",
+                "https://api.binance.me/api/v3/ticker/price?symbol=BTCUSDT",
+                "https://api.binance.info/api/v3/ticker/price?symbol=BTCUSDT",
+                "https://api.binance.com/api/v3/ping"
             ]
             for u in test_urls:
                 try:
-                    d = fetch_json(u, timeout=3.0)
-                    results[u] = f"OK: {len(d)} items" if isinstance(d, list) else f"OK: {type(d)}"
+                    req = urllib.request.Request(u, headers={
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+                        "Accept": "application/json"
+                    })
+                    with urllib.request.urlopen(req, timeout=3.0) as resp:
+                        results[u] = f"OK: {resp.read().decode()[:80]}"
+                except urllib.error.HTTPError as e:
+                    body = ""
+                    try: body = e.read().decode()
+                    except: pass
+                    results[u] = f"HTTP {e.code}: {body[:150]}"
                 except Exception as e:
                     results[u] = f"ERR: {str(e)}"
+
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.end_headers()
