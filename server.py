@@ -383,23 +383,28 @@ def upbit_worker():
         time.sleep(0.5)
 
 def binance_global_worker():
-    """Worker for Binance Global (Binance ธรรมดา) bookTicker (~350ms)"""
+    """Worker for Binance Global (Binance ธรรมดา) bookTicker (~1.2s with mirrors and backoff)"""
     global raw_binance_global, cache
     endpoints = [
+        "https://data-api.binance.vision/api/v3/ticker/bookTicker",
+        "https://api1.binance.com/api/v3/ticker/bookTicker",
+        "https://api2.binance.com/api/v3/ticker/bookTicker",
+        "https://api3.binance.com/api/v3/ticker/bookTicker",
         "https://api.binance.com/api/v3/ticker/bookTicker",
-        "https://data-api.binance.vision/api/v3/ticker/bookTicker"
+        "https://api-gcp.binance.com/api/v3/ticker/bookTicker"
     ]
     curr_idx = 0
+    backoff_sec = 1.0
     while True:
         t0 = time.time()
         url = endpoints[curr_idx]
         try:
-            bg_data = fetch_json(url, timeout=3.5)
+            bg_data = fetch_json(url, timeout=4.0)
             latency = int((time.time() - t0) * 1000)
             if bg_data and isinstance(bg_data, list):
                 m = {}
                 for item in bg_data:
-                    sym = item["symbol"]
+                    sym = item.get("symbol", "")
                     bid_p = float(item.get("bidPrice", 0))
                     bid_q = float(item.get("bidQty", 0))
                     ask_p = float(item.get("askPrice", 0))
@@ -413,15 +418,24 @@ def binance_global_worker():
                         "ask_qty": ask_q
                     }
                 raw_binance_global = m
+                backoff_sec = 1.0  # Reset backoff on success
                 with cache_lock:
                     cache["latency_ms"]["binance_global"] = latency
                     cache["status"]["binance_global"] = "online"
                 recompute_thb_comparison()
+                time.sleep(1.2)
+                continue
         except Exception as e:
+            err_str = str(e)
             curr_idx = (curr_idx + 1) % len(endpoints)
             with cache_lock:
-                cache["status"]["binance_global"] = f"error: {str(e)[:30]}"
-        time.sleep(0.35)
+                cache["status"]["binance_global"] = f"error: {err_str[:30]}"
+            # If rate limited (418/429), back off progressively so IP ban can expire
+            if "418" in err_str or "429" in err_str:
+                backoff_sec = min(backoff_sec * 2, 20.0)
+            else:
+                backoff_sec = min(backoff_sec * 1.5, 5.0)
+        time.sleep(backoff_sec)
 
 HISTORY_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "arbitrage_history.json")
 
@@ -1202,6 +1216,26 @@ class CryptoHandler(SimpleHTTPRequestHandler):
             self.end_headers()
             data = json.dumps(TOKEN_DICTIONARY).encode("utf-8")
             self.wfile.write(data)
+        if self.path.startswith("/api/diag_bg"):
+            results = {}
+            test_urls = [
+                "https://data-api.binance.vision/api/v3/ticker/bookTicker",
+                "https://api1.binance.com/api/v3/ticker/bookTicker",
+                "https://api2.binance.com/api/v3/ticker/bookTicker",
+                "https://api3.binance.com/api/v3/ticker/bookTicker",
+                "https://api.binance.com/api/v3/ticker/bookTicker",
+                "https://api-gcp.binance.com/api/v3/ticker/bookTicker"
+            ]
+            for u in test_urls:
+                try:
+                    d = fetch_json(u, timeout=3.0)
+                    results[u] = f"OK: {len(d)} items" if isinstance(d, list) else f"OK: {type(d)}"
+                except Exception as e:
+                    results[u] = f"ERR: {str(e)}"
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(json.dumps(results, indent=2).encode("utf-8"))
             return
 
         if self.path.startswith("/api/compare"):
