@@ -705,6 +705,11 @@ class AutoTradeEngine:
                         bn_ask = target_coin_data.get("meta", {}).get("binance_global", {}).get("ask", 0)
 
                         if bk_bid > 0 and bn_ask > 0:
+                            unwind_val_thb = hedged_amt * bk_bid
+                            # Binance Cross Margin minNotional is $5.00 USD (~175 THB). Skip dust amounts.
+                            if unwind_val_thb < 180.0:
+                                continue
+
                             gross_unwind = (bk_bid - bn_ask) / bn_ask * 100.0
                             net_unwind = gross_unwind - 0.35  # 0.25% BK fee + 0.10% BN fee
 
