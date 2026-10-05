@@ -614,59 +614,75 @@ class AutoTradeEngine:
                 current_coin = coin_map.get(sym)
 
                 if current_coin:
-                    cur_exec = current_coin.get("execution", {})
-                    cur_buy_ex = cur_exec.get("real_buy_ex")
-                    cur_sell_ex = cur_exec.get("real_sell_ex")
-                    cur_spread = cur_exec.get("real_spread_pct", 0)
-                    cur_depth = cur_exec.get("max_capacity_thb", p["initial_depth"])
+                    # Look up the specific route for this pending order
+                    routes = current_coin.get("real_routes", [])
+                    cur_route = next((r for r in routes if r.get("buy_ex") == buy_ex and r.get("sell_ex") == sell_ex), None)
+                    if not cur_route:
+                        # Fallback to direct book calculation from coin meta
+                        b_ask = current_coin.get("meta", {}).get(buy_ex, {}).get("ask", 0)
+                        s_bid = current_coin.get("meta", {}).get(sell_ex, {}).get("bid", 0)
+                        if b_ask > 0 and s_bid > 0:
+                            s_pct = (s_bid - b_ask) / b_ask * 100.0
+                            cur_route = {
+                                "buy_ex": buy_ex,
+                                "sell_ex": sell_ex,
+                                "buy_price": b_ask,
+                                "sell_price": s_bid,
+                                "spread_pct": s_pct,
+                                "max_capacity_thb": p.get("initial_depth", 10000)
+                            }
 
-                    fee_rate_buy = p["fee_rate_buy"]
-                    fee_rate_sell = p["fee_rate_sell"]
-                    total_fee_pct = (fee_rate_buy + fee_rate_sell) * 100.0
-                    cur_net_spread = cur_spread - total_fee_pct
+                    if cur_route:
+                        cur_spread = cur_route.get("spread_pct", 0)
+                        cur_depth = cur_route.get("max_capacity_thb", p.get("initial_depth", 10000))
 
-                    # Check if the route is still valid and still profitable (> 0)
-                    if cur_buy_ex == buy_ex and cur_sell_ex == sell_ex and cur_net_spread > 0.0:
-                        cur_buy_p = cur_exec.get("real_buy_price", p["initial_buy_price"])
-                        cur_sell_p = cur_exec.get("real_sell_price", p["initial_sell_price"])
+                        fee_rate_buy = p["fee_rate_buy"]
+                        fee_rate_sell = p["fee_rate_sell"]
+                        total_fee_pct = (fee_rate_buy + fee_rate_sell) * 100.0
+                        cur_net_spread = cur_spread - total_fee_pct
 
-                        # Check inventory balance
-                        has_funds = self.check_and_rebalance_inventory(buy_ex, p["trade_val_thb"])
-                        if not has_funds:
+                        # Check if the route is still valid and still profitable (> 0)
+                        if cur_net_spread > 0.0:
+                            cur_buy_p = cur_route.get("buy_price", p["initial_buy_price"])
+                            cur_sell_p = cur_route.get("sell_price", p["initial_sell_price"])
+
+                            # Check inventory balance
+                            has_funds = self.check_and_rebalance_inventory(buy_ex, p["trade_val_thb"])
+                            if not has_funds:
+                                self.record_missed_trade(
+                                    p=p,
+                                    reason="INVENTORY_DEPLETED",
+                                    reason_th=f"เงินสด THB ในกระดาน {ex_names.get(buy_ex)} ไม่เพียงพอ",
+                                    final_spread=cur_net_spread,
+                                    delay_actual=delay_actual
+                                )
+                                continue
+
+                            self.execute_ultra_realistic_fill(
+                                p=p,
+                                base_buy_price=cur_buy_p,
+                                base_sell_price=cur_sell_p,
+                                book_depth=cur_depth,
+                                raw_net_spread=cur_net_spread,
+                                raw_gross_spread=cur_spread,
+                                delay_actual=delay_actual
+                            )
+                        else:
+                            # Spread decayed below break-even during the 1-3s delay!
                             self.record_missed_trade(
                                 p=p,
-                                reason="INVENTORY_DEPLETED",
-                                reason_th=f"เงินสด THB ในกระดาน {ex_names.get(buy_ex)} ไม่เพียงพอ",
+                                reason="SLIPPAGE_DECAY",
+                                reason_th="สเปรดหุบต่ำกว่าต้นทุนค่าธรรมเนียมก่อนหมดดีเลย์",
                                 final_spread=cur_net_spread,
                                 delay_actual=delay_actual
                             )
-                            continue
-
-                        self.execute_ultra_realistic_fill(
-                            p=p,
-                            base_buy_price=cur_buy_p,
-                            base_sell_price=cur_sell_p,
-                            book_depth=cur_depth,
-                            raw_net_spread=cur_net_spread,
-                            raw_gross_spread=cur_spread,
-                            delay_actual=delay_actual
-                        )
-                    elif cur_net_spread <= 0.0 and cur_buy_ex == buy_ex:
-                        # Spread decayed below break-even during the 1-3s delay!
-                        self.record_missed_trade(
-                            p=p,
-                            reason="SLIPPAGE_DECAY",
-                            reason_th="สเปรดหุบต่ำกว่าต้นทุนค่าธรรมเนียมก่อนหมดดีเลย์",
-                            final_spread=cur_net_spread,
-                            delay_actual=delay_actual
-                        )
                     else:
                         # Price shifted / Route flipped
                         self.record_missed_trade(
                             p=p,
                             reason="ROUTE_FLIPPED",
-                            reason_th="ราคาเปลี่ยนฝั่งระหว่างรอดีเลย์ 1-3 วิ",
-                            final_spread=cur_net_spread,
+                            reason_th="ออเดอร์ใน Orderbook เปลี่ยนฝั่งระหว่างรอดีเลย์ 1-3 วิ",
+                            final_spread=0.0,
                             delay_actual=delay_actual
                         )
                 else:
@@ -760,34 +776,46 @@ class AutoTradeEngine:
                 if self.allowed_coins and sym not in self.allowed_coins:
                     continue
 
-                exec_data = coin.get("execution", {})
-                if not exec_data.get("valid"):
-                    continue
+                # Search through all available routes on this coin between connected/allowed exchanges
+                routes = coin.get("real_routes", [])
+                if not routes:
+                    exec_data = coin.get("execution", {})
+                    if exec_data.get("valid"):
+                        routes = [{
+                            "buy_ex": exec_data.get("real_buy_ex"),
+                            "sell_ex": exec_data.get("real_sell_ex"),
+                            "spread_pct": exec_data.get("real_spread_pct", 0),
+                            "buy_price": exec_data.get("real_buy_price", 0),
+                            "sell_price": exec_data.get("real_sell_price", 0),
+                            "max_capacity_thb": exec_data.get("max_capacity_thb", 0)
+                        }]
 
-                buy_ex = exec_data.get("real_buy_ex")
-                sell_ex = exec_data.get("real_sell_ex")
-                if self.mode == "live":
-                    connected_exchanges = [ex for ex, k in self.api_keys.items() if k.get("connected") and k.get("key")]
-                    if buy_ex not in connected_exchanges or sell_ex not in connected_exchanges:
+                connected_exchanges = [ex for ex, k in self.api_keys.items() if k.get("connected") and k.get("key")] if self.mode == "live" else self.allowed_exchanges
+                valid_routes = []
+
+                for r in routes:
+                    b_ex = r.get("buy_ex")
+                    s_ex = r.get("sell_ex")
+                    if b_ex not in connected_exchanges or s_ex not in connected_exchanges:
                         continue
-                    # Live Mode Guard: เหรียญต้องเปิดให้เทรด Cross Margin บน Binance Global เท่านั้น (ตัด KUB, SIX, ฯลฯ ทิ้งทันที)
-                    bn_rules = ExchangeAPIClient.get_binance_symbol_rules(sym)
-                    if not bn_rules.get("is_margin", False):
-                        continue
-                elif buy_ex not in self.allowed_exchanges or sell_ex not in self.allowed_exchanges:
+                    if self.mode == "live":
+                        bn_rules = ExchangeAPIClient.get_binance_symbol_rules(sym)
+                        if not bn_rules.get("is_margin", False):
+                            continue
+                    f_buy = 0.001 if "binance" in b_ex else 0.0025
+                    f_sell = 0.001 if "binance" in s_ex else 0.0025
+                    tot_fee = (f_buy + f_sell) * 100.0
+                    n_spread = r.get("spread_pct", 0) - tot_fee
+                    if n_spread >= self.min_net_spread_pct and r.get("buy_price", 0) > 0 and r.get("sell_price", 0) > 0:
+                        valid_routes.append((r, n_spread))
+
+                if not valid_routes:
                     continue
 
-                real_spread = exec_data.get("real_spread_pct", 0)
-                if real_spread <= 0:
-                    continue
-
-                fee_rate_buy = 0.001 if "binance" in buy_ex else 0.0025
-                fee_rate_sell = 0.001 if "binance" in sell_ex else 0.0025
-                total_fee_pct = (fee_rate_buy + fee_rate_sell) * 100.0
-                net_spread = real_spread - total_fee_pct
-
-                if net_spread < self.min_net_spread_pct:
-                    continue
+                best_route, net_spread = max(valid_routes, key=lambda x: x[1])
+                buy_ex = best_route["buy_ex"]
+                sell_ex = best_route["sell_ex"]
+                real_spread = best_route["spread_pct"]
 
                 last_traded = self.last_trade_time_per_coin.get(sym, 0)
                 if (now - last_traded) < self.cooldown_sec:
@@ -808,13 +836,13 @@ class AutoTradeEngine:
                         paper_free = self.balances.get(buy_ex, {}).get("THB", 5000.0)
                         target_size = max(self.trade_size_thb, min(5000.0, paper_free * 0.5))
 
-                max_cap = exec_data.get("max_capacity_thb", 0)
+                max_cap = best_route.get("max_capacity_thb", 0)
                 trade_val = min(target_size, max_cap * (self.max_book_cap_pct / 100.0))
                 if trade_val < 50.0:
                     continue
 
-                buy_price = exec_data.get("real_buy_price", 0)
-                sell_price = exec_data.get("real_sell_price", 0)
+                buy_price = best_route.get("buy_price", 0)
+                sell_price = best_route.get("sell_price", 0)
                 if buy_price <= 0 or sell_price <= 0 or sell_price <= buy_price:
                     continue
 

@@ -373,7 +373,11 @@ class ExchangeAPIClient:
             "BTC", "ETH", "SOL", "XRP", "DOGE", "ADA", "BNB", "SUI", "NEAR", "LINK",
             "UNI", "AVAX", "DOT", "XLM", "POL", "SAND", "MANA", "AXS", "GALA", "PENDLE",
             "QI", "ZIL", "AAVE", "CRV", "DYDX", "APT", "OP", "ARB", "INJ", "TIA", "SEI",
-            "WLD", "PEPE", "SHIB", "FLOKI", "BONK", "CFX", "TRB", "TWT", "ZRO", "FET", "RENDER"
+            "WLD", "PEPE", "SHIB", "FLOKI", "BONK", "CFX", "TRB", "TWT", "ZRO", "FET", "RENDER",
+            "BLUR", "CETUS", "GMX", "EDEN", "KAIA", "ILV", "IQ", "MOVR", "KERNEL", "TURTLE",
+            "SSV", "EIGEN", "LQTY", "AVNT", "JUP", "WIF", "NOT", "PYTH", "STRK", "STX", "RUNE",
+            "FIL", "ICP", "ETC", "LTC", "BCH", "KAVA", "CHZ", "ENJ", "THETA", "ALGO", "ATOM",
+            "FTM", "SUSHI", "COMP", "SNX", "MKR", "LDO", "GRT", "1INCH", "BAT", "ENS"
         }
         try:
             url = f"https://data-api.binance.vision/api/v3/exchangeInfo?symbol={sym}"
@@ -533,39 +537,44 @@ class ExchangeAPIClient:
             }
             query_string = urllib.parse.urlencode(params)
             signature = hmac.new(api_secret.encode("utf-8"), query_string.encode("utf-8"), hashlib.sha256).hexdigest()
-            url = f"https://api.binance.com/sapi/v1/margin/order?{query_string}&signature={signature}"
-
-            req = urllib.request.Request(
-                url,
-                data=b"",
-                headers={
-                    "X-MBX-APIKEY": api_key,
-                    "User-Agent": "Antigravity-Arbitrage/2.0"
-                }
-            )
-            with urllib.request.urlopen(req, timeout=7) as resp:
-                data = json.loads(resp.read().decode("utf-8"))
-                order_id = str(data.get("orderId"))
-                cummulative_quote = float(data.get("cummulativeQuoteQty", 0))
-                executed_qty = float(data.get("executedQty", 0))
-                return {
-                    "success": True,
-                    "order_id": order_id,
-                    "executed_qty": executed_qty,
-                    "cummulative_quote_usdt": cummulative_quote,
-                    "raw": data,
-                    "message": f"✅ Binance Margin {side.upper()} สำเร็จ! Order ID: {order_id}"
-                }
-        except urllib.error.HTTPError as e:
-            err_body = e.read().decode("utf-8", errors="ignore")
-            try:
-                err_json = json.loads(err_body)
-                err_msg = err_json.get("msg", err_body)
-            except Exception:
-                err_msg = err_body
-            return {"success": False, "message": f"❌ Binance Margin ปฏิเสธ ({e.code}): {err_msg}"}
-        except Exception as e:
-            return {"success": False, "message": f"❌ ข้อผิดพลาด Binance Margin: {str(e)}"}
+            candidate_bases = ["https://api.binance.com", "https://api1.binance.com", "https://api2.binance.com", "https://api3.binance.com"]
+            for base_url in candidate_bases:
+                try:
+                    url = f"{base_url}/sapi/v1/margin/order?{query_string}&signature={signature}"
+                    req = urllib.request.Request(
+                        url,
+                        data=b"",
+                        headers={
+                            "X-MBX-APIKEY": api_key,
+                            "User-Agent": "Antigravity-Arbitrage/2.0"
+                        }
+                    )
+                    with urllib.request.urlopen(req, timeout=7) as resp:
+                        data = json.loads(resp.read().decode("utf-8"))
+                        order_id = str(data.get("orderId"))
+                        cummulative_quote = float(data.get("cummulativeQuoteQty", 0))
+                        executed_qty = float(data.get("executedQty", 0))
+                        return {
+                            "success": True,
+                            "order_id": order_id,
+                            "executed_qty": executed_qty,
+                            "cummulative_quote_usdt": cummulative_quote,
+                            "raw": data,
+                            "message": f"✅ Binance Margin {side.upper()} สำเร็จ! Order ID: {order_id}"
+                        }
+                except urllib.error.HTTPError as e:
+                    if e.code in (418, 429):
+                        continue
+                    err_body = e.read().decode("utf-8", errors="ignore")
+                    try:
+                        err_json = json.loads(err_body)
+                        err_msg = err_json.get("msg", err_body)
+                    except Exception:
+                        err_msg = err_body
+                    return {"success": False, "message": f"❌ Binance Margin ปฏิเสธ ({e.code}): {err_msg}"}
+                except Exception as e:
+                    continue
+            return {"success": False, "message": "❌ ข้อผิดพลาด Binance Margin: ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ Binance ได้"}
 
     @classmethod
     def check_binance_borrowable(cls, api_key, api_secret, coin, min_amount=0.0):
@@ -577,26 +586,34 @@ class ExchangeAPIClient:
             ts = cls.get_binance_synced_timestamp(is_th=False)
             qs = f"asset={coin.upper()}&timestamp={ts}"
             sig = hmac.new(api_secret.encode("utf-8"), qs.encode("utf-8"), hashlib.sha256).hexdigest()
-            url = f"https://api.binance.com/sapi/v1/margin/maxBorrowable?{qs}&signature={sig}"
-            req = urllib.request.Request(
-                url,
-                headers={"X-MBX-APIKEY": api_key, "User-Agent": "Antigravity-Arbitrage/2.0"}
-            )
-            with urllib.request.urlopen(req, timeout=4) as resp:
-                data = json.loads(resp.read().decode("utf-8"))
-                avail = float(data.get("amount", 0.0))
-                if avail >= min_amount and avail > 0:
-                    return True, avail, "OK"
-                else:
-                    return False, avail, f"วงเงินให้กู้ไม่เพียงพอ (ต้องการ {min_amount}, มีให้กู้ {avail})"
-        except urllib.error.HTTPError as e:
-            err_body = e.read().decode("utf-8", errors="ignore")
-            try:
-                err_json = json.loads(err_body)
-                err_msg = err_json.get("msg", err_body)
-            except Exception:
-                err_msg = err_body
-            return False, 0.0, f"Binance คลังกู้ปฏิเสธ: {err_msg}"
+            candidate_bases = ["https://api.binance.com", "https://api1.binance.com", "https://api2.binance.com", "https://api3.binance.com"]
+            for base_url in candidate_bases:
+                try:
+                    url = f"{base_url}/sapi/v1/margin/maxBorrowable?{qs}&signature={sig}"
+                    req = urllib.request.Request(
+                        url,
+                        headers={"X-MBX-APIKEY": api_key, "User-Agent": "Antigravity-Arbitrage/2.0"}
+                    )
+                    with urllib.request.urlopen(req, timeout=4) as resp:
+                        data = json.loads(resp.read().decode("utf-8"))
+                        avail = float(data.get("amount", 0.0))
+                        if avail >= min_amount and avail > 0:
+                            return True, avail, "OK"
+                        else:
+                            return False, avail, f"วงเงินให้กู้ไม่เพียงพอ (ต้องการ {min_amount}, มีให้กู้ {avail})"
+                except urllib.error.HTTPError as e:
+                    if e.code in (418, 429):
+                        continue
+                    err_body = e.read().decode("utf-8", errors="ignore")
+                    try:
+                        err_json = json.loads(err_body)
+                        err_msg = err_json.get("msg", err_body)
+                    except Exception:
+                        err_msg = err_body
+                    return False, 0.0, f"Binance คลังกู้ปฏิเสธ: {err_msg}"
+                except Exception:
+                    continue
+            return False, 0.0, "Binance คลังกู้ปฏิเสธ: ไม่สามารถตรวจสอบวงเงินกู้ได้"
         except Exception as e:
             return False, 0.0, f"Error checking borrowable: {str(e)}"
 

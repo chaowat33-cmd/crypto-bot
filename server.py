@@ -978,7 +978,8 @@ def recompute_thb_comparison():
                 "spread_pct": spread_pct,
                 "signal": arb_signal,
                 "is_stale": any(stale_map.get(best_buy_ex, False) or stale_map.get(best_sell_ex, False) for _ in [1])
-            }
+            },
+            "real_routes": real_routes
         })
 
     # Default Sort: Highest Executable Spread first, then highest Match Spread
