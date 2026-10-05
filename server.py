@@ -1277,6 +1277,20 @@ class CryptoHandler(SimpleHTTPRequestHandler):
 
         return super().do_GET()
 
+def keep_alive_worker():
+    """Pings the public Render URL every 8 minutes to prevent Render Free tier from sleeping."""
+    time.sleep(60)
+    public_url = os.environ.get("RENDER_EXTERNAL_URL", "https://crypto-arbitrage-bot-oq91.onrender.com")
+    ping_url = f"{public_url}/api/dictionary"
+    while True:
+        try:
+            req = urllib.request.Request(ping_url, headers={"User-Agent": "KeepAlive/1.0"})
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                pass
+        except Exception:
+            pass
+        time.sleep(480)
+
 def run_server():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
@@ -1294,6 +1308,9 @@ def run_server():
 
     t_bg = threading.Thread(target=binance_global_worker, daemon=True)
     t_bg.start()
+
+    t_ka = threading.Thread(target=keep_alive_worker, daemon=True)
+    t_ka.start()
 
     server = ThreadingHTTPServer((HOST, PORT), CryptoHandler)
     print(f"🚀 Thai Baht Pure All-Exchange Monitor running at http://localhost:{PORT}")
