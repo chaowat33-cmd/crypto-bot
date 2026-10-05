@@ -572,9 +572,9 @@ class ExchangeAPIClient:
                     except Exception:
                         err_msg = err_body
                     return {"success": False, "message": f"❌ Binance Margin ปฏิเสธ ({e.code}): {err_msg}"}
-                except Exception as e:
-                    continue
             return {"success": False, "message": "❌ ข้อผิดพลาด Binance Margin: ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ Binance ได้"}
+        except Exception as e:
+            return {"success": False, "message": f"❌ ข้อผิดพลาด Binance Margin: {str(e)}"}
 
     @classmethod
     def check_binance_borrowable(cls, api_key, api_secret, coin, min_amount=0.0):
