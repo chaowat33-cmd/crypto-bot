@@ -1158,16 +1158,33 @@ class CryptoHandler(SimpleHTTPRequestHandler):
             self.wfile.write(json.dumps(res, ensure_ascii=False).encode("utf-8"))
             return
 
-        if self.path.startswith("/api/autotrade/loan/auto-toggle"):
+        if self.path.startswith("/api/autotrade/close-position"):
             length = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(length) if length > 0 else b"{}"
-            data = json.loads(body.decode("utf-8")) if length > 0 else {}
-            state = data.get("enabled", None)
-            res = autotrade_engine.toggle_auto_loan(state)
+            data = json.loads(body.decode("utf-8"))
+            coin = data.get("coin", "").upper()
+            qty = float(data.get("quantity", 0))
+            bn_keys = autotrade_engine.api_keys.get("binance_global", {})
+            if not bn_keys.get("key") or not bn_keys.get("secret"):
+                res = {"success": False, "message": "ไม่พบ API Key ของ Binance Global"}
+            else:
+                res = ExchangeAPIClient.place_binance_margin_order(
+                    bn_keys["key"], bn_keys["secret"], coin, "BUY", quantity=qty
+                )
+                if res.get("success"):
+                    autotrade_engine.log(f"✅ [MANUAL CLOSE SUCCESS] ปิดสถานะหนี้ {coin} {qty:,.2f} สำเร็จเรียบร้อย!", "success")
+                    send_telegram_alert(
+                        f"✅ <b>[POSITION CLOSED] ปิดสถานะหนี้สำเร็จ!</b>\n\n"
+                        f"🪙 เหรียญ: <b>{coin}</b>\n"
+                        f"💵 จำนวนที่ปิด: {qty:,.2f} {coin}\n"
+                        f"🏦 กระดาน: Binance Global Cross Margin\n"
+                        f"🎉 สถานะ: ชำระหนี้คืนคลังเรียบร้อย 0 หนี้คงค้าง"
+                    )
+                    autotrade_engine.refresh_real_balances()
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.end_headers()
-            self.wfile.write(json.dumps(res).encode("utf-8"))
+            self.wfile.write(json.dumps(res, ensure_ascii=False).encode("utf-8"))
             return
 
         self.send_response(404)
