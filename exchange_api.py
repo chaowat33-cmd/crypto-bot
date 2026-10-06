@@ -365,14 +365,31 @@ class ExchangeAPIClient:
     _bitkub_symbol_cache = {}
 
     KNOWN_MARGIN = {
-        "BTC", "ETH", "SOL", "XRP", "DOGE", "ADA", "BNB", "SUI", "NEAR", "LINK",
-        "UNI", "AVAX", "DOT", "XLM", "POL", "SAND", "MANA", "AXS", "GALA", "PENDLE",
-        "QI", "ZIL", "AAVE", "CRV", "DYDX", "APT", "OP", "ARB", "INJ", "TIA", "SEI",
-        "WLD", "PEPE", "SHIB", "FLOKI", "BONK", "CFX", "TRB", "TWT", "ZRO", "FET", "RENDER",
-        "BLUR", "CETUS", "GMX", "EDEN", "KAIA", "ILV", "IQ", "MOVR", "KERNEL", "TURTLE",
-        "SSV", "EIGEN", "LQTY", "AVNT", "JUP", "WIF", "NOT", "PYTH", "STRK", "STX", "RUNE",
-        "FIL", "ICP", "ETC", "LTC", "BCH", "KAVA", "CHZ", "ENJ", "THETA", "ALGO", "ATOM",
-        "FTM", "SUSHI", "COMP", "SNX", "MKR", "LDO", "GRT", "1INCH", "BAT", "ENS"
+        "0G", "1INCH", "2Z", "AAVE", "ACH", "ADA", "AERO", "AEVO", "AGLD", "AIXBT",
+        "ALGO", "ALT", "ANIME", "ANKR", "APE", "API3", "APT", "ARB", "ARKM", "ASTER",
+        "ASTR", "ATOM", "AVA", "AVAX", "AVNT", "AXL", "AXS", "BABY", "BAND", "BARD",
+        "BAT", "BCH", "BICO", "BLUR", "BMT", "BNB", "BNT", "BOME", "BONK", "BREV",
+        "BTC", "C", "C98", "CAKE", "CATI", "CELO", "CELR", "CETUS", "CFG", "CFX",
+        "CGPT", "CHIP", "CHZ", "COMP", "COOKIE", "CRV", "CVC", "CVX", "CYBER", "DASH",
+        "DOGE", "DOLO", "DOT", "DYDX", "EDEN", "EIGEN", "ENA", "ENJ", "ENS", "ENSO",
+        "EPIC", "ERA", "ETC", "ETH", "ETHFI", "F", "FET", "FF", "FIDA", "FIL",
+        "FLOKI", "FLOW", "FLUX", "FRAX", "FTT", "G", "GALA", "GLM", "GLMR", "GMT",
+        "GMX", "GPS", "GRAM", "GRT", "HAEDAL", "HBAR", "HEMI", "HOLO", "HOME", "HUMA",
+        "HYPE", "HYPER", "ICP", "ID", "ILV", "IMX", "INJ", "IO", "IOST", "JASMY",
+        "JOE", "JST", "JTO", "JUP", "KAIA", "KAITO", "KAT", "KAVA", "KERNEL", "KITE",
+        "KMNO", "KNC", "KSM", "LA", "LAYER", "LDO", "LINEA", "LINK", "LPT", "LQTY",
+        "LTC", "LUNA", "MAGIC", "MANA", "MANTA", "MASK", "ME", "MEME", "MET", "MIRA",
+        "MITO", "MORPHO", "MOVE", "MOVR", "NEAR", "NEIRO", "NEWT", "NEXO", "NOM", "NXPC",
+        "ONDO", "OP", "OPEN", "OPG", "ORCA", "PARTI", "PAXG", "PENDLE", "PENGU", "PEOPLE",
+        "PEPE", "PLUME", "PNUT", "POL", "PORTAL", "PROVE", "PUMP", "PYTH", "QI", "QNT",
+        "RAY", "RED", "RESOLV", "REZ", "RLUSD", "ROBO", "RPL", "RSR", "S", "SAHARA",
+        "SAND", "SAPIEN", "SCR", "SEI", "SENT", "SFP", "SHELL", "SHIB", "SIGN", "SKL",
+        "SKY", "SLP", "SNX", "SOL", "SOLV", "SOMI", "SOPH", "SPELL", "SPK", "SSV",
+        "STO", "STRK", "SUI", "SUN", "SUSHI", "SXT", "SYRUP", "TAO", "TIA", "TNSR",
+        "TOWNS", "TRB", "TREE", "TRUMP", "TRX", "TURTLE", "TWT", "UMA", "UNI", "USD1",
+        "USDC", "USDS", "VIRTUAL", "W", "WAL", "WBTC", "WCT", "WIF", "WLD", "WLFI",
+        "WOO", "XAI", "XAUT", "XLM", "XPL", "XRP", "XTZ", "YB", "YFI", "YGG",
+        "ZAMA", "ZBT", "ZEC", "ZIL", "ZK", "ZKC", "ZKP", "ZRO", "ZRX"
     }
 
     @classmethod

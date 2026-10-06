@@ -1,5 +1,5 @@
 {
-  "min_net_spread_pct": 0.4,
+  "min_net_spread_pct": 0.2,
   "trade_size_thb": 200.0,
   "max_daily_loss_thb": 500.0,
   "max_consecutive_losses": 5,
