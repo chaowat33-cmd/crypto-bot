@@ -88,9 +88,9 @@ class AutoTradeEngine:
         self.cooldown_sec = 10.0            # Seconds between triggers on the same coin
         self.max_book_cap_pct = 85.0        # Order depth safety cap
         
-        # Fast Execution Delay Parameters (0.5 to 1.0 seconds)
-        self.sim_delay_min_sec = 0.5
-        self.sim_delay_max_sec = 1.0
+        # Ultra-Fast Execution Delay Parameters (0.1 to 0.25 seconds)
+        self.sim_delay_min_sec = 0.1
+        self.sim_delay_max_sec = 0.25
         
         self.allowed_exchanges = ["bitkub", "binance_th", "binance_global", "orbix", "upbit"]
         self.allowed_coins = []             # Empty = All coins
@@ -845,14 +845,13 @@ class AutoTradeEngine:
                 if buy_price <= 0 or sell_price <= 0 or sell_price <= buy_price:
                     continue
 
-                # Realistic log-normal latency simulation (70% standard, 20% medium, 10% network jitter)
-                r = random.random()
-                if r < 0.70:
-                    delay_sec = round(random.uniform(self.sim_delay_min_sec, self.sim_delay_min_sec + 0.8), 2)
-                elif r < 0.90:
-                    delay_sec = round(random.uniform(self.sim_delay_min_sec + 0.8, self.sim_delay_max_sec), 2)
+                # Ultra-Fast Execution Latency:
+                # Live mode: 0.10s - 0.25s (Next market tick debounce - fastest possible without reacting to 1ms glitches)
+                # Paper mode: configured sim_delay_min_sec to sim_delay_max_sec
+                if self.mode == "live":
+                    delay_sec = round(random.uniform(0.10, 0.25), 2)
                 else:
-                    delay_sec = round(random.uniform(self.sim_delay_max_sec, self.sim_delay_max_sec + 0.9), 2)
+                    delay_sec = round(random.uniform(self.sim_delay_min_sec, self.sim_delay_max_sec), 2)
 
                 meta_buy = coin.get("meta", {}).get(buy_ex, {})
                 meta_sell = coin.get("meta", {}).get(sell_ex, {})
