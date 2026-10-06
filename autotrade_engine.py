@@ -799,8 +799,7 @@ class AutoTradeEngine:
                     if b_ex not in connected_exchanges or s_ex not in connected_exchanges:
                         continue
                     if self.mode == "live":
-                        bn_rules = ExchangeAPIClient.get_binance_symbol_rules(sym)
-                        if not bn_rules.get("is_margin", False):
+                        if not ExchangeAPIClient.is_binance_margin(sym):
                             continue
                     f_buy = 0.001 if "binance" in b_ex else 0.0025
                     f_sell = 0.001 if "binance" in s_ex else 0.0025

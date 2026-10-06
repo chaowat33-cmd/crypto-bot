@@ -361,6 +361,21 @@ class ExchangeAPIClient:
     _binance_symbol_cache = {}
     _bitkub_symbol_cache = {}
 
+    KNOWN_MARGIN = {
+        "BTC", "ETH", "SOL", "XRP", "DOGE", "ADA", "BNB", "SUI", "NEAR", "LINK",
+        "UNI", "AVAX", "DOT", "XLM", "POL", "SAND", "MANA", "AXS", "GALA", "PENDLE",
+        "QI", "ZIL", "AAVE", "CRV", "DYDX", "APT", "OP", "ARB", "INJ", "TIA", "SEI",
+        "WLD", "PEPE", "SHIB", "FLOKI", "BONK", "CFX", "TRB", "TWT", "ZRO", "FET", "RENDER",
+        "BLUR", "CETUS", "GMX", "EDEN", "KAIA", "ILV", "IQ", "MOVR", "KERNEL", "TURTLE",
+        "SSV", "EIGEN", "LQTY", "AVNT", "JUP", "WIF", "NOT", "PYTH", "STRK", "STX", "RUNE",
+        "FIL", "ICP", "ETC", "LTC", "BCH", "KAVA", "CHZ", "ENJ", "THETA", "ALGO", "ATOM",
+        "FTM", "SUSHI", "COMP", "SNX", "MKR", "LDO", "GRT", "1INCH", "BAT", "ENS"
+    }
+
+    @classmethod
+    def is_binance_margin(cls, coin):
+        return coin.upper() in cls.KNOWN_MARGIN
+
     @classmethod
     def get_binance_symbol_rules(cls, coin):
         """Fetch and cache LOT_SIZE stepSize and NOTIONAL minNotional for coinUSDT"""
@@ -368,24 +383,19 @@ class ExchangeAPIClient:
         sym = f"{coin_upper}USDT"
         if sym in cls._binance_symbol_cache:
             return cls._binance_symbol_cache[sym]
-        
-        KNOWN_MARGIN = {
-            "BTC", "ETH", "SOL", "XRP", "DOGE", "ADA", "BNB", "SUI", "NEAR", "LINK",
-            "UNI", "AVAX", "DOT", "XLM", "POL", "SAND", "MANA", "AXS", "GALA", "PENDLE",
-            "QI", "ZIL", "AAVE", "CRV", "DYDX", "APT", "OP", "ARB", "INJ", "TIA", "SEI",
-            "WLD", "PEPE", "SHIB", "FLOKI", "BONK", "CFX", "TRB", "TWT", "ZRO", "FET", "RENDER",
-            "BLUR", "CETUS", "GMX", "EDEN", "KAIA", "ILV", "IQ", "MOVR", "KERNEL", "TURTLE",
-            "SSV", "EIGEN", "LQTY", "AVNT", "JUP", "WIF", "NOT", "PYTH", "STRK", "STX", "RUNE",
-            "FIL", "ICP", "ETC", "LTC", "BCH", "KAVA", "CHZ", "ENJ", "THETA", "ALGO", "ATOM",
-            "FTM", "SUSHI", "COMP", "SNX", "MKR", "LDO", "GRT", "1INCH", "BAT", "ENS"
-        }
+
+        if coin_upper not in cls.KNOWN_MARGIN:
+            res = {"valid": False, "is_margin": False, "precision": 2, "step_size": 0.01, "min_notional": 5.0}
+            cls._binance_symbol_cache[sym] = res
+            return res
+
         try:
             url = f"https://data-api.binance.vision/api/v3/exchangeInfo?symbol={sym}"
             req = urllib.request.Request(url, headers={"User-Agent": "Antigravity/2.0"})
-            with urllib.request.urlopen(req, timeout=5) as r:
+            with urllib.request.urlopen(req, timeout=3) as r:
                 data = json.loads(r.read().decode("utf-8"))
                 sym_info = data["symbols"][0]
-                is_margin = sym_info.get("isMarginTradingAllowed", coin_upper in KNOWN_MARGIN)
+                is_margin = sym_info.get("isMarginTradingAllowed", True)
                 filters = {f["filterType"]: f for f in sym_info.get("filters", [])}
                 step_str = filters.get("LOT_SIZE", {}).get("stepSize", "0.00010000")
                 min_qty = float(filters.get("LOT_SIZE", {}).get("minQty", "0.0001"))
@@ -407,8 +417,9 @@ class ExchangeAPIClient:
                 cls._binance_symbol_cache[sym] = rules
                 return rules
         except Exception as e:
-            is_m = coin_upper in KNOWN_MARGIN
-            return {"valid": is_m, "is_margin": is_m, "error": str(e), "precision": 2, "step_size": 0.01, "min_notional": 5.0}
+            res = {"valid": True, "is_margin": True, "error": str(e), "precision": 2, "step_size": 0.01, "min_notional": 5.0}
+            cls._binance_symbol_cache[sym] = res
+            return res
 
     @classmethod
     def format_binance_quantity(cls, coin, raw_qty):
