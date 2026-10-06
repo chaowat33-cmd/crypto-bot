@@ -11,6 +11,7 @@ import io
 import csv
 import base64
 from autotrade_engine import autotrade_engine, send_telegram_alert
+from exchange_api import ExchangeAPIClient
 
 PORT = int(os.environ.get("PORT", 5000))
 HOST = "0.0.0.0"
