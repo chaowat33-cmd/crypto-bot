@@ -436,7 +436,9 @@ class ExchangeAPIClient:
         raw = Decimal(str(raw_qty))
         truncated = (raw // step) * step
         prec = rules.get("precision", 2)
-        formatted_str = f"{truncated:.{prec}f}" if prec > 0 else f"{int(truncated)}"
+        if prec == 0:
+            return int(truncated)
+        formatted_str = f"{truncated:.{prec}f}"
         return float(formatted_str)
 
     @classmethod

@@ -10,7 +10,7 @@ import uuid
 import io
 import csv
 import base64
-from autotrade_engine import autotrade_engine
+from autotrade_engine import autotrade_engine, send_telegram_alert
 
 PORT = int(os.environ.get("PORT", 5000))
 HOST = "0.0.0.0"
