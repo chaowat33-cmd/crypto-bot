@@ -1174,6 +1174,13 @@ class CryptoHandler(SimpleHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
+        if self.path in ("/health", "/ping", "/healthz"):
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(b'{"status":"ok","uptime":' + str(int(time.time())).encode("utf-8") + b'}')
+            return
+
         if not self.check_auth():
             self.require_auth()
             return
@@ -1279,18 +1286,18 @@ class CryptoHandler(SimpleHTTPRequestHandler):
         return super().do_GET()
 
 def keep_alive_worker():
-    """Pings the public Render URL every 8 minutes to prevent Render Free tier from sleeping."""
-    time.sleep(60)
-    public_url = os.environ.get("RENDER_EXTERNAL_URL", "https://crypto-arbitrage-bot-oq91.onrender.com")
-    ping_url = f"{public_url}/api/dictionary"
+    """Pings the public Render URL /health every 4 minutes to prevent Render Free tier from sleeping."""
+    time.sleep(30)
+    public_url = os.environ.get("RENDER_EXTERNAL_URL", "https://crypto-arbitrage-bot-oq91.onrender.com").rstrip("/")
+    ping_url = f"{public_url}/health"
     while True:
         try:
-            req = urllib.request.Request(ping_url, headers={"User-Agent": "KeepAlive/1.0"})
-            with urllib.request.urlopen(req, timeout=15) as resp:
+            req = urllib.request.Request(ping_url, headers={"User-Agent": "AntigravityKeepAlive/2.0"})
+            with urllib.request.urlopen(req, timeout=10) as resp:
                 pass
-        except Exception:
+        except Exception as e:
             pass
-        time.sleep(480)
+        time.sleep(240)
 
 def run_server():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))

@@ -599,6 +599,20 @@ class AutoTradeEngine:
             self.last_real_bal_refresh = now
             threading.Thread(target=self.refresh_real_balances, daemon=True).start()
 
+        # Hourly Telegram Heartbeat (every 3600 seconds)
+        if (now - getattr(self, "last_telegram_heartbeat", 0)) > 3600.0:
+            self.last_telegram_heartbeat = now
+            bk_d = self.real_balances.get("bitkub", {}).get("display", "฿1,266.84 THB")
+            bn_d = self.real_balances.get("binance_global", {}).get("display", "227.30 USDT")
+            send_telegram_alert(
+                f"💓 <b>[ANTIGRAVITY BOT HEARTBEAT] บอทออนไลน์ปกติ</b>\n\n"
+                f"🟢 ระบบ: Live Real Trade เฝ้าสแกน 24 ชม.\n"
+                f"🏦 Bitkub: <b>{bk_d}</b>\n"
+                f"🌐 Binance Global: <b>{bn_d}</b>\n"
+                f"🎯 เป้าหมาย: สเปรดสุทธิ > +{self.min_net_spread_pct:.2f}% | ไม้ละ ฿{self.trade_size_thb:,.0f}\n"
+                f"⚡ ความเร็วยิงออเดอร์: {self.sim_delay_min_sec:.2f}s (Ultra-Fast)"
+            )
+
         with self.lock:
             # =========================================================================
             # PHASE 1: Process Ready Pending Orders (Simulated 1 - 3s Delay Completed)
@@ -889,6 +903,15 @@ class AutoTradeEngine:
                     f"ทุน ฿{trade_val:,.0f}{boost_msg} | หน่วงส่งคำสั่ง {delay_sec:.2f}s...",
                     "success" if is_boosted else "info"
                 )
+                if self.mode == "live":
+                    send_telegram_alert(
+                        f"⏳ <b>[TRIGGERED] พบสเปรดทำกำไร!</b>\n\n"
+                        f"🪙 เหรียญ: <b>{sym}</b>\n"
+                        f"🔄 เส้นทาง: {ex_names.get(buy_ex)} ➔ {ex_names.get(sell_ex)}\n"
+                        f"📊 สเปรดสุทธิ: +{net_spread:.2f}%\n"
+                        f"💵 ทุนเทรด: ฿{trade_val:,.0f} THB\n"
+                        f"⚡ กำลังส่งคำสั่ง (หน่วง {delay_sec:.2f}s)..."
+                    )
 
     def execute_ultra_realistic_fill(self, p, base_buy_price, base_sell_price, book_depth, raw_net_spread, raw_gross_spread, delay_actual):
         """
@@ -962,6 +985,11 @@ class AutoTradeEngine:
                             f"🛡️ [PRE-FLIGHT BLOCKED] ระงับการเทรด {coin}: Binance ปฏิเสธการกู้เหรียญ ({borrow_reason}) ➔ ระบบไม่ส่งคำสั่งซื้อ Bitkub เพื่อป้องกันความเสี่ยงถือเหรียญขาเดียว (Zero Legging Risk)",
                             "warning"
                         )
+                        send_telegram_alert(
+                            f"🛡️ <b>[PRE-FLIGHT ระงับการเทรดชั่วคราว]</b> {coin}\n\n"
+                            f"⚠️ เหตุผล: Binance ปฏิเสธการกู้ ({borrow_reason})\n"
+                            f"🔒 ระบบระงับซื้อ Bitkub ทันที เพื่อป้องกันเงินทุนถือเหรียญขาเดียว (Zero Legging Risk)"
+                        )
                         return
 
                     self.log(f"⚡ [LIVE TRADE DISPATCH] ยืนยันคลัง Binance มีให้กู้ {max_avail:.4f} {coin} ➔ ส่งคำสั่งซื้อ Bitkub ฿{trade_val_thb:,.0f} & ชอร์ต Binance Margin", "warning")
@@ -978,6 +1006,14 @@ class AutoTradeEngine:
                     live_executed = True
                     if bk_res.get("success") and bn_res.get("success"):
                         self.log(f"🎉 [LIVE MATCH SUCCESS] ซื้อ Bitkub (Order {bk_res.get('order_id')}) + ขาย Binance Margin (Order {bn_res.get('order_id')}) สำเร็จคู่!", "success")
+                        send_telegram_alert(
+                            f"🎉 <b>[LIVE MATCH SUCCESS] จับคู่ทำกำไรสำเร็จ!</b>\n\n"
+                            f"🪙 เหรียญ: <b>{coin}</b>\n"
+                            f"🟢 Bitkub ซื้อสำเร็จ (Order {bk_res.get('order_id')})\n"
+                            f"🔴 Binance Short สำเร็จ (Order {bn_res.get('order_id')})\n"
+                            f"💵 ทุนเทรด: ฿{trade_val_thb:,.0f} THB\n"
+                            f"💰 สเปรดสุทธิ: +{actual_roi_pct:.2f}% | กำไร +฿{net_profit_thb:.2f} THB"
+                        )
                         execution_note += " [LIVE 100%]"
                     else:
                         self.log(f"⚠️ [LIVE PARTIAL/FAIL] BK: {bk_res.get('message')} | BN: {bn_res.get('message')}", "error")
