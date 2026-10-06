@@ -129,11 +129,14 @@ class ExchangeAPIClient:
                                 margin_level = str(m_data.get("marginLevel", "999"))
                                 for a in m_data.get("userAssets", []):
                                     free_amt = float(a.get("free", 0))
+                                    borrowed_amt = float(a.get("borrowed", 0))
                                     net_amt = float(a.get("netAsset", 0))
-                                    if free_amt > 0.0001 or net_amt > 0.0001:
+                                    interest_amt = float(a.get("interest", 0))
+                                    if free_amt > 0.0001 or borrowed_amt > 0.0001 or abs(net_amt) > 0.0001:
                                         margin_balances[a.get("asset")] = {
                                             "free": free_amt,
-                                            "borrowed": float(a.get("borrowed", 0)),
+                                            "borrowed": borrowed_amt,
+                                            "interest": interest_amt,
                                             "net": net_amt
                                         }
                         except Exception:

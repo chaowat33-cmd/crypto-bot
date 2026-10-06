@@ -180,16 +180,29 @@ class AutoTradeEngine:
             if bn.get("connected") and bn.get("key") and bn.get("secret"):
                 r = ExchangeAPIClient.test_binance(bn["key"], bn["secret"], is_th=False)
                 if r.get("success"):
-                    m_bal = r.get("margin_balances", {}).get("USDT", {})
+                    all_m = r.get("margin_balances", {})
+                    m_bal = all_m.get("USDT", {})
                     free_usdt = m_bal.get("free", 0.0) if isinstance(m_bal, dict) else float(m_bal or 0.0)
-                    borrowed = m_bal.get("borrowed", 0.0) if isinstance(m_bal, dict) else 0.0
+                    borrowed_assets = {}
+                    for asset, b in all_m.items():
+                        b_amt = b.get("borrowed", 0.0)
+                        if b_amt > 0.0001:
+                            borrowed_assets[asset] = {
+                                "borrowed": b_amt,
+                                "interest": b.get("interest", 0.0),
+                                "net": b.get("net", 0.0)
+                            }
+                    disp = f"{free_usdt:,.2f} USDT"
+                    if borrowed_assets:
+                        disp += f" (หนี้: {', '.join(borrowed_assets.keys())})"
                     real["binance_global"] = {
                         "connected": True,
                         "currency": "USDT (Margin)",
                         "free": free_usdt,
-                        "borrowed": borrowed,
+                        "borrowed": m_bal.get("borrowed", 0.0),
+                        "borrowed_assets": borrowed_assets,
                         "margin_level": r.get("margin_level", "999"),
-                        "display": f"{free_usdt:,.2f} USDT"
+                        "display": disp
                     }
         except Exception:
             pass
