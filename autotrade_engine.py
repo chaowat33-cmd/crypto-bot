@@ -80,17 +80,17 @@ class AutoTradeEngine:
         self.mode = "paper"   # Realistic Paper Trading
         
         # Strategy Parameters
-        self.min_net_spread_pct = 0.5       # Minimum net profit after fees (e.g. +0.50%)
-        self.trade_size_thb = 500.0         # Default safe trade size: ฿500 per order
+        self.min_net_spread_pct = 0.4       # Minimum net profit after fees (e.g. +0.40%)
+        self.trade_size_thb = 200.0         # Smallest viable trade size: ฿200 per order (~$5.9 USDT)
         self.max_daily_loss_thb = 500.0     # Strict circuit breaker: stop bot if total loss reaches ฿500
         self.max_consecutive_losses = 5     # Stop bot immediately if 5 consecutive losses occur
         self.consecutive_losses = 0         # Real-time consecutive loss counter
-        self.cooldown_sec = 5.0             # Seconds between triggers on the same coin
+        self.cooldown_sec = 10.0            # Seconds between triggers on the same coin
         self.max_book_cap_pct = 85.0        # Order depth safety cap
         
-        # Realistic Execution Delay Parameters (1.0 to 3.0 seconds as requested)
-        self.sim_delay_min_sec = 1.0
-        self.sim_delay_max_sec = 3.0
+        # Fast Execution Delay Parameters (0.5 to 1.0 seconds)
+        self.sim_delay_min_sec = 0.5
+        self.sim_delay_max_sec = 1.0
         
         self.allowed_exchanges = ["bitkub", "binance_th", "binance_global", "orbix", "upbit"]
         self.allowed_coins = []             # Empty = All coins

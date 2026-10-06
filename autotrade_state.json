@@ -1,12 +1,12 @@
 {
-  "min_net_spread_pct": 0.5,
-  "trade_size_thb": 500.0,
+  "min_net_spread_pct": 0.4,
+  "trade_size_thb": 200.0,
   "max_daily_loss_thb": 500.0,
   "max_consecutive_losses": 5,
   "consecutive_losses": 0,
-  "cooldown_sec": 8.0,
-  "sim_delay_min_sec": 1.0,
-  "sim_delay_max_sec": 3.0,
+  "cooldown_sec": 15.0,
+  "sim_delay_min_sec": 0.5,
+  "sim_delay_max_sec": 1.0,
   "allowed_exchanges": [
     "bitkub",
     "binance_global"
