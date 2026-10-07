@@ -607,8 +607,9 @@ class AutoTradeEngine:
         ex_names = {"bitkub": "Bitkub", "binance_th": "Binance TH", "binance_global": "Binance Global", "orbix": "Orbix", "upbit": "Upbit"}
         coin_map = {c["symbol"]: c for c in processed_coins}
 
-        # Periodic non-blocking refresh of live real wallet balances every 8 seconds
-        if (now - getattr(self, "last_real_bal_refresh", 0)) > 8.0:
+        # Periodic non-blocking refresh of live real wallet balances every 120 seconds (2 mins)
+        # Keeps request weight low to strictly prevent Binance HTTP 418 / 429 rate limit bans
+        if (now - getattr(self, "last_real_bal_refresh", 0)) > 120.0:
             self.last_real_bal_refresh = now
             threading.Thread(target=self.refresh_real_balances, daemon=True).start()
 

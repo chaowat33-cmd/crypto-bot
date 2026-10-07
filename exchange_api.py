@@ -32,6 +32,8 @@ class ExchangeAPIClient:
         # Fallback to local clock minus 1500ms safety margin
         return int(time.time() * 1000) - 1500
 
+    _binance_banned_until = 0
+
     @classmethod
     def test_binance(cls, api_key, api_secret, is_th=False):
         """
@@ -41,6 +43,15 @@ class ExchangeAPIClient:
         start_t = time.time()
         candidate_bases = ["https://api1.binance.com", "https://api2.binance.com", "https://api3.binance.com", "https://api.binance.com"] if not is_th else ["https://api.binance.th"]
         ex_label = "Binance TH" if is_th else "Binance Global"
+
+        if not is_th and time.time() < cls._binance_banned_until:
+            wait_sec = int(cls._binance_banned_until - time.time())
+            return {
+                "success": False,
+                "exchange": ex_label,
+                "latency_ms": 0,
+                "message": f"⏳ Binance API อยู่ในช่วงพักคำขอชั่วคราว (เหลือเวลาอีก {wait_sec} วินาที)"
+            }
 
         if not api_key or not api_secret:
             return {
@@ -163,7 +174,9 @@ class ExchangeAPIClient:
                     last_msg = err_json.get("msg", err_body)
                 except Exception:
                     last_msg = err_body
-                if last_code == 401:
+                if last_code in (401, 418, 429):
+                    if last_code in (418, 429):
+                        cls._binance_banned_until = time.time() + 900
                     break
                 continue
             except Exception as e:
