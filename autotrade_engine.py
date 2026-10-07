@@ -59,7 +59,7 @@ def calculate_vwap_slippage(price, trade_val, book_depth, is_buy=True):
 
 def send_telegram_alert(text):
     token = os.environ.get("TELEGRAM_BOT_TOKEN", "8223980053:AAEB7EY61T55TjAhVDs7R5T-bzUzStzEpKY").strip()
-    chat_id = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID", "822022855").strip()
     if not token or not chat_id:
         return
     def _send():
