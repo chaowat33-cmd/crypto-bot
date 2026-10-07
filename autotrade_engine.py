@@ -80,7 +80,7 @@ class AutoTradeEngine:
         self.mode = "paper"   # Realistic Paper Trading
         
         # Strategy Parameters
-        self.min_net_spread_pct = 0.10      # Minimum net profit after fees (+0.10% net per trade)
+        self.min_net_spread_pct = 0.01      # Minimum net profit after fees (+0.01% net per trade)
         self.trade_size_thb = 200.0         # Smallest viable trade size: ฿200 per order (~$5.9 USDT)
         self.max_daily_loss_thb = 500.0     # Strict circuit breaker: stop bot if total loss reaches ฿500
         self.max_consecutive_losses = 5     # Stop bot immediately if 5 consecutive losses occur
@@ -335,7 +335,7 @@ class AutoTradeEngine:
     def update_config(self, cfg):
         with self.lock:
             if "min_net_spread_pct" in cfg:
-                self.min_net_spread_pct = max(0.05, float(cfg["min_net_spread_pct"]))
+                self.min_net_spread_pct = max(0.001, float(cfg["min_net_spread_pct"]))
             if "trade_size_thb" in cfg:
                 self.trade_size_thb = max(50.0, float(cfg["trade_size_thb"]))
             if "max_daily_loss_thb" in cfg:
