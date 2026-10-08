@@ -222,16 +222,16 @@ TOKEN_DICTIONARY = [
     }
 ]
 
-# In-memory unified cache for Thai Baht (THB) Exchanges
+# In-memory unified cache for Multi-Exchange Arbitrage (THB & Global)
 cache = {
     "last_updated": 0,
     "update_count": 0,
     "latency_ms": {
         "bitkub": 0,
         "binance_th": 0,
-        "orbix": 0,
-        "upbit": 0,
-        "binance_global": 0
+        "binance_global": 0,
+        "okx": 0,
+        "bybit": 0
     },
     "coins": [],
     "dictionary": TOKEN_DICTIONARY,
@@ -239,9 +239,9 @@ cache = {
     "status": {
         "bitkub": "initializing",
         "binance_th": "initializing",
-        "orbix": "initializing",
-        "upbit": "initializing",
-        "binance_global": "initializing"
+        "binance_global": "initializing",
+        "okx": "initializing",
+        "bybit": "initializing"
     }
 }
 cache_lock = threading.Lock()
@@ -249,9 +249,9 @@ cache_lock = threading.Lock()
 # Raw storage
 raw_bitkub = {}
 raw_binance_th = {}
-raw_orbix = {}
-raw_upbit = {}
 raw_binance_global = {}
+raw_okx = {}
+raw_bybit = {}
 data_event = threading.Event()
 
 def fetch_json(url, timeout=4, headers=None):
@@ -317,70 +317,88 @@ def binance_th_worker():
                 cache["status"]["binance_th"] = f"error: {str(e)[:30]}"
         time.sleep(0.35)
 
-def orbix_worker():
-    """Worker for Orbix (KBank) (~450ms)"""
-    global raw_orbix, cache
+def okx_worker():
+    """Worker for OKX public spot tickers (~500ms)"""
+    global raw_okx, cache
+    url = "https://www.okx.com/api/v5/market/tickers?instType=SPOT"
     while True:
         t0 = time.time()
         try:
-            # Satang Pro / Orbix ticker endpoint
-            orb_data = fetch_json("https://satangcorp.com/api/v3/ticker/24hr", timeout=3)
+            okx_data = fetch_json(url, timeout=4)
             latency = int((time.time() - t0) * 1000)
-            if orb_data and isinstance(orb_data, list):
+            if okx_data and "data" in okx_data:
                 m = {}
-                for item in orb_data:
-                    sym = item.get("symbol", "").upper()
-                    if sym.endswith("_THB"):
-                        coin = sym.replace("_THB", "")
-                        m[coin] = {
-                            "last": float(item.get("lastPrice", 0)),
-                            "bid": float(item.get("bidPrice", 0)),
-                            "bid_qty": float(item.get("bidQty", 0)),
-                            "ask": float(item.get("askPrice", 0)),
-                            "ask_qty": float(item.get("askQty", 0)),
-                            "vol_thb": float(item.get("quoteVolume", 0)),
-                            "change_24h": float(item.get("priceChangePercent", 0))
-                        }
-                raw_orbix = m
+                for item in okx_data["data"]:
+                    iid = item.get("instId", "")
+                    if iid.endswith("-USDT"):
+                        coin = iid.replace("-USDT", "").upper()
+                        try:
+                            bid = float(item.get("bidPx", 0))
+                            ask = float(item.get("askPx", 0))
+                            last = float(item.get("last", 0))
+                            vol = float(item.get("volCcy24h", 0))
+                            if bid > 0 and ask > 0:
+                                m[coin] = {
+                                    "last": last,
+                                    "bid": bid,
+                                    "ask": ask,
+                                    "vol_usdt": vol,
+                                    "bid_sz": float(item.get("bidSz", 0)),
+                                    "ask_sz": float(item.get("askSz", 0)),
+                                    "change_24h": float(item.get("open24h", 0))
+                                }
+                        except Exception:
+                            pass
+                raw_okx = m
                 with cache_lock:
-                    cache["latency_ms"]["orbix"] = latency
-                    cache["status"]["orbix"] = "online"
+                    cache["latency_ms"]["okx"] = latency
+                    cache["status"]["okx"] = "online"
                 recompute_thb_comparison()
         except Exception as e:
             with cache_lock:
-                cache["status"]["orbix"] = f"error: {str(e)[:30]}"
-        time.sleep(0.45)
+                cache["status"]["okx"] = f"error: {str(e)[:30]}"
+        time.sleep(0.5)
 
-def upbit_worker():
-    """Worker for Upbit Thailand (~500ms)"""
-    global raw_upbit, cache
-    # List of Upbit THB markets
-    markets_str = "THB-BTC,THB-ETH,THB-XRP,THB-SOL,THB-ADA,THB-DOGE,THB-USDT,THB-XLM,THB-LINK,THB-UNI,THB-CHZ,THB-AXS,THB-MANA,THB-YFI,THB-POL,THB-KAIA"
-    url = f"https://th-api.upbit.com/v1/ticker?markets={markets_str}"
+def bybit_worker():
+    """Worker for Bybit public spot tickers (~500ms)"""
+    global raw_bybit, cache
+    url = "https://api.bybit.com/v5/market/tickers?category=spot"
     while True:
         t0 = time.time()
         try:
-            upb_data = fetch_json(url, timeout=3)
+            bb_data = fetch_json(url, timeout=4)
             latency = int((time.time() - t0) * 1000)
-            if upb_data and isinstance(upb_data, list):
+            if bb_data and "result" in bb_data and "list" in bb_data["result"]:
                 m = {}
-                for item in upb_data:
-                    market = item.get("market", "")
-                    if market.startswith("THB-"):
-                        coin = market.replace("THB-", "")
-                        m[coin] = {
-                            "last": float(item.get("trade_price", 0)),
-                            "change_24h": float(item.get("signed_change_rate", 0)) * 100,
-                            "vol_thb": float(item.get("acc_trade_price_24h", 0))
-                        }
-                raw_upbit = m
+                for item in bb_data["result"]["list"]:
+                    sym = item.get("symbol", "")
+                    if sym.endswith("USDT"):
+                        coin = sym.replace("USDT", "").upper()
+                        try:
+                            bid = float(item.get("bid1Price", 0))
+                            ask = float(item.get("ask1Price", 0))
+                            last = float(item.get("lastPrice", 0))
+                            vol = float(item.get("turnover24h", 0))
+                            if bid > 0 and ask > 0:
+                                m[coin] = {
+                                    "last": last,
+                                    "bid": bid,
+                                    "ask": ask,
+                                    "vol_usdt": vol,
+                                    "bid_sz": float(item.get("bid1Size", 0)),
+                                    "ask_sz": float(item.get("ask1Size", 0)),
+                                    "change_24h": float(item.get("price24hPcnt", 0)) * 100
+                                }
+                        except Exception:
+                            pass
+                raw_bybit = m
                 with cache_lock:
-                    cache["latency_ms"]["upbit"] = latency
-                    cache["status"]["upbit"] = "online"
+                    cache["latency_ms"]["bybit"] = latency
+                    cache["status"]["bybit"] = "online"
                 recompute_thb_comparison()
         except Exception as e:
             with cache_lock:
-                cache["status"]["upbit"] = f"error: {str(e)[:30]}"
+                cache["status"]["bybit"] = f"error: {str(e)[:30]}"
         time.sleep(0.5)
 
 def binance_global_worker():
@@ -721,11 +739,11 @@ def recompute_thb_comparison():
     global cache
     bk_data = raw_bitkub
     bnth_prices = raw_binance_th
-    orb_data = raw_orbix
-    upb_data = raw_upbit
     bg_prices = raw_binance_global
+    okx_data = raw_okx
+    bybit_data = raw_bybit
 
-    if not bk_data:
+    if not bk_data and not bg_prices:
         return
 
     # Usdt reference rate on Bitkub
@@ -752,9 +770,14 @@ def recompute_thb_comparison():
     for k in bnth_prices.keys():
         if k.endswith("THB"):
             all_coins_set.add(k[:-3])
-    for k in orb_data.keys():
+        elif k.endswith("USDT"):
+            all_coins_set.add(k[:-4])
+    for k in bg_prices.keys():
+        if k.endswith("USDT"):
+            all_coins_set.add(k[:-4])
+    for k in okx_data.keys():
         all_coins_set.add(k)
-    for k in upb_data.keys():
+    for k in bybit_data.keys():
         all_coins_set.add(k)
 
     mismatches = {"LUNA", "DATA", "VELO"}
@@ -793,34 +816,14 @@ def recompute_thb_comparison():
                 bnth_bid_thb = 0
                 bnth_ask_thb = 0
 
-        # 3. Orbix (KBank)
-        orb_item = orb_data.get(coin, {})
-        orb_price = orb_item.get("last", 0)
-        orb_bid = orb_item.get("bid", 0)
-        orb_ask = orb_item.get("ask", 0)
-        orb_change = orb_item.get("change_24h", 0)
-        orb_vol = orb_item.get("vol_thb", 0)
-        orb_bid_thb = orb_bid * orb_item.get("bid_qty", 0)
-        orb_ask_thb = orb_ask * orb_item.get("ask_qty", 0)
-
-        # 4. Upbit TH
-        upb_item = upb_data.get(coin, {})
-        upb_price = upb_item.get("last", 0)
-        upb_change = upb_item.get("change_24h", 0)
-        upb_vol = upb_item.get("vol_thb", 0)
-        upb_bid = upb_price
-        upb_ask = upb_price
-        upb_bid_thb = upb_vol * 0.03 if upb_vol >= 50000 else 0
-        upb_ask_thb = upb_vol * 0.03 if upb_vol >= 50000 else 0
-
-        # 5. Binance Global (USDT pair converted to THB)
+        # 3. Binance Global (USDT pair converted to THB)
         bg_item = bg_prices.get(f"{coin}USDT", {})
         if bg_item and bg_item.get("price", 0) > 0:
             bg_price = bg_item["price"] * usdt_thb
             bg_bid = bg_item["bid"] * usdt_thb
             bg_ask = bg_item["ask"] * usdt_thb
-            bg_bid_thb = bg_bid * bg_item.get("bid_qty", 0)
-            bg_ask_thb = bg_ask * bg_item.get("ask_qty", 0)
+            bg_bid_thb = bg_bid * bg_item.get("bid_qty", 0) if bg_item.get("bid_qty", 0) > 0 else 100_000_000
+            bg_ask_thb = bg_ask * bg_item.get("ask_qty", 0) if bg_item.get("ask_qty", 0) > 0 else 100_000_000
         else:
             bg_price = 0
             bg_bid = 0
@@ -828,18 +831,60 @@ def recompute_thb_comparison():
             bg_bid_thb = 0
             bg_ask_thb = 0
 
+        # 4. OKX (USDT pair converted to THB)
+        okx_item = okx_data.get(coin, {})
+        if okx_item and okx_item.get("last", 0) > 0:
+            okx_price = okx_item["last"] * usdt_thb
+            okx_bid = okx_item["bid"] * usdt_thb
+            okx_ask = okx_item["ask"] * usdt_thb
+            okx_change = okx_item.get("change_24h", 0)
+            okx_vol_usdt = okx_item.get("vol_usdt", 0)
+            okx_vol = okx_vol_usdt * usdt_thb
+            okx_bid_thb = okx_bid * okx_item.get("bid_sz", 0) if okx_item.get("bid_sz", 0) > 0 else 50_000_000
+            okx_ask_thb = okx_ask * okx_item.get("ask_sz", 0) if okx_item.get("ask_sz", 0) > 0 else 50_000_000
+        else:
+            okx_price = 0
+            okx_bid = 0
+            okx_ask = 0
+            okx_change = 0
+            okx_vol = 0
+            okx_vol_usdt = 0
+            okx_bid_thb = 0
+            okx_ask_thb = 0
+
+        # 5. Bybit (USDT pair converted to THB)
+        bybit_item = bybit_data.get(coin, {})
+        if bybit_item and bybit_item.get("last", 0) > 0:
+            bybit_price = bybit_item["last"] * usdt_thb
+            bybit_bid = bybit_item["bid"] * usdt_thb
+            bybit_ask = bybit_item["ask"] * usdt_thb
+            bybit_change = bybit_item.get("change_24h", 0)
+            bybit_vol_usdt = bybit_item.get("vol_usdt", 0)
+            bybit_vol = bybit_vol_usdt * usdt_thb
+            bybit_bid_thb = bybit_bid * bybit_item.get("bid_sz", 0) if bybit_item.get("bid_sz", 0) > 0 else 50_000_000
+            bybit_ask_thb = bybit_ask * bybit_item.get("ask_sz", 0) if bybit_item.get("ask_sz", 0) > 0 else 50_000_000
+        else:
+            bybit_price = 0
+            bybit_bid = 0
+            bybit_ask = 0
+            bybit_change = 0
+            bybit_vol = 0
+            bybit_vol_usdt = 0
+            bybit_bid_thb = 0
+            bybit_ask_thb = 0
+
         # Bitkub depth estimation from volume
         bk_safe_depth = min(max(bk_vol * 0.04, 500), 1_500_000) if bk_vol >= 50000 else bk_vol * 0.1
         bk_bid_thb = bk_safe_depth
         bk_ask_thb = bk_safe_depth
 
-        # Stale indicators (no trade volume in 24h = stale historical price)
+        # Stale indicators
         stale_map = {
             "bitkub": bk_vol < 50000 and bk_price > 0,
             "binance_th": False,
             "binance_global": False,
-            "orbix": orb_vol < 50000 and orb_price > 0,
-            "upbit": upb_vol < 50000 and upb_price > 0
+            "okx": False,
+            "bybit": False
         }
 
         # Gather active prices
@@ -847,8 +892,8 @@ def recompute_thb_comparison():
         if bk_price > 0: prices_dict["bitkub"] = bk_price
         if bnth_price > 0: prices_dict["binance_th"] = bnth_price
         if bg_price > 0: prices_dict["binance_global"] = bg_price
-        if orb_price > 0: prices_dict["orbix"] = orb_price
-        if upb_price > 0: prices_dict["upbit"] = upb_price
+        if okx_price > 0: prices_dict["okx"] = okx_price
+        if bybit_price > 0: prices_dict["bybit"] = bybit_price
 
         # Liquid prices (volume >= 50,000 THB)
         liquid_prices = {}
@@ -861,8 +906,8 @@ def recompute_thb_comparison():
             "bitkub": "Bitkub",
             "binance_th": "Binance TH",
             "binance_global": "Binance Global",
-            "orbix": "Orbix",
-            "upbit": "Upbit"
+            "okx": "OKX",
+            "bybit": "Bybit"
         }
 
         # Real Orderbook Execution Calculation (Ask to Bid across exchanges)
@@ -870,18 +915,18 @@ def recompute_thb_comparison():
             "bitkub": {"ask": bk_ask, "bid": bk_bid, "ask_thb": bk_ask_thb, "bid_thb": bk_bid_thb, "vol": bk_vol},
             "binance_th": {"ask": bnth_ask, "bid": bnth_bid, "ask_thb": bnth_ask_thb, "bid_thb": bnth_bid_thb, "vol": 1_000_000},
             "binance_global": {"ask": bg_ask, "bid": bg_bid, "ask_thb": bg_ask_thb, "bid_thb": bg_bid_thb, "vol": 100_000_000},
-            "orbix": {"ask": orb_ask, "bid": orb_bid, "ask_thb": orb_ask_thb, "bid_thb": orb_bid_thb, "vol": orb_vol},
-            "upbit": {"ask": upb_ask, "bid": upb_bid, "ask_thb": upb_ask_thb, "bid_thb": upb_bid_thb, "vol": upb_vol}
+            "okx": {"ask": okx_ask, "bid": okx_bid, "ask_thb": okx_ask_thb, "bid_thb": okx_bid_thb, "vol": okx_vol or 50_000_000},
+            "bybit": {"ask": bybit_ask, "bid": bybit_bid, "ask_thb": bybit_ask_thb, "bid_thb": bybit_bid_thb, "vol": bybit_vol or 50_000_000}
         }
 
         real_routes = []
         for buy_ex, buy_b in books.items():
-            if buy_b["ask"] <= 0 or (buy_ex not in ("binance_th", "binance_global") and buy_b["vol"] < 50000):
+            if buy_b["ask"] <= 0 or (buy_ex not in ("binance_th", "binance_global", "okx", "bybit") and buy_b["vol"] < 50000):
                 continue
             for sell_ex, sell_b in books.items():
                 if buy_ex == sell_ex:
                     continue
-                if sell_b["bid"] <= 0 or (sell_ex not in ("binance_th", "binance_global") and sell_b["vol"] < 50000):
+                if sell_b["bid"] <= 0 or (sell_ex not in ("binance_th", "binance_global", "okx", "bybit") and sell_b["vol"] < 50000):
                     continue
 
                 eff_diff = sell_b["bid"] - buy_b["ask"]
@@ -946,16 +991,16 @@ def recompute_thb_comparison():
                 "bitkub": bk_price,
                 "binance_th": bnth_price,
                 "binance_global": bg_price,
-                "orbix": orb_price,
-                "upbit": upb_price
+                "okx": okx_price,
+                "bybit": bybit_price
             },
             "meta": {
                 "stale": stale_map,
                 "bitkub": { "bid": bk_bid, "ask": bk_ask, "vol": bk_vol, "change": bk_change, "depth_thb": bk_ask_thb, "url": f"https://www.bitkub.com/market/{coin}", "stale": stale_map["bitkub"] },
                 "binance_th": { "bid": bnth_bid, "ask": bnth_ask, "depth_thb": bnth_ask_thb, "direct_thb": has_direct_bnth, "url": f"https://www.binance.th/th/trade/{coin}_{'THB' if has_direct_bnth else 'USDT'}", "stale": stale_map["binance_th"] },
                 "binance_global": { "bid": bg_bid, "ask": bg_ask, "depth_thb": bg_ask_thb, "usdt_price": bg_item.get("price", 0) if bg_item else 0, "url": f"https://www.binance.com/en/trade/{coin}_USDT", "stale": False },
-                "orbix": { "bid": orb_bid, "ask": orb_ask, "vol": orb_vol, "depth_thb": orb_ask_thb, "change": orb_change, "url": f"https://www.orbixtrade.com/trade/{coin}-THB", "stale": stale_map["orbix"] },
-                "upbit": { "vol": upb_vol, "change": upb_change, "depth_thb": upb_ask_thb, "url": f"https://th.upbit.com/exchange?code=CRIX.UPBIT.THB-{coin}", "stale": stale_map["upbit"] }
+                "okx": { "bid": okx_bid, "ask": okx_ask, "vol": okx_vol, "depth_thb": okx_ask_thb, "change": okx_change, "usdt_price": okx_item.get("last", 0) if okx_item else 0, "url": f"https://www.okx.com/trade-spot/{coin.lower()}-usdt", "stale": False },
+                "bybit": { "bid": bybit_bid, "ask": bybit_ask, "vol": bybit_vol, "depth_thb": bybit_ask_thb, "change": bybit_change, "usdt_price": bybit_item.get("last", 0) if bybit_item else 0, "url": f"https://www.bybit.com/en/trade/spot/{coin.upper()}/USDT", "stale": False }
             },
             "execution": {
                 "valid": bool(best_real),
@@ -1326,11 +1371,11 @@ def run_server():
     t_bnth = threading.Thread(target=binance_th_worker, daemon=True)
     t_bnth.start()
 
-    t_orb = threading.Thread(target=orbix_worker, daemon=True)
-    t_orb.start()
+    t_okx = threading.Thread(target=okx_worker, daemon=True)
+    t_okx.start()
 
-    t_upb = threading.Thread(target=upbit_worker, daemon=True)
-    t_upb.start()
+    t_bb = threading.Thread(target=bybit_worker, daemon=True)
+    t_bb.start()
 
     t_bg = threading.Thread(target=binance_global_worker, daemon=True)
     t_bg.start()

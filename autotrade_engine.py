@@ -7,6 +7,7 @@ import uuid
 import random
 import csv
 import io
+import urllib.request
 from exchange_api import ExchangeAPIClient
 
 STATE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "autotrade_state.json")

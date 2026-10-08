@@ -70,11 +70,15 @@
           </span>
           <span class="text-slate-700">•</span>
           <span class="flex items-center gap-1 text-slate-300">
-            <span class="w-2 h-2 rounded-full bg-purple-400"></span> Orbix
+            <span class="w-2 h-2 rounded-full bg-amber-400"></span> Binance Global
           </span>
           <span class="text-slate-700">•</span>
           <span class="flex items-center gap-1 text-slate-300">
-            <span class="w-2 h-2 rounded-full bg-blue-400"></span> Upbit
+            <span class="w-2 h-2 rounded-full bg-sky-400"></span> OKX
+          </span>
+          <span class="text-slate-700">•</span>
+          <span class="flex items-center gap-1 text-slate-300">
+            <span class="w-2 h-2 rounded-full bg-orange-400"></span> Bybit
           </span>
         </div>
 
@@ -160,18 +164,18 @@
             <span id="badge-bg" class="text-[10px] mono bg-amber-400 text-slate-950 px-1 rounded font-black">ON</span>
           </button>
 
-          <!-- Toggle Orbix (KBank) -->
-          <button id="toggle-orb" onclick="toggleExchange('orbix')" class="px-3 py-1.5 rounded-xl border font-bold text-xs flex items-center gap-2 transition bg-purple-500/20 border-purple-500 text-purple-300 shadow-sm">
-            <span class="w-2 h-2 rounded-full bg-purple-400"></span>
-            Orbix (KBank) 🟣
-            <span id="badge-orb" class="text-[10px] mono bg-purple-400 text-slate-950 px-1 rounded font-black">ON</span>
+          <!-- Toggle OKX Global -->
+          <button id="toggle-okx" onclick="toggleExchange('okx')" class="px-3 py-1.5 rounded-xl border font-bold text-xs flex items-center gap-2 transition bg-sky-500/20 border-sky-500 text-sky-300 shadow-sm">
+            <span class="w-2 h-2 rounded-full bg-sky-400"></span>
+            OKX Global ⬛
+            <span id="badge-okx" class="text-[10px] mono bg-sky-400 text-slate-950 px-1 rounded font-black">ON</span>
           </button>
 
-          <!-- Toggle Upbit Thailand -->
-          <button id="toggle-upb" onclick="toggleExchange('upbit')" class="px-3 py-1.5 rounded-xl border font-bold text-xs flex items-center gap-2 transition bg-blue-500/20 border-blue-500 text-blue-300 shadow-sm">
-            <span class="w-2 h-2 rounded-full bg-blue-400"></span>
-            Upbit Thailand 🔷
-            <span id="badge-upb" class="text-[10px] mono bg-blue-400 text-slate-950 px-1 rounded font-black">ON</span>
+          <!-- Toggle Bybit Global -->
+          <button id="toggle-bb" onclick="toggleExchange('bybit')" class="px-3 py-1.5 rounded-xl border font-bold text-xs flex items-center gap-2 transition bg-orange-500/20 border-orange-500 text-orange-300 shadow-sm">
+            <span class="w-2 h-2 rounded-full bg-orange-400"></span>
+            Bybit Global 🟠
+            <span id="badge-bb" class="text-[10px] mono bg-orange-400 text-slate-950 px-1 rounded font-black">ON</span>
           </button>
         </div>
 
@@ -194,7 +198,7 @@
           <p class="text-xs text-slate-300 leading-relaxed">
             API ดึงราคา <code class="text-amber-300 font-mono font-bold">lastPrice</code> มาถูกต้อง 100% จาก Exchange แต่สาเหตุที่ Spread กว้างผิดปกติเกิดจาก:
             <br>
-            <b class="text-amber-400">1. ราคาค้างในอดีต (Stale Price / ตลาดร้าง):</b> โดยเฉพาะ <b>Orbix</b> และ <b>Upbit</b> ในเหรียญเล็กๆ (เช่น QNT, GRASS, DEXE, ZENT) ไม่มีคนเทรดใน 24 ชม. (<code class="text-slate-400">Volume = 0</code>) ราคาที่แสดงจึงเป็นราคาบิลเก่าค้างในอดีต ไม่ใช่ราคาตลาดปัจจุบัน
+            <b class="text-amber-400">1. คัดกรองกระดานที่ไม่มีสภาพคล่องออกแล้ว:</b> ระบบได้ตัดกระดานที่ไม่มีคนเทรด (เช่น Upbit Thailand, Orbix) ออกทั้งหมด และเพิ่มกระดานระดับโลกที่มี Orderbook หนาแน่นอย่าง <b>OKX</b> และ <b>Bybit</b> แทน เพื่อให้เห็นโอกาส Arbitrage ข้ามกระดานจริง
             <br>
             <b class="text-cyan-400">2. ชื่อ Ticker ซ้ำแต่คนละเหรียญ (Token Mismatch):</b> เช่น <code class="text-cyan-300">VELO</code> บน Bitkub คือ <i>Velo Protocol</i> (~1.17 ฿) แต่บน Binance TH คือ <i>Velodrome Finance</i> (~0.17 ฿) (ระบบตัดการเทียบเหรียญนี้ออกให้แล้ว)
           </p>
@@ -224,11 +228,11 @@
           <span class="text-emerald-400 text-xs font-black mono">▲ NET PROFIT</span>
         </div>
         <div class="flex items-baseline justify-between mt-1">
-          <span id="card-max-prem-coin" class="text-2xl font-black text-emerald-400 mono">SOL</span>
-          <span id="card-max-prem-val" class="text-xl font-black mono text-emerald-400">+2.86%</span>
+          <span id="card-max-prem-coin" class="text-2xl font-black text-emerald-400 mono">BTC</span>
+          <span id="card-max-prem-val" class="text-xl font-black mono text-emerald-400">+0.00%</span>
         </div>
         <div id="card-prem-route" class="text-[11px] text-slate-300 mt-2 font-mono truncate">
-          ซื้อ Orbix ➔ ขาย Upbit (+114 ฿/SOL)
+          คำนวณจาก Orderbook จริง
         </div>
       </div>
 
@@ -310,7 +314,7 @@
             กำไรสุทธิหลังหัก Fee (>0%) ⚡
           </button>
           <button onclick="setFilter('all-four')" id="filter-all-four" class="filter-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition whitespace-nowrap">
-            มีครบทั้ง 4 กระดาน 💎
+            มีครบทุกกระดานหลัก 💎
           </button>
         </div>
 
@@ -382,8 +386,8 @@
               <th id="th-bk" class="py-3 px-4 text-right">Bitkub (THB) 🟢</th>
               <th id="th-bnth" class="py-3 px-4 text-right">Binance TH (THB) 🔵</th>
               <th id="th-bg" class="py-3 px-4 text-right">Binance Global (THB) 🟡</th>
-              <th id="th-orb" class="py-3 px-4 text-right">Orbix KBank (THB) 🟣</th>
-              <th id="th-upb" class="py-3 px-4 text-right">Upbit TH (THB) 🔷</th>
+              <th id="th-okx" class="py-3 px-4 text-right">OKX (THB) ⬛</th>
+              <th id="th-bb" class="py-3 px-4 text-right">Bybit (THB) 🟠</th>
               <th class="py-3 px-4 text-right">ซื้อจริงที่ (Ask)</th>
               <th class="py-3 px-4 text-right">ขายจริงที่ (Bid)</th>
               <th class="py-3 px-4 text-right">Spread สุทธิ (หลังหัก Fee)</th>
@@ -396,7 +400,7 @@
             <tr>
               <td colspan="10" class="text-center py-12 text-slate-400">
                 <div class="inline-block animate-spin w-8 h-8 border-4 border-emerald-400 border-t-transparent rounded-full mb-3"></div>
-                <div class="mono text-xs">กำลังสตรีมราคาสดจาก 4 ศูนย์ซื้อขายในไทย (Bitkub, Binance TH, Orbix, Upbit)...</div>
+                <div class="mono text-xs">กำลังสตรีมราคาสดจาก 5 ศูนย์ซื้อขาย (Bitkub, Binance TH, Binance Global, OKX, Bybit)...</div>
               </td>
             </tr>
           </tbody>
@@ -410,7 +414,7 @@
         <div class="flex items-center gap-2">
           <span>Render Tick: <span id="last-render-time" class="mono text-slate-300 font-bold">-</span></span>
           <span class="text-slate-600">•</span>
-          <span class="text-emerald-400 font-bold mono">100% Pure Thai Baht Pairs</span>
+          <span class="text-emerald-400 font-bold mono">100% Real-time Streaming</span>
         </div>
       </div>
     </div>
@@ -429,7 +433,7 @@
             คำนวณกำไร Arbitrage เงินบาท (THB)
             <span id="modal-coin-symbol" class="text-xs px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 mono font-black">BTC</span>
           </h3>
-          <p class="text-xs text-slate-400">จำลองการซื้อจากกระดานไทย A ไปขายกระดานไทย B (หักค่าธรรมเนียมตามจริง)</p>
+          <p class="text-xs text-slate-400">จำลองการซื้อจากกระดาน A ไปขายกระดาน B (หักค่าธรรมเนียมตามจริง)</p>
         </div>
       </div>
 
@@ -440,19 +444,19 @@
           <select id="calc-source-ex" onchange="runArbitrageCalculation()" class="w-full bg-[#050811] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-bold focus:border-emerald-500">
             <option value="bitkub">Bitkub 🟢</option>
             <option value="binance_th" selected>Binance TH 🔵</option>
-            <option value="binance_global">Binance Global (ธรรมดา) 🟡</option>
-            <option value="orbix">Orbix KBank 🟣</option>
-            <option value="upbit">Upbit Thailand 🔷</option>
+            <option value="binance_global">Binance Global 🟡</option>
+            <option value="okx">OKX Global ⬛</option>
+            <option value="bybit">Bybit Global 🟠</option>
           </select>
         </div>
         <div>
           <label class="block text-xs font-semibold text-slate-300 mb-1">2. ขายที่ Exchange ปลายทาง (Sell):</label>
           <select id="calc-target-ex" onchange="runArbitrageCalculation()" class="w-full bg-[#050811] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-bold focus:border-emerald-500">
-            <option value="orbix" selected>Orbix KBank 🟣</option>
-            <option value="upbit">Upbit Thailand 🔷</option>
+            <option value="okx" selected>OKX Global ⬛</option>
+            <option value="bybit">Bybit Global 🟠</option>
             <option value="bitkub">Bitkub 🟢</option>
             <option value="binance_th">Binance TH 🔵</option>
-            <option value="binance_global">Binance Global (ธรรมดา) 🟡</option>
+            <option value="binance_global">Binance Global 🟡</option>
           </select>
         </div>
       </div>
@@ -499,8 +503,8 @@
           <a id="calc-link-bk" href="#" target="_blank" class="flex-1 py-2 px-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs text-center transition">Bitkub ↗</a>
           <a id="calc-link-bnth" href="#" target="_blank" class="flex-1 py-2 px-1 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs text-center transition">Binance TH ↗</a>
           <a id="calc-link-bg" href="#" target="_blank" class="flex-1 py-2 px-1 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs text-center transition">Binance Global ↗</a>
-          <a id="calc-link-orb" href="#" target="_blank" class="flex-1 py-2 px-1 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs text-center transition">Orbix ↗</a>
-          <a id="calc-link-upb" href="#" target="_blank" class="flex-1 py-2 px-1 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs text-center transition">Upbit ↗</a>
+          <a id="calc-link-okx" href="#" target="_blank" class="flex-1 py-2 px-1 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs text-center transition">OKX ↗</a>
+          <a id="calc-link-bb" href="#" target="_blank" class="flex-1 py-2 px-1 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs text-center transition">Bybit ↗</a>
         </div>
       </div>
     </div>
@@ -609,27 +613,27 @@
       });
     }
 
-    // Toggle States for Exchanges (including Binance Global)
+    // Toggle States for Exchanges (including OKX and Bybit)
     const enabledExchanges = {
       bitkub: true,
       binance_th: true,
       binance_global: true,
-      orbix: true,
-      upbit: true
+      okx: true,
+      bybit: true
     };
 
     const exNames = {
       bitkub: 'Bitkub',
       binance_th: 'Binance TH',
       binance_global: 'Binance Global',
-      orbix: 'Orbix',
-      upbit: 'Upbit'
+      okx: 'OKX',
+      bybit: 'Bybit'
     };
 
     // Toggle Exchange On/Off
     function toggleExchange(ex) {
       enabledExchanges[ex] = !enabledExchanges[ex];
-      const btnMap = { bitkub: 'bk', binance_th: 'bnth', binance_global: 'bg', orbix: 'orb', upbit: 'upb' };
+      const btnMap = { bitkub: 'bk', binance_th: 'bnth', binance_global: 'bg', okx: 'okx', bybit: 'bb' };
       const idPrefix = btnMap[ex];
       
       const btn = document.getElementById(`toggle-${idPrefix}`);
@@ -642,8 +646,8 @@
         if (ex === 'bitkub') btn.className = 'px-3 py-1.5 rounded-xl border font-bold text-xs flex items-center gap-2 transition bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-sm';
         else if (ex === 'binance_th') btn.className = 'px-3 py-1.5 rounded-xl border font-bold text-xs flex items-center gap-2 transition bg-cyan-500/20 border-cyan-500 text-cyan-300 shadow-sm';
         else if (ex === 'binance_global') btn.className = 'px-3 py-1.5 rounded-xl border font-bold text-xs flex items-center gap-2 transition bg-amber-500/20 border-amber-500 text-amber-300 shadow-sm';
-        else if (ex === 'orbix') btn.className = 'px-3 py-1.5 rounded-xl border font-bold text-xs flex items-center gap-2 transition bg-purple-500/20 border-purple-500 text-purple-300 shadow-sm';
-        else btn.className = 'px-3 py-1.5 rounded-xl border font-bold text-xs flex items-center gap-2 transition bg-blue-500/20 border-blue-500 text-blue-300 shadow-sm';
+        else if (ex === 'okx') btn.className = 'px-3 py-1.5 rounded-xl border font-bold text-xs flex items-center gap-2 transition bg-sky-500/20 border-sky-500 text-sky-300 shadow-sm';
+        else btn.className = 'px-3 py-1.5 rounded-xl border font-bold text-xs flex items-center gap-2 transition bg-orange-500/20 border-orange-500 text-orange-300 shadow-sm';
       } else {
         badge.innerText = 'OFF';
         btn.className = 'px-3 py-1.5 rounded-xl border border-slate-800 font-bold text-xs flex items-center gap-2 transition bg-slate-900 text-slate-500 opacity-60';
@@ -683,8 +687,8 @@
       checkAndAdd('bitkub');
       checkAndAdd('binance_th');
       checkAndAdd('binance_global');
-      checkAndAdd('orbix');
-      checkAndAdd('upbit');
+      checkAndAdd('okx');
+      checkAndAdd('bybit');
 
       const keys = Object.keys(activePrices);
       if (keys.length < 2) {
@@ -974,7 +978,7 @@
       } else if (currentFilter === 'all-four') {
         filtered = filtered.filter(item => {
           const p = item.prices;
-          return p.bitkub > 0 && p.binance_th > 0 && p.orbix > 0 && p.upbit > 0;
+          return p.bitkub > 0 && p.binance_th > 0 && (p.okx > 0 || p.bybit > 0);
         });
       }
 
@@ -1014,7 +1018,7 @@
         const netSpread = exec.valid ? (exec.real_spread_pct - feeDeductionPct) : null;
 
         // Flash checks
-        let bkFlash = '', bnthFlash = '', bgFlash = '', orbFlash = '', upbFlash = '';
+        let bkFlash = '', bnthFlash = '', bgFlash = '', okxFlash = '', bbFlash = '';
         if (previousPrices[sym]) {
           if (p.bitkub > previousPrices[sym].bk) bkFlash = 'flash-up';
           else if (p.bitkub < previousPrices[sym].bk) bkFlash = 'flash-down';
@@ -1025,13 +1029,13 @@
           if (p.binance_global > previousPrices[sym].bg) bgFlash = 'flash-up';
           else if (p.binance_global < previousPrices[sym].bg) bgFlash = 'flash-down';
 
-          if (p.orbix > previousPrices[sym].orb) orbFlash = 'flash-up';
-          else if (p.orbix < previousPrices[sym].orb) orbFlash = 'flash-down';
+          if (p.okx > previousPrices[sym].okx) okxFlash = 'flash-up';
+          else if (p.okx < previousPrices[sym].okx) okxFlash = 'flash-down';
 
-          if (p.upbit > previousPrices[sym].upb) upbFlash = 'flash-up';
-          else if (p.upbit < previousPrices[sym].upb) upbFlash = 'flash-down';
+          if (p.bybit > previousPrices[sym].bb) bbFlash = 'flash-up';
+          else if (p.bybit < previousPrices[sym].bb) bbFlash = 'flash-down';
         }
-        previousPrices[sym] = { bk: p.bitkub, bnth: p.binance_th, bg: p.binance_global, orb: p.orbix, upb: p.upbit };
+        previousPrices[sym] = { bk: p.bitkub, bnth: p.binance_th, bg: p.binance_global, okx: p.okx, bb: p.bybit };
 
         // Spread & Route badge styling
         let arbBadge = '';
@@ -1069,8 +1073,8 @@
         const showBk = enabledExchanges.bitkub ? '' : 'style="display:none;"';
         const showBnth = enabledExchanges.binance_th ? '' : 'style="display:none;"';
         const showBg = enabledExchanges.binance_global ? '' : 'style="display:none;"';
-        const showOrb = enabledExchanges.orbix ? '' : 'style="display:none;"';
-        const showUpb = enabledExchanges.upbit ? '' : 'style="display:none;"';
+        const showOkx = enabledExchanges.okx ? '' : 'style="display:none;"';
+        const showBb = enabledExchanges.bybit ? '' : 'style="display:none;"';
 
         // Best Buy / Best Sell Highlight helper
         const isBestBuy = (ex) => arb.valid && arb.best_buy_ex === ex ? 'border border-emerald-500/50 bg-emerald-500/10' : '';
@@ -1080,8 +1084,8 @@
         const isBkStale = isExStale(item, 'bitkub');
         const isBnthStale = isExStale(item, 'binance_th');
         const isBgStale = isExStale(item, 'binance_global');
-        const isOrbStale = isExStale(item, 'orbix');
-        const isUpbStale = isExStale(item, 'upbit');
+        const isOkxStale = isExStale(item, 'okx');
+        const isBbStale = isExStale(item, 'bybit');
 
         return `
           <tr class="hover:bg-slate-800/40 transition">
@@ -1126,23 +1130,23 @@
               </span>
             </td>
 
-            <!-- Orbix KBank -->
-            <td ${showOrb} class="py-3 px-4 text-right whitespace-nowrap ${orbFlash} ${isBestBuy('orbix')} ${isBestSell('orbix')} rounded">
-              <span class="font-bold mono ${isOrbStale ? 'text-slate-500' : 'text-purple-300'} block text-sm">
-                ${p.orbix > 0 ? '฿' + formatNumber(p.orbix) : '<span class=\"text-slate-600 text-xs\">-</span>'}
+            <!-- OKX -->
+            <td ${showOkx} class="py-3 px-4 text-right whitespace-nowrap ${okxFlash} ${isBestBuy('okx')} ${isBestSell('okx')} rounded">
+              <span class="font-bold mono text-sky-300 block text-sm">
+                ${p.okx > 0 ? '฿' + formatNumber(p.okx) : '<span class=\"text-slate-600 text-xs\">-</span>'}
               </span>
               <span class="text-[10px] text-slate-400 mono block">
-                ${isOrbStale ? '<span class=\"text-amber-400/90 font-bold bg-amber-500/10 px-1 rounded\">⚠️ ตลาดร้าง (0 Vol)</span>' : 'Vol: ฿' + formatNumber(item.meta.orbix.vol, 0)}
+                ${item.meta.okx && item.meta.okx.usdt_price > 0 ? '$' + formatNumber(item.meta.okx.usdt_price) : 'OKX USDT'}
               </span>
             </td>
 
-            <!-- Upbit TH -->
-            <td ${showUpb} class="py-3 px-4 text-right whitespace-nowrap ${upbFlash} ${isBestBuy('upbit')} ${isBestSell('upbit')} rounded">
-              <span class="font-bold mono ${isUpbStale ? 'text-slate-500' : 'text-blue-300'} block text-sm">
-                ${p.upbit > 0 ? '฿' + formatNumber(p.upbit) : '<span class=\"text-slate-600 text-xs\">-</span>'}
+            <!-- Bybit -->
+            <td ${showBb} class="py-3 px-4 text-right whitespace-nowrap ${bbFlash} ${isBestBuy('bybit')} ${isBestSell('bybit')} rounded">
+              <span class="font-bold mono text-orange-300 block text-sm">
+                ${p.bybit > 0 ? '฿' + formatNumber(p.bybit) : '<span class=\"text-slate-600 text-xs\">-</span>'}
               </span>
               <span class="text-[10px] text-slate-400 mono block">
-                ${isUpbStale ? '<span class=\"text-amber-400/90 font-bold bg-amber-500/10 px-1 rounded\">⚠️ ตลาดร้าง (0 Vol)</span>' : 'Vol: ฿' + formatNumber(item.meta.upbit.vol, 0)}
+                ${item.meta.bybit && item.meta.bybit.usdt_price > 0 ? '$' + formatNumber(item.meta.bybit.usdt_price) : 'Bybit USDT'}
               </span>
             </td>
 
@@ -1283,8 +1287,8 @@
       document.getElementById('calc-link-bk').href = meta.bitkub?.url || '#';
       document.getElementById('calc-link-bnth').href = meta.binance_th?.url || '#';
       document.getElementById('calc-link-bg').href = meta.binance_global?.url || '#';
-      document.getElementById('calc-link-orb').href = meta.orbix?.url || '#';
-      document.getElementById('calc-link-upb').href = meta.upbit?.url || '#';
+      document.getElementById('calc-link-okx').href = meta.okx?.url || '#';
+      document.getElementById('calc-link-bb').href = meta.bybit?.url || '#';
 
       // Auto select real best buy (Ask) and real best sell (Bid)
       const exec = selectedCoinForCalc.execution;
