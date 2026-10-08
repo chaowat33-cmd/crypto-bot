@@ -645,9 +645,32 @@
       if (p) p.addEventListener('input', () => localStorage.setItem(`anti_pass_${ex}`, p.value.trim()));
     });
 
+    // Auto-reconnect if saved locally but disconnected on server
+    async function autoReconnectIfSaved() {
+      try {
+        const res = await fetch('/api/autotrade/status');
+        if (!res.ok) return;
+        const data = await res.json();
+        const keys = data.api_keys || {};
+        for (const ex of ['bybit', 'okx']) {
+          if (!keys[ex] || !keys[ex].connected) {
+            const k = localStorage.getItem(`anti_key_${ex}`);
+            const s = localStorage.getItem(`anti_secret_${ex}`);
+            if (k && s) {
+              console.log(`Auto-reconnecting ${ex} from saved localStorage...`);
+              testConnection(ex);
+            }
+          }
+        }
+      } catch (e) {
+        console.error("autoReconnect error:", e);
+      }
+    }
+
     // Initialize
     restoreCredentialsFromLocal();
     fetchStatus();
+    autoReconnectIfSaved();
     setInterval(fetchStatus, 3000);
   </script>
 

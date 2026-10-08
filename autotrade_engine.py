@@ -879,10 +879,12 @@ class AutoTradeEngine:
                     if b_ex not in connected_exchanges or s_ex not in connected_exchanges:
                         continue
                     if self.mode == "live":
-                        if not ExchangeAPIClient.is_binance_margin(sym):
-                            continue
-                    f_buy = 0.001 if "binance" in b_ex else 0.0025
-                    f_sell = 0.001 if "binance" in s_ex else 0.0025
+                        # Only require Binance Margin check if trading Bitkub Spot leg with Binance
+                        if "bitkub" in (b_ex, s_ex) and "binance_global" in (b_ex, s_ex):
+                            if not ExchangeAPIClient.is_binance_margin(sym):
+                                continue
+                    f_buy = 0.0005 if b_ex in ("bybit", "okx") else (0.001 if "binance" in b_ex else 0.0025)
+                    f_sell = 0.0005 if s_ex in ("bybit", "okx") else (0.001 if "binance" in s_ex else 0.0025)
                     tot_fee = (f_buy + f_sell) * 100.0
                     n_spread = r.get("spread_pct", 0) - tot_fee
                     if n_spread >= self.min_net_spread_pct and r.get("buy_price", 0) > 0 and r.get("sell_price", 0) > 0:
