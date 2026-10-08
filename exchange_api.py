@@ -21,7 +21,7 @@ class ExchangeAPIClient:
         guaranteed never to be ahead of Binance's server clock.
         """
         try:
-            time_url = "https://api.binance.th/api/v1/time" if is_th else "https://api.binance.com/api/v3/time"
+            time_url = "https://api.binance.th/api/v1/time" if is_th else "https://api-gcp.binance.com/api/v3/time"
             req = urllib.request.Request(time_url, headers={"User-Agent": "Antigravity-Arbitrage-Bot/2.0"})
             with urllib.request.urlopen(req, timeout=4) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
@@ -43,7 +43,7 @@ class ExchangeAPIClient:
         Fetches account status, spot trading permissions, and non-zero balances.
         """
         start_t = time.time()
-        candidate_bases = ["https://api1.binance.com", "https://api2.binance.com", "https://api3.binance.com", "https://api.binance.com"] if not is_th else ["https://api.binance.th"]
+        candidate_bases = ["https://api-gcp.binance.com", "https://api3.binance.com", "https://api2.binance.com", "https://api1.binance.com", "https://api.binance.com"] if not is_th else ["https://api.binance.th"]
         ex_label = "Binance TH" if is_th else "Binance Global"
 
         if not is_th and time.time() < cls._binance_banned_until:
@@ -176,10 +176,11 @@ class ExchangeAPIClient:
                     last_msg = err_json.get("msg", err_body)
                 except Exception:
                     last_msg = err_body
-                if last_code in (401, 418, 429):
-                    if last_code in (418, 429):
-                        cls._binance_banned_until = time.time() + 900
+                if last_code == 401:
                     break
+                if last_code in (418, 429):
+                    cls._binance_banned_until = time.time() + 60
+                    continue
                 continue
             except Exception as e:
                 last_msg = str(e)
