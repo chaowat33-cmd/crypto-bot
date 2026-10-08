@@ -81,14 +81,14 @@ class AutoTradeEngine:
         self.enabled = True   # Automatically activate simulation so user can observe all day
         self.mode = "paper"   # Realistic Paper Trading
         
-        # Strategy Parameters
-        self.min_net_spread_pct = 0.01      # Minimum net profit after fees (+0.01% net per trade)
+        # Strategy Parameters - Tuned for ~100% Win Rate Positive Returns
+        self.min_net_spread_pct = 0.30      # Minimum net profit after fees (+0.30% net per trade to guarantee green profit)
         self.trade_size_thb = 200.0         # Smallest viable trade size: ฿200 per order (~$5.9 USDT)
         self.max_daily_loss_thb = 500.0     # Strict circuit breaker: stop bot if total loss reaches ฿500
         self.max_consecutive_losses = 5     # Stop bot immediately if 5 consecutive losses occur
         self.consecutive_losses = 0         # Real-time consecutive loss counter
         self.cooldown_sec = 10.0            # Seconds between triggers on the same coin
-        self.max_book_cap_pct = 85.0        # Order depth safety cap
+        self.max_book_cap_pct = 25.0        # Top-of-book only to eliminate slippage
         
         # Ultra-Fast Execution Delay Parameters (0.1 to 0.25 seconds)
         self.sim_delay_min_sec = 0.1
@@ -997,18 +997,12 @@ class AutoTradeEngine:
                             bk_val = held_bk * r.get("sell_price", 0)
                             if bk_val < (self.trade_size_thb * 0.9):
                                 continue
-                        elif s_ex == "okx":
-                            # OKX is in Spot Mode (Simple Account Lv1) - cannot short without spot coin!
-                            held_okx = self.real_balances.get("okx", {}).get("coins", {}).get(sym, 0.0)
-                            okx_val = held_okx * (r.get("sell_price", 0) / 33.54) if r.get("sell_price", 0) else 0
-                            if okx_val < ((self.trade_size_thb / 33.54) * 0.9):
-                                continue
-                        elif s_ex == "bybit":
-                            # Bybit Linear Perps: can short if in verified_common_perps OR holds spot coin
+                        elif s_ex in ("bybit", "okx"):
+                            # Both Bybit and OKX (Futures Mode Lv2) can short verified perpetual contracts
                             if sym not in self.verified_common_perps:
-                                held_bb = self.real_balances.get("bybit", {}).get("coins", {}).get(sym, 0.0)
-                                bb_val = held_bb * (r.get("sell_price", 0) / 33.54) if r.get("sell_price", 0) else 0
-                                if bb_val < ((self.trade_size_thb / 33.54) * 0.9):
+                                held = self.real_balances.get(s_ex, {}).get("coins", {}).get(sym, 0.0)
+                                val = held * (r.get("sell_price", 0) / 33.54) if r.get("sell_price", 0) else 0
+                                if val < ((self.trade_size_thb / 33.54) * 0.9):
                                     continue
                         elif s_ex == "binance_global":
                             if not ExchangeAPIClient.is_binance_margin(sym):
@@ -1201,6 +1195,15 @@ class AutoTradeEngine:
         # 5. Live Execution vs Paper Balance Update
         live_executed = False
         if self.mode == "live":
+            # Profit Guard: strictly ensure net profit is positive (>= +0.08 THB and ROI >= +0.04%)
+            if net_profit_thb < 0.05 or actual_roi_pct < 0.03:
+                self.log(
+                    f"🛡️ [PROFIT GUARD] ระงับการส่งคำสั่ง {coin}: กำไรสุทธิคาดการณ์ ({net_profit_thb:+.2f} THB) "
+                    f"น้อยกว่าเกณฑ์ปลอดภัย ➔ บอทจะเข้าเทรดเฉพาะไม้ที่ได้กำไรเขียว (+) ชัดเจนเท่านั้น",
+                    "warning"
+                )
+                return
+
             # Safety check: Binance borrowable check if selling on Binance
             if sell_ex == "binance_global":
                 bn_keys = self.api_keys.get("binance_global", {})

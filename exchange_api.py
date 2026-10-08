@@ -749,6 +749,35 @@ class ExchangeAPIClient:
             return int(truncated)
         return float(f"{truncated:.{prec}f}")
 
+    _okx_swap_cache = {}
+
+    @classmethod
+    def get_okx_swap_rules(cls, coin):
+        """Fetch and cache OKX Swap instrument rules (ctVal, minSz, lotSz)"""
+        coin_upper = coin.upper()
+        if coin_upper in cls._okx_swap_cache:
+            return cls._okx_swap_cache[coin_upper]
+        try:
+            url = f"https://www.okx.com/api/v5/public/instruments?instType=SWAP&instId={coin_upper}-USDT-SWAP"
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=4) as r:
+                d = json.loads(r.read().decode("utf-8"))
+                if d.get("code") == "0" and d.get("data"):
+                    item = d["data"][0]
+                    res = {
+                        "valid": True,
+                        "ct_val": float(item.get("ctVal", 1.0)),
+                        "min_sz": float(item.get("minSz", 1.0)),
+                        "lot_sz": float(item.get("lotSz", 1.0))
+                    }
+                    cls._okx_swap_cache[coin_upper] = res
+                    return res
+        except Exception:
+            pass
+        res = {"valid": False, "ct_val": 1.0, "min_sz": 1.0, "lot_sz": 1.0}
+        cls._okx_swap_cache[coin_upper] = res
+        return res
+
     @classmethod
     def get_bitkub_symbol_scale(cls, coin):
         """Fetch and cache quantity_scale for Bitkub market sell"""
@@ -1056,7 +1085,16 @@ class ExchangeAPIClient:
                 else:
                     payload["sz"] = f"{coin_amount}"
             else:
-                payload["sz"] = f"{int(max(1, coin_amount))}"
+                rules = cls.get_okx_swap_rules(coin)
+                ct_val = rules.get("ct_val", 1.0)
+                min_sz = rules.get("min_sz", 1.0)
+                lot_sz = rules.get("lot_sz", 1.0)
+                raw_contracts = (coin_amount / ct_val) if ct_val > 0 else coin_amount
+                num_contracts = max(min_sz, round(raw_contracts / lot_sz) * lot_sz)
+                if lot_sz >= 1:
+                    payload["sz"] = str(int(num_contracts))
+                else:
+                    payload["sz"] = str(round(num_contracts, 4))
 
             body_str = json.dumps(payload)
             prehash = f"{ts_iso}{method}{path}{body_str}"
