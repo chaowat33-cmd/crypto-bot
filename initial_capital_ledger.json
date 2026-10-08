@@ -1,0 +1,43 @@
+{
+  "recorded_at": "2026-10-09T01:45:00+07:00",
+  "base_currency": "USDT / THB",
+  "exchange_rate_usd_thb": 33.54,
+  "exchanges": {
+    "binance_global": {
+      "account_type": "Cross Margin / Futures",
+      "initial_usdt": 221.43,
+      "debt_usdt": 0.0,
+      "notes": "Margin Level > 17.5"
+    },
+    "bybit": {
+      "account_type": "Unified Trading Account (UTA)",
+      "initial_usdt": 49.9536,
+      "raw_usdt": 49.99,
+      "debt_usdt": 0.0,
+      "notes": "Ready for Linear Futures Perp"
+    },
+    "okx": {
+      "account_type": "Trading Account",
+      "initial_usdt": 48.4641,
+      "raw_usdt": 48.4641,
+      "debt_usdt": 0.0,
+      "notes": "Ready for Swap Futures"
+    },
+    "bitkub": {
+      "account_type": "Spot Wallet",
+      "initial_thb": 1854.75,
+      "coins": {
+        "SAND": 0.7647,
+        "MOVR": 0.5075
+      },
+      "debt_thb": 0.0,
+      "notes": "Spot Thai Baht"
+    }
+  },
+  "summary": {
+    "total_initial_usdt": 319.8477,
+    "total_initial_thb_cash": 1854.75,
+    "total_portfolio_value_approx_thb": 12582.41,
+    "total_portfolio_value_approx_usd": 375.15
+  }
+}
