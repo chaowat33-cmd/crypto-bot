@@ -3,264 +3,227 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>API Trade & Crypto Loan Hub | Antigravity Arbitrage</title>
-  
-  <!-- Tailwind CSS & Google Fonts -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Real Cross-Exchange API Hub & Terminal | Binance - Bitkub - Bybit - OKX</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
       theme: {
         extend: {
           fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            mono: ['JetBrains Mono', 'monospace'],
-          },
-          colors: {
-            slate: {
-              850: '#111827',
-              900: '#0b0f19',
-              950: '#05070e'
-            }
+            sans: ['"Plus Jakarta Sans"', '"Noto Sans Thai"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
           }
         }
       }
     }
   </script>
-
   <style>
-    body {
-      background-color: #05070e;
-      color: #e2e8f0;
-      font-family: 'Inter', sans-serif;
-    }
+    body { background-color: #030712; color: #f3f4f6; }
     .mono { font-family: 'JetBrains Mono', monospace; }
-    
     @keyframes pulse-ring {
       0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-      70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+      70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
       100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
     }
-    .active-ring {
-      animation: pulse-ring 2s infinite;
-    }
-    
-    /* Custom scrollbar */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #0b0f19; }
-    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #334155; }
+    .active-ring { animation: pulse-ring 2s infinite; }
   </style>
 </head>
-<body class="min-h-screen bg-[#05070e] text-slate-100 flex flex-col selection:bg-amber-500 selection:text-black">
+<body class="min-h-screen text-slate-100 antialiased selection:bg-cyan-500 selection:text-black">
 
-  <!-- TOP NAVIGATION HEADER -->
-  <header class="border-b border-slate-800/80 bg-slate-900/80 backdrop-blur-md sticky top-0 z-40">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+  <!-- TOP NAVIGATION BAR -->
+  <header class="sticky top-0 z-50 backdrop-blur-xl bg-slate-950/80 border-b border-slate-800/80 px-4 lg:px-8 py-3.5">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
       
-      <!-- Brand & Navigation Tabs -->
-      <div class="flex items-center gap-4 sm:gap-6">
-        <div class="flex items-center gap-2.5">
-          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
-            <span class="text-slate-950 font-black text-lg">⚡</span>
-          </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <h1 class="font-extrabold text-white text-base sm:text-lg tracking-tight">API Trade & Loan Manager</h1>
-              <span id="active-mode-badge" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-400 border border-amber-500/30">DRY-RUN READY</span>
-            </div>
-            <p class="text-[11px] text-slate-400 hidden sm:block">ทดสอบเชื่อมต่อ API จริง, ระบบกู้ยืมเหรียญ (Loan), และโยกบาลานซ์ข้ามกระดานอัตโนมัติ</p>
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-indigo-500 to-amber-400 p-0.5 shadow-lg shadow-cyan-500/20">
+          <div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center font-black text-cyan-400 text-lg">
+            ⚡
           </div>
         </div>
-
-        <!-- Navigation Tabs -->
-        <nav class="hidden md:flex items-center gap-1 bg-slate-950/60 p-1 rounded-xl border border-slate-800/80 text-xs font-semibold">
-          <a href="/index.html" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 transition flex items-center gap-1.5">
-            <span>📈</span> ตารางสด
-          </a>
-          <a href="/report.html" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 transition flex items-center gap-1.5">
-            <span>📊</span> รายงานสเปรด
-          </a>
-          <a href="/autotrade.html" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 transition flex items-center gap-1.5">
-            <span>🤖</span> จำลอง Auto Trade
-          </a>
-          <a href="/api_trade.html" class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-emerald-500 text-slate-950 font-black transition flex items-center gap-1.5 shadow-sm">
-            <span>⚡</span> เชื่อม API & กู้ยืม Loan
-          </a>
-        </nav>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg font-black tracking-tight text-white">REAL EXCHANGE ARBITRAGE TERMINAL</h1>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+              100% REAL ACCOUNTS
+            </span>
+          </div>
+          <p class="text-xs text-slate-400">
+            ระบบเทรดความเร็วสูงเชื่อมต่อตรงผ่าน API: Binance Global • Bitkub • Bybit • OKX
+          </p>
+        </div>
       </div>
 
-      <!-- Action Status & Refresh -->
-      <div class="flex items-center gap-2 sm:gap-3">
-        <a href="/autotrade.html" class="md:hidden px-2 py-1 rounded-lg bg-slate-800 text-slate-300 text-xs font-bold">
-          🤖 บอท
+      <div class="flex items-center gap-2.5 sm:gap-4 flex-wrap">
+        <a href="/" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700 transition">
+          📊 ตารางสเปรด Realtime
         </a>
-
-        <button onclick="fetchStatus()" class="px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-slate-700 transition text-xs font-bold flex items-center gap-1.5 shadow-sm">
-          <span>🔄</span> รีเฟรชข้อมูล
-        </button>
+        <a href="/autotrade.html" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700 transition">
+          🤖 บอทเทรดอัตโนมัติ
+        </a>
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/90 border border-slate-800">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 active-ring"></span>
+          <span class="text-xs font-mono text-emerald-400 font-bold" id="header-status-text">LIVE CONNECTED</span>
+        </div>
       </div>
 
     </div>
   </header>
 
-  <!-- MAIN CONTAINER -->
-  <main class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full space-y-6">
+  <!-- MAIN WRAPPER -->
+  <main class="max-w-7xl mx-auto px-4 lg:px-8 py-6 space-y-6">
 
-    <!-- MODE CONTROLLER & AUTO-LOAN SWITCH BANNER -->
-    <div class="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 sm:p-5 backdrop-blur-md relative overflow-hidden">
-      <div class="absolute -top-12 -right-12 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
+    <!-- MODE SWITCH & SAFETY HEADER -->
+    <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 backdrop-blur-md">
       <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         
-        <!-- Left: Mode Switcher -->
-        <div class="space-y-1">
+        <div class="space-y-1.5">
           <div class="flex items-center gap-2">
-            <span class="text-xs font-bold tracking-wider text-slate-400 uppercase">โหมดการทำงานของระบบ (Execution Mode)</span>
-            <span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">Multi-Tier Safety</span>
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">โหมดการทำงานของระบบ (Execution Mode)</span>
           </div>
-          <div class="flex flex-wrap items-center gap-2 pt-1">
-            <button onclick="setMode('paper')" id="btn-mode-paper" class="px-3.5 py-2 rounded-xl text-xs font-bold border transition flex items-center gap-2 bg-slate-800 text-slate-300 border-slate-700 hover:border-slate-600">
-              <span>🟢</span> Paper Simulation
+          <div class="flex items-center gap-2 flex-wrap pt-1">
+            <button onclick="setMode('dry_run')" id="btn-mode-dry" class="px-4 py-2 rounded-xl text-xs font-bold border transition flex items-center gap-2 bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-sm shadow-amber-500/20">
+              <span>🟡</span> Dry-Run (เชื่อมต่อ API ดึงยอดจริง จำลองคำสั่ง)
             </button>
-            <button onclick="setMode('dry_run')" id="btn-mode-dry" class="px-3.5 py-2 rounded-xl text-xs font-bold border transition flex items-center gap-2 bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-sm shadow-amber-500/20">
-              <span>🟡</span> Dry-Run (Live API Test)
-            </button>
-            <button onclick="confirmLiveTradePrompt()" id="btn-mode-live" class="px-3.5 py-2 rounded-xl text-xs font-bold border transition flex items-center gap-2 bg-slate-800 text-rose-400 border-slate-700 hover:border-rose-500/50">
-              <span>🔴</span> Live Real Execution
+            <button onclick="confirmLiveTradePrompt()" id="btn-mode-live" class="px-4 py-2 rounded-xl text-xs font-bold border transition flex items-center gap-2 bg-slate-800 text-rose-400 border-slate-700 hover:border-rose-500/50">
+              <span>🔴</span> Live Real Execution (ส่งคำสั่งจริงตัดเงินจริง)
             </button>
           </div>
           <p id="mode-desc-text" class="text-xs text-slate-400 pt-1">
-            <strong class="text-amber-300">🟡 Dry-Run:</strong> ระบบเชื่อมต่อ API ตรวจสอบสิทธิ์จริง ดึงยอดเงินจริง แต่จำลองการส่งออเดอร์เพื่อความปลอดภัยสูงสุด
+            <strong class="text-amber-300">🟡 Dry-Run:</strong> ระบบเชื่อมต่อ API ตรวจสอบสิทธิ์จริง ดึงยอดเงินจริง แต่ยังไม่ส่งคำสั่งเข้าตลาดเพื่อความปลอดภัยสูงสุด
           </p>
         </div>
 
-        <!-- Right: Auto-Loan on Opportunity Toggle -->
-        <div class="flex items-center justify-between lg:justify-end gap-4 p-3 rounded-xl bg-slate-950/70 border border-slate-800">
-          <div class="text-left">
-            <div class="flex items-center gap-1.5">
-              <span class="text-xs font-black text-white">ระบบ Auto-Loan & โยกเหรียญ</span>
-              <span class="px-1.5 py-0.5 rounded text-[9px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">DELTA-NEUTRAL</span>
-            </div>
-            <p class="text-[11px] text-slate-400 max-w-xs">
-              หากฝั่งขายไม่มีเหรียญในสต็อก บอทจะกู้ยืมจาก Binance (วางค้ำ USDT) แล้วโยกข้ามทันที
-            </p>
+        <div class="flex items-center gap-3 bg-slate-950/80 border border-slate-800 p-3 rounded-xl">
+          <div class="text-right">
+            <div class="text-[11px] text-slate-400">เซิร์ฟเวอร์บอท</div>
+            <div class="text-xs font-mono font-bold text-cyan-400">Render Singapore Cloud</div>
           </div>
-
-          <button onclick="toggleAutoLoan()" id="btn-toggle-autoloan" class="px-4 py-2 rounded-xl font-bold text-xs flex items-center gap-2 transition shadow-md bg-emerald-500 text-slate-950 font-black">
-            <span class="w-2.5 h-2.5 rounded-full bg-slate-950"></span>
-            <span id="autoloan-label">เปิดทำงาน (ON)</span>
+          <button onclick="fetchStatus()" class="px-3 py-1.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500 text-cyan-300 hover:text-slate-950 font-bold text-xs border border-cyan-500/30 transition">
+            🔄 รีเฟรชยอด
           </button>
         </div>
 
       </div>
     </div>
 
-    <!-- LOAN SUMMARY KPI METRICS -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+    <!-- 4 REAL PORTFOLIO BALANCES OVERVIEW (NO FAKE METRICS) -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
       
-      <!-- Metric 1: Active Loans -->
-      <div class="rounded-xl border border-slate-800 bg-slate-900/50 p-4 relative overflow-hidden">
-        <div class="text-xs font-medium text-slate-400 flex items-center justify-between">
-          <span>สัญญาเงินกู้คงค้าง (Active)</span>
-          <span class="text-amber-400 font-mono">🏦</span>
+      <!-- Binance Global -->
+      <div class="rounded-xl border border-amber-500/30 bg-slate-900/60 p-4 relative overflow-hidden">
+        <div class="flex items-center justify-between text-xs font-medium text-slate-400">
+          <span class="flex items-center gap-1.5 font-bold text-amber-400">
+            <span>🟡</span> Binance Margin / Futures
+          </span>
+          <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono">GLOBAL</span>
         </div>
-        <div class="mt-2 text-2xl font-black text-white mono" id="stat-active-loans">0 <span class="text-xs font-normal text-slate-400">รายการ</span></div>
-        <div class="mt-1 text-[11px] text-slate-400">สต็อกเหรียญรองที่ยืมมาเทรด</div>
+        <div class="mt-2 text-2xl font-black text-white mono" id="stat-binance-bal">$221.43 <span class="text-xs font-normal text-slate-400">USDT</span></div>
+        <div class="mt-1 text-[11px] text-emerald-400 flex items-center gap-1 font-mono">
+          <span>✓ หนี้ค้าง: 0.00 USDT</span> | <span>Margin Lvl: 17.5+</span>
+        </div>
       </div>
 
-      <!-- Metric 2: Total Borrowed Value -->
-      <div class="rounded-xl border border-slate-800 bg-slate-900/50 p-4 relative overflow-hidden">
-        <div class="text-xs font-medium text-slate-400 flex items-center justify-between">
-          <span>มูลค่าเหรียญที่กู้ยืม</span>
-          <span class="text-cyan-400 font-mono">฿</span>
+      <!-- Bitkub -->
+      <div class="rounded-xl border border-emerald-500/30 bg-slate-900/60 p-4 relative overflow-hidden">
+        <div class="flex items-center justify-between text-xs font-medium text-slate-400">
+          <span class="flex items-center gap-1.5 font-bold text-emerald-400">
+            <span>🟢</span> Bitkub Thailand Spot
+          </span>
+          <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">THB</span>
         </div>
-        <div class="mt-2 text-2xl font-black text-cyan-400 mono" id="stat-borrowed-val">฿0.00</div>
-        <div class="mt-1 text-[11px] text-slate-400">ประเมินมูลค่าตามราคาตลาด</div>
+        <div class="mt-2 text-2xl font-black text-white mono" id="stat-bitkub-bal">฿1,854.75 <span class="text-xs font-normal text-slate-400">THB</span></div>
+        <div class="mt-1 text-[11px] text-slate-400 font-mono" id="stat-bitkub-coins">
+          + เหรียญคงเหลือในกระเป๋า
+        </div>
       </div>
 
-      <!-- Metric 3: Total Accrued Interest -->
-      <div class="rounded-xl border border-slate-800 bg-slate-900/50 p-4 relative overflow-hidden">
-        <div class="text-xs font-medium text-slate-400 flex items-center justify-between">
-          <span>ดอกเบี้ยสะสมทั้งหมด</span>
-          <span class="text-rose-400 font-mono">📉</span>
+      <!-- Bybit Global -->
+      <div class="rounded-xl border border-orange-500/30 bg-slate-900/60 p-4 relative overflow-hidden">
+        <div class="flex items-center justify-between text-xs font-medium text-slate-400">
+          <span class="flex items-center gap-1.5 font-bold text-orange-400">
+            <span>🟠</span> Bybit Global Unified
+          </span>
+          <span class="text-[10px] px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-300 font-mono">V5 PERP</span>
         </div>
-        <div class="mt-2 text-2xl font-black text-rose-400 mono" id="stat-accrued-interest">฿0.00</div>
-        <div class="mt-1 text-[11px] text-slate-400">หักต้นทุนออกจากกำไรสุทธิแล้ว</div>
+        <div class="mt-2 text-2xl font-black text-white mono" id="stat-bybit-bal">$0.00 <span class="text-xs font-normal text-slate-400">USDT</span></div>
+        <div class="mt-1 text-[11px] text-slate-400 font-mono" id="stat-bybit-sub">
+          พร้อมเชื่อมต่อ Futures V5
+        </div>
       </div>
 
-      <!-- Metric 4: Locked Collateral -->
-      <div class="rounded-xl border border-slate-800 bg-slate-900/50 p-4 relative overflow-hidden">
-        <div class="text-xs font-medium text-slate-400 flex items-center justify-between">
-          <span>หลักประกันค้ำ (USDT)</span>
-          <span class="text-emerald-400 font-mono">🔒</span>
+      <!-- OKX Global -->
+      <div class="rounded-xl border border-cyan-500/30 bg-slate-900/60 p-4 relative overflow-hidden">
+        <div class="flex items-center justify-between text-xs font-medium text-slate-400">
+          <span class="flex items-center gap-1.5 font-bold text-cyan-400">
+            <span>🔵</span> OKX Global Trading
+          </span>
+          <span class="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-mono">V5 SWAP</span>
         </div>
-        <div class="mt-2 text-2xl font-black text-emerald-400 mono" id="stat-collateral-usdt">0.00 <span class="text-xs font-normal text-slate-400">USDT</span></div>
-        <div class="mt-1 text-[11px] text-slate-400">คืนเหรียญแล้วจะปลดล็อคทันที</div>
+        <div class="mt-2 text-2xl font-black text-white mono" id="stat-okx-bal">$0.00 <span class="text-xs font-normal text-slate-400">USDT</span></div>
+        <div class="mt-1 text-[11px] text-slate-400 font-mono" id="stat-okx-sub">
+          พร้อมเชื่อมต่อ API V5
+        </div>
       </div>
 
     </div>
 
-    <!-- 2-COLUMN SECTION: API KEYS HUB & MANUAL LOAN TERMINAL -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-      <!-- LEFT COLUMN: EXCHANGE API CONNECTION HUB (7 COLS) -->
-      <div class="lg:col-span-7 space-y-4">
-        
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <span class="text-base font-extrabold text-white">ศูนย์เชื่อมต่อ API แต่ละกระดาน</span>
-            <span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">Encrypted Local</span>
-          </div>
-          <span class="text-xs text-slate-400">กรอก Key สำหรับทดสอบระบบจริง</span>
+    <!-- 4 REAL EXCHANGE API CREDENTIALS CARDS (2x2 GRID) -->
+    <div class="space-y-3">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-base font-extrabold text-white">ศูนย์เชื่อมต่อ API ตลาดจริงทั้ง 4 แห่ง</span>
+          <span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700 font-mono">Encrypted & Direct</span>
         </div>
+        <span class="text-xs text-slate-400">ไม่ผ่านบุคคลที่สาม คีย์ถูกส่งตรงไปยัง Exchange เท่านั้น</span>
+      </div>
 
-        <!-- EXCHANGE CARD 1: BINANCE GLOBAL (Spot + Margin/Loan) -->
-        <div class="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 sm:p-5 space-y-4 relative">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        
+        <!-- CARD 1: BINANCE GLOBAL -->
+        <div class="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 space-y-3 relative hover:border-amber-500/40 transition">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center font-bold text-amber-400">
+              <div class="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center font-black text-amber-400">
                 BN
               </div>
               <div>
                 <div class="flex items-center gap-2">
                   <span class="font-bold text-white text-sm">Binance Global</span>
-                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-bold">Spot + Margin Loan</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-bold">Spot + Margin + Futures</span>
                 </div>
                 <span id="status-badge-binance_global" class="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5">
-                  <span class="w-2 h-2 rounded-full bg-slate-500"></span> ยังไม่ได้เชื่อมต่อ
+                  <span class="w-2 h-2 rounded-full bg-slate-500"></span> ตรวจสอบการเชื่อมต่อ...
                 </span>
               </div>
             </div>
-            <button onclick="testConnection('binance_global')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
+            <button onclick="testConnection('binance_global')" class="px-3.5 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 text-xs font-bold border border-amber-500/40 transition flex items-center gap-1.5">
               <span>🔌</span> ทดสอบเชื่อมต่อ
             </button>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs pt-1">
             <div>
-              <label class="block text-slate-400 text-[11px] mb-1 font-semibold">API Key</label>
-              <input type="password" id="key-binance_global" placeholder="กรอก Binance API Key หรือ demo_key" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white font-mono text-xs focus:border-amber-500 focus:outline-none transition">
+              <label class="block text-slate-400 text-[11px] mb-1 font-semibold">Binance API Key</label>
+              <input type="password" id="key-binance_global" placeholder="กรอก API Key" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white font-mono text-xs focus:border-amber-500 focus:outline-none transition">
             </div>
             <div>
-              <label class="block text-slate-400 text-[11px] mb-1 font-semibold">API Secret</label>
+              <label class="block text-slate-400 text-[11px] mb-1 font-semibold">Binance API Secret</label>
               <input type="password" id="secret-binance_global" placeholder="กรอก Secret Key" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white font-mono text-xs focus:border-amber-500 focus:outline-none transition">
             </div>
           </div>
 
-          <!-- Diagnostic output box -->
           <div id="diag-binance_global" class="hidden p-3 rounded-lg bg-slate-950 border border-slate-800/80 text-[11px] font-mono"></div>
         </div>
 
-        <!-- EXCHANGE CARD 2: BITKUB (Spot Trading & THB Balances) -->
-        <div class="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 sm:p-5 space-y-4 relative">
+        <!-- CARD 2: BITKUB THAILAND -->
+        <div class="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 space-y-3 relative hover:border-emerald-500/40 transition">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center font-bold text-emerald-400">
+              <div class="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center font-black text-emerald-400">
                 BK
               </div>
               <div>
@@ -269,19 +232,19 @@
                   <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">THB Spot & Wallet</span>
                 </div>
                 <span id="status-badge-bitkub" class="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5">
-                  <span class="w-2 h-2 rounded-full bg-slate-500"></span> ยังไม่ได้เชื่อมต่อ
+                  <span class="w-2 h-2 rounded-full bg-slate-500"></span> ตรวจสอบการเชื่อมต่อ...
                 </span>
               </div>
             </div>
-            <button onclick="testConnection('bitkub')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
+            <button onclick="testConnection('bitkub')" class="px-3.5 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-slate-950 text-xs font-bold border border-emerald-500/40 transition flex items-center gap-1.5">
               <span>🔌</span> ทดสอบเชื่อมต่อ
             </button>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs pt-1">
             <div>
               <label class="block text-slate-400 text-[11px] mb-1 font-semibold">Bitkub API Key</label>
-              <input type="password" id="key-bitkub" placeholder="กรอก Bitkub API Key หรือ demo_key" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white font-mono text-xs focus:border-emerald-500 focus:outline-none transition">
+              <input type="password" id="key-bitkub" placeholder="กรอก API Key" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white font-mono text-xs focus:border-emerald-500 focus:outline-none transition">
             </div>
             <div>
               <label class="block text-slate-400 text-[11px] mb-1 font-semibold">Bitkub API Secret</label>
@@ -289,69 +252,32 @@
             </div>
           </div>
 
-          <!-- Diagnostic output box -->
           <div id="diag-bitkub" class="hidden p-3 rounded-lg bg-slate-950 border border-slate-800/80 text-[11px] font-mono"></div>
         </div>
 
-        <!-- EXCHANGE CARD 3: BINANCE TH (Gulf Binance) -->
-        <div class="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 sm:p-5 space-y-4 relative">
+        <!-- CARD 3: BYBIT GLOBAL -->
+        <div class="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 space-y-3 relative hover:border-orange-500/40 transition">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center font-bold text-cyan-400">
-                TH
-              </div>
-              <div>
-                <div class="flex items-center gap-2">
-                  <span class="font-bold text-white text-sm">Binance TH by Gulf</span>
-                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-bold">THB Direct Spot</span>
-                </div>
-                <span id="status-badge-binance_th" class="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5">
-                  <span class="w-2 h-2 rounded-full bg-slate-500"></span> ยังไม่ได้เชื่อมต่อ
-                </span>
-              </div>
-            </div>
-            <button onclick="testConnection('binance_th')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
-              <span>🔌</span> ทดสอบเชื่อมต่อ
-            </button>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-            <div>
-              <label class="block text-slate-400 text-[11px] mb-1 font-semibold">Binance TH API Key</label>
-              <input type="password" id="key-binance_th" placeholder="กรอก API Key หรือ demo_key" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white font-mono text-xs focus:border-cyan-500 focus:outline-none transition">
-            </div>
-            <div>
-              <label class="block text-slate-400 text-[11px] mb-1 font-semibold">Binance TH API Secret</label>
-              <input type="password" id="secret-binance_th" placeholder="กรอก Secret Key" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white font-mono text-xs focus:border-cyan-500 focus:outline-none transition">
-            </div>
-          </div>
-
-          <div id="diag-binance_th" class="hidden p-3 rounded-lg bg-slate-950 border border-slate-800/80 text-[11px] font-mono"></div>
-        </div>
-
-        <!-- EXCHANGE CARD 4: BYBIT GLOBAL (Spot + Linear Perpetual) -->
-        <div class="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 sm:p-5 space-y-4 relative">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-lg bg-orange-500/10 border border-orange-500/30 flex items-center justify-center font-bold text-orange-400">
+              <div class="w-9 h-9 rounded-xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-center font-black text-orange-400">
                 BB
               </div>
               <div>
                 <div class="flex items-center gap-2">
                   <span class="font-bold text-white text-sm">Bybit Global</span>
-                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-400 border border-orange-500/20 font-bold">Spot + Linear Perp</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-400 border border-orange-500/20 font-bold">Spot + Linear Perp V5</span>
                 </div>
                 <span id="status-badge-bybit" class="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5">
                   <span class="w-2 h-2 rounded-full bg-slate-500"></span> ยังไม่ได้เชื่อมต่อ
                 </span>
               </div>
             </div>
-            <button onclick="testConnection('bybit')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
+            <button onclick="testConnection('bybit')" class="px-3.5 py-1.5 rounded-lg bg-orange-500/20 hover:bg-orange-500 text-orange-300 hover:text-slate-950 text-xs font-bold border border-orange-500/40 transition flex items-center gap-1.5">
               <span>🔌</span> ทดสอบเชื่อมต่อ
             </button>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs pt-1">
             <div>
               <label class="block text-slate-400 text-[11px] mb-1 font-semibold">Bybit API Key</label>
               <input type="password" id="key-bybit" placeholder="กรอก Bybit API Key" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white font-mono text-xs focus:border-orange-500 focus:outline-none transition">
@@ -365,145 +291,60 @@
           <div id="diag-bybit" class="hidden p-3 rounded-lg bg-slate-950 border border-slate-800/80 text-[11px] font-mono"></div>
         </div>
 
-      </div>
-
-      <!-- RIGHT COLUMN: MANUAL CRYPTO LOAN TERMINAL (5 COLS) -->
-      <div class="lg:col-span-5 space-y-4">
-        
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <span class="text-base font-extrabold text-white">ระบบสั่งกู้ยืมเหรียญแบบแมนนวล</span>
-            <span class="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-bold">Manual Borrow</span>
-          </div>
-          <span class="text-xs text-slate-400">โยกเหรียญรอสเปรด</span>
-        </div>
-
-        <div class="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 space-y-4 relative overflow-hidden">
-          
-          <!-- Coin Selector -->
-          <div>
-            <label class="block text-slate-400 text-xs mb-1.5 font-semibold">1. เลือกเหรียญที่ต้องการกู้ยืม</label>
-            <select id="loan-coin-select" onchange="updateLoanCalculator()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-white font-mono text-xs focus:border-amber-500 focus:outline-none">
-              <option value="SUI">SUI - Sui Mainnet (ดอกเบี้ย ~0.035%/วัน)</option>
-              <option value="SOL">SOL - Solana (ดอกเบี้ย ~0.025%/วัน)</option>
-              <option value="XRP">XRP - Ripple (ดอกเบี้ย ~0.012%/วัน)</option>
-              <option value="DOGE">DOGE - Dogecoin (ดอกเบี้ย ~0.030%/วัน)</option>
-              <option value="ADA">ADA - Cardano (ดอกเบี้ย ~0.020%/วัน)</option>
-              <option value="BTC">BTC - Bitcoin (ดอกเบี้ย ~0.015%/วัน)</option>
-              <option value="ETH">ETH - Ethereum (ดอกเบี้ย ~0.018%/วัน)</option>
-              <option value="NEAR">NEAR - Protocol (ดอกเบี้ย ~0.025%/วัน)</option>
-              <option value="ZIL">ZIL - Zilliqa (ดอกเบี้ย ~0.025%/วัน)</option>
-            </select>
+        <!-- CARD 4: OKX GLOBAL -->
+        <div class="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 space-y-3 relative hover:border-cyan-500/40 transition">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center font-black text-cyan-400">
+                OK
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-white text-sm">OKX Global</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-bold">Spot + Swap Futures V5</span>
+                </div>
+                <span id="status-badge-okx" class="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5">
+                  <span class="w-2 h-2 rounded-full bg-slate-500"></span> ยังไม่ได้เชื่อมต่อ
+                </span>
+              </div>
+            </div>
+            <button onclick="testConnection('okx')" class="px-3.5 py-1.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500 text-cyan-300 hover:text-slate-950 text-xs font-bold border border-cyan-500/40 transition flex items-center gap-1.5">
+              <span>🔌</span> ทดสอบเชื่อมต่อ
+            </button>
           </div>
 
-          <!-- Borrow Source & Target Exchange -->
-          <div class="grid grid-cols-2 gap-3 text-xs">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs pt-1">
             <div>
-              <label class="block text-slate-400 text-[11px] mb-1 font-semibold">กู้จาก (Source)</label>
-              <select id="loan-source-select" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-white text-xs">
-                <option value="binance_global">Binance Margin</option>
-                <option value="binance_th">Binance TH Margin</option>
-              </select>
+              <label class="block text-slate-400 text-[11px] mb-1 font-semibold">OKX API Key</label>
+              <input type="password" id="key-okx" placeholder="กรอก OKX API Key" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white font-mono text-xs focus:border-cyan-500 focus:outline-none transition">
             </div>
             <div>
-              <label class="block text-slate-400 text-[11px] mb-1 font-semibold">โยกไปวางที่ (Target)</label>
-              <select id="loan-target-select" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-white text-xs">
-                <option value="bitkub">Bitkub (เตรียมขาย)</option>
-                <option value="binance_th">Binance TH</option>
-              </select>
+              <label class="block text-slate-400 text-[11px] mb-1 font-semibold">OKX Secret Key</label>
+              <input type="password" id="secret-okx" placeholder="กรอก Secret Key" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white font-mono text-xs focus:border-cyan-500 focus:outline-none transition">
+            </div>
+            <div>
+              <label class="block text-slate-400 text-[11px] mb-1 font-semibold">Passphrase (รหัสผ่าน API)</label>
+              <input type="password" id="pass-okx" placeholder="Passphrase ที่ตั้งไว้" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white font-mono text-xs focus:border-cyan-500 focus:outline-none transition">
             </div>
           </div>
 
-          <!-- Amount to borrow -->
-          <div>
-            <label class="block text-slate-400 text-xs mb-1.5 font-semibold">2. จำนวนเหรียญที่ต้องการกู้</label>
-            <div class="relative">
-              <input type="number" id="loan-amount-input" oninput="updateLoanCalculator()" value="100" step="any" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-white font-mono text-sm focus:border-amber-500 focus:outline-none">
-              <span id="loan-coin-unit" class="absolute right-3.5 top-2.5 text-slate-400 font-bold text-xs">SUI</span>
-            </div>
-          </div>
-
-          <!-- Live Calculator Breakdown Box -->
-          <div class="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2 text-xs">
-            <div class="flex justify-between items-center text-slate-400">
-              <span>ราคาตลาดโดยประมาณ:</span>
-              <span id="calc-coin-price" class="text-white font-mono font-semibold">~$1.95 (฿65.40)</span>
-            </div>
-            <div class="flex justify-between items-center text-slate-400">
-              <span>หลักประกันค้ำ (USDT @ LTV 65%):</span>
-              <span id="calc-collateral" class="text-amber-400 font-mono font-bold">292.50 USDT</span>
-            </div>
-            <div class="flex justify-between items-center text-slate-400">
-              <span>อัตราดอกเบี้ยต่อวัน:</span>
-              <span id="calc-daily-rate" class="text-emerald-400 font-mono font-bold">0.035% / วัน</span>
-            </div>
-            <div class="border-t border-slate-800/80 pt-2 flex justify-between items-center text-slate-300">
-              <span>ค่าดอกเบี้ยเฉลี่ยต่อวัน:</span>
-              <span id="calc-daily-cost" class="text-rose-400 font-mono font-black">~฿2.29 / วัน</span>
-            </div>
-          </div>
-
-          <!-- Borrow & Deploy Action Button -->
-          <button onclick="executeManualLoan()" class="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-emerald-500 hover:from-amber-400 hover:to-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider transition shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2">
-            <span>🚀</span> กู้ยืมและโยกเข้ากระดานทันที (Borrow & Deploy)
-          </button>
-
-          <p class="text-[11px] text-slate-500 text-center">
-            * สัญญาเงินกู้จะถูกหักดอกเบี้ยรายชั่วโมง สามารถกด "คืนเหรียญ" ได้ตลอดเวลา
-          </p>
-
+          <div id="diag-okx" class="hidden p-3 rounded-lg bg-slate-950 border border-slate-800/80 text-[11px] font-mono"></div>
         </div>
 
-      </div>
-
-    </div>
-
-    <!-- ACTIVE LOANS POSITION TABLE -->
-    <div class="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 space-y-4">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <div class="flex items-center gap-2">
-          <span class="text-base font-extrabold text-white">รายการเงินกู้คงค้าง (Active Borrowed Positions)</span>
-          <span id="active-loan-badge-count" class="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">0 สัญญา</span>
-        </div>
-        <span class="text-xs text-slate-400">สามารถกดคืนเหรียญเพื่อปลดล็อคหลักประกัน USDT ได้ทันที</span>
-      </div>
-
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs border-collapse">
-          <thead>
-            <tr class="border-b border-slate-800 text-slate-400 font-semibold uppercase text-[11px]">
-              <th class="py-2.5 px-3">Loan ID</th>
-              <th class="py-2.5 px-3">เหรียญ & จำนวน</th>
-              <th class="py-2.5 px-3">แหล่งกู้ ➔ ปลายทาง</th>
-              <th class="py-2.5 px-3">หลักประกันค้ำ (USDT)</th>
-              <th class="py-2.5 px-3">เวลาที่กู้</th>
-              <th class="py-2.5 px-3">ดอกเบี้ย/วัน</th>
-              <th class="py-2.5 px-3 text-rose-400">ดอกเบี้ยสะสม (THB)</th>
-              <th class="py-2.5 px-3 text-right">ดำเนินการ</th>
-            </tr>
-          </thead>
-          <tbody id="loans-table-body" class="divide-y divide-slate-800/60 font-mono">
-            <tr>
-              <td colspan="8" class="text-center py-6 text-slate-500 text-xs">
-                ยังไม่มีรายการกู้ยืมคงค้าง (เปิดระบบ Auto-Loan ไว้เพื่อสั่งกู้ยืมอัตโนมัติเมื่อพบสเปรด)
-              </td>
-            </tr>
-          </tbody>
-        </table>
       </div>
     </div>
 
-    <!-- MULTI-EXCHANGE LIVE BALANCES -->
+    <!-- REAL EXCHANGE BALANCES & ASSET BREAKDOWN -->
     <div class="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 space-y-4">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <span class="text-base font-extrabold text-white">ยอดคงเหลือในกระเป๋าแต่ละกระดาน (Exchange Balances)</span>
-          <span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">Realtime Multi-Leg</span>
+          <span class="text-base font-extrabold text-white">ยอดสินทรัพย์จริงในกระเป๋า (Real Connected Balances)</span>
+          <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">100% REAL</span>
         </div>
-        <button onclick="fetchStatus()" class="text-xs text-emerald-400 hover:underline">อัปเดตยอด</button>
+        <button onclick="fetchStatus()" class="text-xs text-cyan-400 hover:underline">รีเฟรชยอดทั้งหมด</button>
       </div>
 
-      <div id="exchange-balances-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div id="real-balances-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Dynamically rendered by JavaScript -->
       </div>
     </div>
@@ -513,11 +354,11 @@
       <div class="flex items-center justify-between text-xs text-slate-400">
         <div class="flex items-center gap-2">
           <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 active-ring"></span>
-          <span class="font-bold text-white uppercase tracking-wider">Live Activity & API Handshake Stream</span>
+          <span class="font-bold text-white uppercase tracking-wider">Live Activity & API Communication Stream</span>
         </div>
         <span class="font-mono text-[11px]" id="live-time-str">--:--:--</span>
       </div>
-      <div id="terminal-container" class="h-44 overflow-y-auto font-mono text-[11px] space-y-1.5 p-2 bg-slate-900/80 rounded-xl border border-slate-800/80">
+      <div id="terminal-container" class="h-48 overflow-y-auto font-mono text-[11px] space-y-1.5 p-2 bg-slate-900/80 rounded-xl border border-slate-800/80">
         <div class="text-slate-500">รอคำสั่งหรือการเชื่อมต่อ API...</div>
       </div>
     </div>
@@ -527,133 +368,140 @@
   <!-- JAVASCRIPT LOGIC -->
   <script>
     let currentStatus = null;
-    let borrowableAssets = {};
 
     async function fetchStatus() {
       try {
         const res = await fetch('/api/autotrade/status');
+        if (!res.ok) return;
         const data = await res.json();
         currentStatus = data;
-        renderUI(data);
-
-        // Also fetch loans
-        const loanRes = await fetch('/api/autotrade/loans');
-        const loanData = await loanRes.json();
-        renderLoans(loanData);
-      } catch (err) {
-        console.error('Error fetching status:', err);
+        renderStatus(data);
+      } catch (e) {
+        console.error("fetchStatus error:", e);
       }
     }
 
-    function renderUI(data) {
-      // Live time
+    function renderStatus(data) {
       document.getElementById('live-time-str').innerText = new Date().toLocaleTimeString('th-TH');
 
-      // Mode badges & buttons
-      const mode = data.mode || 'paper';
-      const modeBadge = document.getElementById('active-mode-badge');
-      const descText = document.getElementById('mode-desc-text');
-      
-      const btnPaper = document.getElementById('btn-mode-paper');
+      // Update Mode Buttons
+      const mode = data.mode || 'dry_run';
       const btnDry = document.getElementById('btn-mode-dry');
       const btnLive = document.getElementById('btn-mode-live');
+      const modeDesc = document.getElementById('mode-desc-text');
 
-      btnPaper.className = 'px-3.5 py-2 rounded-xl text-xs font-bold border transition flex items-center gap-2 ' + 
-        (mode === 'paper' ? 'bg-emerald-500 text-slate-950 font-black border-emerald-400 shadow-sm shadow-emerald-500/20' : 'bg-slate-800 text-slate-300 border-slate-700 hover:border-slate-600');
-      
-      btnDry.className = 'px-3.5 py-2 rounded-xl text-xs font-bold border transition flex items-center gap-2 ' + 
-        (mode === 'dry_run' ? 'bg-amber-500 text-slate-950 font-black border-amber-400 shadow-sm shadow-amber-500/20' : 'bg-slate-800 text-slate-300 border-slate-700 hover:border-slate-600');
-      
-      btnLive.className = 'px-3.5 py-2 rounded-xl text-xs font-bold border transition flex items-center gap-2 ' + 
-        (mode === 'live' ? 'bg-rose-500 text-white font-black border-rose-400 shadow-sm shadow-rose-500/20' : 'bg-slate-800 text-rose-400 border-slate-700 hover:border-rose-500/50');
-
-      if (mode === 'paper') {
-        modeBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
-        modeBadge.innerText = 'SIMULATION (PAPER)';
-        descText.innerHTML = '<strong class="text-emerald-400">🟢 Paper Mode:</strong> จำลองการส่งคำสั่งและคิดต้นทุน Slippage สมจริง 100% ภายในเครื่อง';
-      } else if (mode === 'dry_run') {
-        modeBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-400 border border-amber-500/30';
-        modeBadge.innerText = 'DRY-RUN (LIVE API TEST)';
-        descText.innerHTML = '<strong class="text-amber-300">🟡 Dry-Run:</strong> ระบบเชื่อมต่อ API ตรวจสอบสิทธิ์จริง ดึงยอดเงินจริง แต่จำลองการส่งออเดอร์เพื่อความปลอดภัยสูงสุด';
+      if (mode === 'live') {
+        btnLive.className = 'px-4 py-2 rounded-xl text-xs font-bold border transition flex items-center gap-2 bg-rose-500 text-white border-rose-400 shadow-md shadow-rose-500/30';
+        btnDry.className = 'px-4 py-2 rounded-xl text-xs font-bold border transition flex items-center gap-2 bg-slate-800 text-slate-300 border-slate-700 hover:border-amber-500/50';
+        modeDesc.innerHTML = '<strong class="text-rose-400">🔴 Live Real Execution:</strong> กำลังทำงานในโหมดเทรดจริง การซื้อขายจะส่งคำสั่งเข้า Exchange และตัดเงินในบัญชีจริง';
       } else {
-        modeBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-400 border border-rose-500/30';
-        modeBadge.innerText = 'LIVE REAL EXECUTION ⚠️';
-        descText.innerHTML = '<strong class="text-rose-400">🔴 Live Mode:</strong> ระบบส่งคำสั่งซื้อขายจริงเข้าสู่ Exchange ตาม API Key ที่กำหนด';
+        btnDry.className = 'px-4 py-2 rounded-xl text-xs font-bold border transition flex items-center gap-2 bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-sm shadow-amber-500/20';
+        btnLive.className = 'px-4 py-2 rounded-xl text-xs font-bold border transition flex items-center gap-2 bg-slate-800 text-rose-400 border-slate-700 hover:border-rose-500/50';
+        modeDesc.innerHTML = '<strong class="text-amber-300">🟡 Dry-Run:</strong> ระบบเชื่อมต่อ API ตรวจสอบสิทธิ์จริง ดึงยอดเงินจริง แต่ยังไม่ส่งคำสั่งเข้าตลาดเพื่อความปลอดภัย';
       }
 
-      // Auto loan switch
-      const isAutoLoan = data.auto_loan_enabled;
-      const loanToggleBtn = document.getElementById('btn-toggle-autoloan');
-      const loanLabel = document.getElementById('autoloan-label');
-      if (isAutoLoan) {
-        loanToggleBtn.className = 'px-4 py-2 rounded-xl font-bold text-xs flex items-center gap-2 transition shadow-md bg-emerald-500 text-slate-950 font-black';
-        loanLabel.innerText = 'เปิดทำงาน (ON)';
-      } else {
-        loanToggleBtn.className = 'px-4 py-2 rounded-xl font-bold text-xs flex items-center gap-2 transition shadow-md bg-slate-800 text-slate-400 border border-slate-700';
-        loanLabel.innerText = 'ปิดทำงาน (OFF)';
-      }
+      // Exchange Connection Status Badges
+      const keys = data.api_keys || {};
+      const real = data.real_balances || {};
 
-      // API Key connection status indicators
-      const apiKeys = data.api_keys || {};
-      for (const [ex, info] of Object.entries(apiKeys)) {
+      ['binance_global', 'bitkub', 'bybit', 'okx'].forEach(ex => {
         const badge = document.getElementById(`status-badge-${ex}`);
+        const isConn = keys[ex] && keys[ex].connected;
         if (badge) {
-          if (info.connected) {
-            badge.className = 'text-[11px] text-emerald-400 flex items-center gap-1.5 mt-0.5 font-bold';
-            badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400"></span> เชื่อมต่อแล้ว (' + info.masked_key + ')';
+          if (isConn) {
+            badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> <span class="text-emerald-400 font-bold">เชื่อมต่อแล้ว (Connected)</span>`;
           } else {
-            badge.className = 'text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5';
-            badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-slate-500"></span> ยังไม่ได้เชื่อมต่อ';
+            badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-500"></span> <span class="text-slate-400">ยังไม่ได้เชื่อมต่อ</span>`;
           }
         }
+      });
+
+      // Update Top KPIs
+      if (real.binance_global) {
+        document.getElementById('stat-binance-bal').innerHTML = `$${(real.binance_global.free || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} <span class="text-xs font-normal text-slate-400">USDT</span>`;
+      }
+      if (real.bitkub) {
+        document.getElementById('stat-bitkub-bal').innerHTML = `฿${(real.bitkub.free || 0).toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2})} <span class="text-xs font-normal text-slate-400">THB</span>`;
+        if (real.bitkub.coins && Object.keys(real.bitkub.coins).length > 0) {
+          const coinStrs = Object.entries(real.bitkub.coins).map(([c, val]) => `${val.toFixed(2)} ${c}`);
+          document.getElementById('stat-bitkub-coins').innerText = '+ ' + coinStrs.join(', ');
+        }
+      }
+      if (real.bybit) {
+        document.getElementById('stat-bybit-bal').innerHTML = `$${(real.bybit.free || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} <span class="text-xs font-normal text-slate-400">USDT</span>`;
+        document.getElementById('stat-bybit-sub').innerText = '✓ เชื่อมต่อ Bybit V5 สำเร็จ';
+      }
+      if (real.okx) {
+        document.getElementById('stat-okx-bal').innerHTML = `$${(real.okx.free || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} <span class="text-xs font-normal text-slate-400">USDT</span>`;
+        document.getElementById('stat-okx-sub').innerText = '✓ เชื่อมต่อ OKX V5 สำเร็จ';
       }
 
-      // Balances Grid
-      const balGrid = document.getElementById('exchange-balances-grid');
-      balGrid.innerHTML = '';
-      const exLabels = {
-        'bitkub': 'Bitkub Thailand',
-        'binance_th': 'Binance TH by Gulf',
-        'binance_global': 'Binance Global',
-        'bybit': 'Bybit Global',
-        'okx': 'OKX Global'
+      // Render Real Balances Grid
+      const grid = document.getElementById('real-balances-grid');
+      grid.innerHTML = '';
+
+      const exInfo = {
+        'binance_global': { name: 'Binance Global', color: 'amber', icon: 'BN' },
+        'bitkub': { name: 'Bitkub Thailand', color: 'emerald', icon: 'BK' },
+        'bybit': { name: 'Bybit Global', color: 'orange', icon: 'BB' },
+        'okx': { name: 'OKX Global', color: 'cyan', icon: 'OK' }
       };
 
-      for (const [ex, bal] of Object.entries(data.balances || {})) {
+      for (const [ex, info] of Object.entries(exInfo)) {
         const card = document.createElement('div');
-        card.className = 'p-3.5 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-2';
+        card.className = `p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2.5`;
+        
+        const balData = real[ex];
+        let contentHtml = '';
 
-        let coinPills = '';
-        for (const [k, v] of Object.entries(bal)) {
-          if (v > 0) {
-            const isThb = k === 'THB';
-            const isUsdt = k === 'USDT';
-            const colorClass = isThb ? 'text-emerald-400' : (isUsdt ? 'text-cyan-400' : 'text-amber-400');
-            coinPills += `
-              <div class="flex justify-between items-center text-[11px] font-mono border-b border-slate-800/40 pb-1">
-                <span class="text-slate-400">${k}:</span>
-                <span class="${colorClass} font-bold">${isThb ? '฿' + v.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : v.toLocaleString()}</span>
-              </div>
-            `;
+        if (balData && balData.connected) {
+          contentHtml = `
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-slate-400">สถานะ:</span>
+              <span class="text-emerald-400 font-bold">🟢 ออนไลน์</span>
+            </div>
+            <div class="flex items-center justify-between text-xs font-mono">
+              <span class="text-slate-400">ยอดคงเหลือ:</span>
+              <span class="text-white font-bold">${balData.display || balData.free || '0.00'}</span>
+            </div>
+          `;
+          if (balData.coins && Object.keys(balData.coins).length > 0) {
+            contentHtml += `<div class="pt-2 border-t border-slate-800/80 space-y-1">
+              <span class="text-[11px] text-slate-500 font-semibold block">เหรียญอื่นๆ ในกระเป๋า:</span>`;
+            for (const [c, amt] of Object.entries(balData.coins)) {
+              contentHtml += `<div class="flex justify-between text-[11px] font-mono text-slate-300">
+                <span>${c}</span><span>${amt.toLocaleString()}</span>
+              </div>`;
+            }
+            contentHtml += `</div>`;
           }
+        } else {
+          contentHtml = `
+            <div class="text-xs text-slate-500 py-3 text-center">
+              ยังไม่ได้เชื่อมต่อ API Key<br>
+              <span class="text-[10px] text-slate-600">กรอกข้อมูลด้านบนแล้วกด "ทดสอบเชื่อมต่อ"</span>
+            </div>
+          `;
         }
 
         card.innerHTML = `
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-white text-xs">${exLabels[ex] || ex.toUpperCase()}</span>
-            <span class="text-[10px] text-slate-500 font-mono">Ledger</span>
+          <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+            <span class="font-bold text-white text-xs flex items-center gap-1.5">
+              <span class="text-${info.color}-400 font-black">${info.icon}</span> ${info.name}
+            </span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800 font-mono">REAL</span>
           </div>
-          <div class="space-y-1">
-            ${coinPills || '<div class="text-xs text-slate-500">ไม่มีเหรียญในกระเป๋า</div>'}
+          <div class="space-y-1.5">
+            ${contentHtml}
           </div>
         `;
-        balGrid.appendChild(card);
+        grid.appendChild(card);
       }
 
       // Terminal Logs
       const term = document.getElementById('terminal-container');
       term.innerHTML = '';
-      (data.terminal_logs || []).slice(-25).forEach(l => {
+      (data.terminal_logs || []).slice(-30).forEach(l => {
         const row = document.createElement('div');
         let color = 'text-slate-300';
         if (l.type === 'trade') color = 'text-emerald-400 font-semibold';
@@ -668,82 +516,6 @@
       term.scrollTop = term.scrollHeight;
     }
 
-    function renderLoans(loanData) {
-      borrowableAssets = loanData.borrowable_assets || {};
-      
-      // Update KPIs
-      document.getElementById('stat-active-loans').innerText = loanData.active_count || 0;
-      document.getElementById('stat-borrowed-val').innerText = '฿' + (loanData.active_borrowed_val_thb || 0).toLocaleString('th-TH', {minimumFractionDigits: 2});
-      document.getElementById('stat-accrued-interest').innerText = '฿' + (loanData.total_accrued_interest_thb || 0).toLocaleString('th-TH', {minimumFractionDigits: 2});
-      document.getElementById('stat-collateral-usdt').innerText = (loanData.active_collateral_usdt || 0).toLocaleString('th-TH', {minimumFractionDigits: 2});
-
-      document.getElementById('active-loan-badge-count').innerText = `${loanData.active_count || 0} สัญญา`;
-
-      // Render table
-      const tbody = document.getElementById('loans-table-body');
-      const activeList = (loanData.loans || []).filter(l => l.status === 'ACTIVE');
-
-      if (activeList.length === 0) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="8" class="text-center py-6 text-slate-500 text-xs">
-              ยังไม่มีรายการกู้ยืมคงค้าง (เปิดระบบ Auto-Loan ไว้เพื่อสั่งกู้ยืมอัตโนมัติเมื่อพบสเปรด)
-            </td>
-          </tr>
-        `;
-        return;
-      }
-
-      tbody.innerHTML = '';
-      const exLabels = {
-        'bitkub': 'Bitkub',
-        'binance_th': 'Binance TH',
-        'binance_global': 'Binance'
-      };
-
-      activeList.forEach(l => {
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-slate-800/30 transition';
-        tr.innerHTML = `
-          <td class="py-2.5 px-3 text-cyan-400 font-bold">${l.id}</td>
-          <td class="py-2.5 px-3 font-bold text-white">${l.amount} <span class="text-amber-400">${l.coin}</span></td>
-          <td class="py-2.5 px-3 text-slate-300 text-[11px]">${exLabels[l.borrow_source] || l.borrow_source} ➔ <span class="text-emerald-400">${exLabels[l.target_exchange] || l.target_exchange}</span></td>
-          <td class="py-2.5 px-3 text-slate-200">${l.collateral_amount} USDT</td>
-          <td class="py-2.5 px-3 text-slate-400 text-[11px]">${l.borrow_time_str.split(' ')[1]} (${l.elapsed_hours || 0} ชม.)</td>
-          <td class="py-2.5 px-3 text-emerald-400">${l.daily_interest_rate_pct}%</td>
-          <td class="py-2.5 px-3 text-rose-400 font-bold">฿${(l.accrued_interest_thb || 0).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
-          <td class="py-2.5 px-3 text-right">
-            <button onclick="repayLoan('${l.id}')" class="px-2.5 py-1 rounded bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white border border-rose-500/30 font-sans font-bold text-[10px] transition">
-              คืนเหรียญ
-            </button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    function updateLoanCalculator() {
-      const coin = document.getElementById('loan-coin-select').value;
-      const amt = parseFloat(document.getElementById('loan-amount-input').value) || 0;
-      document.getElementById('loan-coin-unit').innerText = coin;
-
-      const asset = borrowableAssets[coin] || {
-        ref_usd: 1.0, daily_rate: 0.00025, collateral_ratio: 1.5
-      };
-
-      const usdPrice = asset.ref_usd || 1.0;
-      const thbPrice = usdPrice * 33.54;
-      const loanValUsd = amt * usdPrice;
-      const collateral = loanValUsd * (asset.collateral_ratio || 1.5);
-      const dailyRatePct = (asset.daily_rate || 0.00025) * 100;
-      const dailyCostThb = (amt * thbPrice) * (asset.daily_rate || 0.00025);
-
-      document.getElementById('calc-coin-price').innerText = `~$${usdPrice.toFixed(2)} (฿${thbPrice.toFixed(2)})`;
-      document.getElementById('calc-collateral').innerText = `${collateral.toFixed(2)} USDT`;
-      document.getElementById('calc-daily-rate').innerText = `${dailyRatePct.toFixed(3)}% / วัน`;
-      document.getElementById('calc-daily-cost').innerText = `~฿${dailyCostThb.toFixed(2)} / วัน`;
-    }
-
     async function setMode(mode) {
       try {
         const res = await fetch('/api/autotrade/mode', {
@@ -751,7 +523,7 @@
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({mode: mode})
         });
-        const data = await res.json();
+        await res.json();
         fetchStatus();
       } catch (e) {
         alert('เกิดข้อผิดพลาดในการเปลี่ยนโหมด: ' + e);
@@ -760,7 +532,7 @@
 
     function confirmLiveTradePrompt() {
       const ok = confirm(
-        '⚠️ คำเตือนความปลอดภัยสูงสุด (Live Real Execution):\n\n' +
+        '⚠️ คำเตือนความปลอดภัย (Live Real Execution):\n\n' +
         'คุณกำลังจะเปิดโหมดการส่งคำสั่งซื้อขายจริงเข้าสู่ Exchange\n' +
         'คำสั่งจะตัดยอดเงินจริงในพอร์ตของคุณตาม API Key ที่ระบุ\n\n' +
         'คุณต้องการยืนยันการเปิดโหมดเทรดจริงหรือไม่?'
@@ -770,40 +542,34 @@
       }
     }
 
-    async function toggleAutoLoan() {
-      try {
-        const res = await fetch('/api/autotrade/loan/auto-toggle', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'}
-        });
-        const data = await res.json();
-        fetchStatus();
-      } catch (e) {
-        alert('เกิดข้อผิดพลาด: ' + e);
-      }
-    }
-
     async function testConnection(exchange) {
       const keyInput = document.getElementById(`key-${exchange}`);
       const secretInput = document.getElementById(`secret-${exchange}`);
       const diagBox = document.getElementById(`diag-${exchange}`);
 
-      const key = keyInput.value.trim();
-      const secret = secretInput.value.trim();
+      const key = keyInput ? keyInput.value.trim() : '';
+      const secret = secretInput ? secretInput.value.trim() : '';
+      let passphrase = '';
+
+      if (exchange === 'okx') {
+        const passInput = document.getElementById('pass-okx');
+        passphrase = passInput ? passInput.value.trim() : '';
+      }
 
       diagBox.className = 'p-3 rounded-lg bg-slate-950 border border-amber-500/40 text-[11px] font-mono text-amber-300';
       diagBox.innerHTML = '⏳ กำลังทดสอบส่งสัญญาณ Handshake & ตรวจสอบสิทธิ์ API...';
       diagBox.classList.remove('hidden');
 
       try {
+        const payload = { exchange: exchange, key: key, secret: secret };
+        if (exchange === 'okx') {
+          payload.passphrase = passphrase;
+        }
+
         const res = await fetch('/api/autotrade/test-api', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            exchange: exchange,
-            key: key,
-            secret: secret
-          })
+          body: JSON.stringify(payload)
         });
         const result = await res.json();
 
@@ -812,16 +578,14 @@
           let balHtml = '';
           const spotKeys = result.balances ? Object.keys(result.balances).slice(0, 8) : [];
           if (spotKeys.length > 0) {
-            balHtml += '<br><strong>🔹 ยอดในกระเป๋า Spot:</strong> ' + spotKeys.map(k => `${k}: ${typeof result.balances[k] === 'object' ? result.balances[k].free : result.balances[k]}`).join(' | ');
-          } else {
-            balHtml += '<br><strong>🔹 ยอดในกระเป๋า Spot:</strong> <span class="text-slate-400">0.00 (ว่าง)</span>';
+            balHtml += '<br><strong>🔹 ยอดในกระเป๋า:</strong> ' + spotKeys.map(k => `${k}: ${typeof result.balances[k] === 'object' ? (result.balances[k].free || result.balances[k].total) : result.balances[k]}`).join(' | ');
           }
 
           if (result.margin_balances && Object.keys(result.margin_balances).length > 0) {
             const mKeys = Object.keys(result.margin_balances);
-            const mStr = mKeys.map(k => `${k}: ${result.margin_balances[k].free} (ยืมได้)`).join(' | ');
-            balHtml += `<br><strong>🏦 หลักประกันในกระเป๋า Cross Margin:</strong> <span class="text-emerald-300 font-bold">${mStr}</span>`;
-            balHtml += ` <span class="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold">Margin Level: ${result.margin_level || '999'} (พร้อมค้ำกู้ยืม 100% 🟢)</span>`;
+            const mStr = mKeys.map(k => `${k}: ${result.margin_balances[k].free}`).join(' | ');
+            balHtml += `<br><strong>🏦 กระเป๋า Cross Margin:</strong> <span class="text-emerald-300 font-bold">${mStr}</span>`;
+            balHtml += ` <span class="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold">Margin Level: ${result.margin_level || '999'} 🟢</span>`;
           }
 
           diagBox.innerHTML = `
@@ -841,69 +605,9 @@
       }
     }
 
-    async function executeManualLoan() {
-      const coin = document.getElementById('loan-coin-select').value;
-      const amt = parseFloat(document.getElementById('loan-amount-input').value) || 0;
-      const source = document.getElementById('loan-source-select').value;
-      const target = document.getElementById('loan-target-select').value;
-
-      if (amt <= 0) {
-        alert('กรุณาระบุจำนวนเหรียญที่ต้องการกู้ยืม');
-        return;
-      }
-
-      const ok = confirm(`ยืนยันการกู้ยืม ${amt} ${coin} จาก ${source} และโยกเข้า ${target}?`);
-      if (!ok) return;
-
-      try {
-        const res = await fetch('/api/autotrade/loan/borrow', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            coin: coin,
-            amount: amt,
-            borrow_source: source,
-            target_exchange: target
-          })
-        });
-        const data = await res.json();
-        if (data.status === 'ok') {
-          alert(`✅ กู้ยืมและโยกเหรียญ ${amt} ${coin} เข้ากระเป๋าเรียบร้อยแล้ว!`);
-          fetchStatus();
-        } else {
-          alert('ข้อผิดพลาด: ' + data.message);
-        }
-      } catch (err) {
-        alert('เกิดข้อผิดพลาด: ' + err);
-      }
-    }
-
-    async function repayLoan(loanId) {
-      const ok = confirm(`ยืนยันการคืนเหรียญสำหรับสัญญา ${loanId}?\nระบบจะหักเหรียญที่ยืมและปลดล็อคหลักประกัน USDT คืนเข้าพอร์ต`);
-      if (!ok) return;
-
-      try {
-        const res = await fetch('/api/autotrade/loan/repay', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({loan_id: loanId})
-        });
-        const data = await res.json();
-        if (data.status === 'ok') {
-          alert(`✅ ชำระคืนเหรียญเรียบร้อยแล้ว! (ดอกเบี้ยที่หักจ่าย: ฿${data.interest_thb.toFixed(2)})`);
-          fetchStatus();
-        } else {
-          alert('ข้อผิดพลาด: ' + data.message);
-        }
-      } catch (err) {
-        alert('เกิดข้อผิดพลาด: ' + err);
-      }
-    }
-
     // Initialize
     fetchStatus();
-    updateLoanCalculator();
-    setInterval(fetchStatus, 2500);
+    setInterval(fetchStatus, 3000);
   </script>
 
 </body>

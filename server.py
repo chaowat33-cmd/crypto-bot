@@ -1143,7 +1143,12 @@ class CryptoHandler(SimpleHTTPRequestHandler):
             length = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(length) if length > 0 else b"{}"
             data = json.loads(body.decode("utf-8"))
-            res = autotrade_engine.set_api_keys(data.get("exchange", ""), data.get("key", ""), data.get("secret", ""))
+            res = autotrade_engine.set_api_keys(
+                data.get("exchange", ""),
+                data.get("key", ""),
+                data.get("secret", ""),
+                passphrase=data.get("passphrase", None)
+            )
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.end_headers()
@@ -1168,7 +1173,8 @@ class CryptoHandler(SimpleHTTPRequestHandler):
             res = autotrade_engine.test_exchange_api(
                 data.get("exchange", ""),
                 data.get("key", None),
-                data.get("secret", None)
+                data.get("secret", None),
+                passphrase=data.get("passphrase", None)
             )
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")

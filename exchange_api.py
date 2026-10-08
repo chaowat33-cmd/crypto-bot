@@ -467,6 +467,132 @@ class ExchangeAPIClient:
             }
 
     @staticmethod
+    def test_okx(api_key, api_secret, passphrase):
+        """
+        Test OKX V5 API credentials
+        Fetches account balance and trading status using V5 authentication.
+        """
+        start_t = time.time()
+        ex_label = "OKX Global"
+
+        if not api_key or not api_secret or not passphrase:
+            return {
+                "success": False,
+                "exchange": ex_label,
+                "latency_ms": 0,
+                "message": "กรุณาระบุ OKX API Key, Secret Key และ Passphrase ให้ครบถ้วน"
+            }
+
+        if api_key.startswith("demo_") or api_key.startswith("test_") or "mock" in api_key.lower():
+            return {
+                "success": True,
+                "is_mock": True,
+                "exchange": ex_label,
+                "latency_ms": 42,
+                "can_trade": True,
+                "permissions": ["TRADE", "FUTURES", "SWAP"],
+                "balances": {"USDT": 10000.0, "BTC": 0.1, "ETH": 1.0},
+                "total_equity_usd": 10000.0,
+                "message": "✅ [DEMO/MOCK] จำลองการเชื่อมต่อ OKX Global สำเร็จ"
+            }
+
+        try:
+            # 1. Fetch server time
+            server_time_ms = int(time.time() * 1000)
+            req_time = urllib.request.Request(
+                "https://www.okx.com/api/v5/public/time",
+                headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+            )
+            try:
+                with urllib.request.urlopen(req_time, timeout=4) as r:
+                    d = json.loads(r.read().decode())
+                    if d.get("code") == "0" and d.get("data"):
+                        server_time_ms = int(d["data"][0]["ts"])
+            except Exception:
+                pass
+
+            ts_iso = datetime.datetime.fromtimestamp(server_time_ms / 1000.0, tz=datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
+            method = "GET"
+            path = "/api/v5/account/balance"
+            body = ""
+            prehash = f"{ts_iso}{method}{path}{body}"
+            sig = base64.b64encode(hmac.new(api_secret.encode('utf-8'), prehash.encode('utf-8'), hashlib.sha256).digest()).decode('utf-8')
+
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+                "OK-ACCESS-KEY": api_key,
+                "OK-ACCESS-SIGN": sig,
+                "OK-ACCESS-TIMESTAMP": ts_iso,
+                "OK-ACCESS-PASSPHRASE": passphrase,
+                "Content-Type": "application/json"
+            }
+
+            req = urllib.request.Request(f"https://www.okx.com{path}", headers=headers)
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                data = json.loads(resp.read().decode('utf-8'))
+
+            ret_code = str(data.get("code", "-1"))
+            ret_msg = data.get("msg", "")
+
+            if ret_code != "0":
+                return {
+                    "success": False,
+                    "exchange": ex_label,
+                    "latency_ms": int((time.time() - start_t) * 1000),
+                    "message": f"❌ OKX API Error: {ret_msg} (Code {ret_code})"
+                }
+
+            balances = {}
+            total_equity_usd = 0.0
+            acc_list = data.get("data", [])
+            for acc in acc_list:
+                total_equity_usd = float(acc.get("totalEq", 0) or 0)
+                for det in acc.get("details", []):
+                    ccy = det.get("ccy", "")
+                    avail = float(det.get("availBal", 0) or 0)
+                    eq = float(det.get("eq", 0) or 0)
+                    if eq > 0 or avail > 0:
+                        balances[ccy] = {
+                            "free": avail,
+                            "total": eq,
+                            "usd_val": float(det.get("eqUsd", 0) or 0)
+                        }
+
+            elapsed_ms = int((time.time() - start_t) * 1000)
+            return {
+                "success": True,
+                "exchange": ex_label,
+                "latency_ms": elapsed_ms,
+                "can_trade": True,
+                "total_equity_usd": total_equity_usd,
+                "balances": balances,
+                "message": f"✅ เชื่อมต่อ OKX Global สำเร็จเรียบร้อย! ({elapsed_ms}ms) ยอดเงินพอร์ต: ${total_equity_usd:,.2f} USDT"
+            }
+        except urllib.error.HTTPError as e:
+            elapsed_ms = int((time.time() - start_t) * 1000)
+            err_body = e.read().decode("utf-8", errors="ignore")
+            try:
+                ej = json.loads(err_body)
+                err_msg = ej.get("msg", err_body)
+            except Exception:
+                err_msg = err_body
+            return {
+                "success": False,
+                "exchange": ex_label,
+                "latency_ms": elapsed_ms,
+                "http_code": e.code,
+                "message": f"❌ ข้อผิดพลาด OKX HTTP {e.code}: {err_msg}"
+            }
+        except Exception as e:
+            elapsed_ms = int((time.time() - start_t) * 1000)
+            return {
+                "success": False,
+                "exchange": ex_label,
+                "latency_ms": elapsed_ms,
+                "message": f"❌ ข้อผิดพลาด OKX: {str(e)}"
+            }
+
+    @staticmethod
     def test_generic_exchange(exchange, api_key, api_secret):
         """Test Upbit, Orbix, or other exchanges"""
         ex_names = {"upbit": "Upbit Thailand", "orbix": "Orbix"}

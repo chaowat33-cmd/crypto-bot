@@ -121,17 +121,16 @@ class AutoTradeEngine:
         }
         self.balances = json.loads(json.dumps(self.default_balances))
         
-        # Exchange API Keys
+        # Exchange API Keys (Real Only: Bitkub, Binance Global, Bybit, OKX)
         self.api_keys = {
             "bitkub": {"key": "", "secret": "", "connected": False},
-            "binance_th": {"key": "", "secret": "", "connected": False},
             "binance_global": {"key": "", "secret": "", "connected": False},
-            "orbix": {"key": "", "secret": "", "connected": False},
-            "upbit": {"key": "", "secret": "", "connected": False}
+            "bybit": {"key": "", "secret": "", "connected": False},
+            "okx": {"key": "", "secret": "", "passphrase": "", "connected": False}
         }
 
-        # Crypto Loan & Cross-Inventory System
-        self.auto_loan_enabled = True
+        # Real Inventory & Balances
+        self.auto_loan_enabled = False
         self.loans = []
         self.borrowable_assets = BORROWABLE_ASSETS
         self.real_balances = {}
@@ -140,7 +139,7 @@ class AutoTradeEngine:
         self.load_keys()
         self.load_state()
         self.refresh_real_balances()
-        self.log(f"🤖 Ultra-Realistic Arbitrage Engine Online! ทุนไม้ละ: ฿{self.trade_size_thb:,.0f} | Delay: {self.sim_delay_min_sec:.1f}-{self.sim_delay_max_sec:.1f}s | VWAP Slippage & Dual-Legging Activated", "success")
+        self.log(f"🤖 Real Cross-Exchange Arbitrage Engine Online! ทุนไม้ละ: ฿{self.trade_size_thb:,.0f} | Delay: {self.sim_delay_min_sec:.1f}-{self.sim_delay_max_sec:.1f}s", "success")
 
     def refresh_real_balances(self):
         """Fetch actual balances directly from connected exchange APIs."""
@@ -207,6 +206,39 @@ class AutoTradeEngine:
                     }
         except Exception:
             pass
+
+        try:
+            bb = self.api_keys.get("bybit", {})
+            if bb.get("connected") and bb.get("key") and bb.get("secret"):
+                r = ExchangeAPIClient.test_bybit(bb["key"], bb["secret"])
+                if r.get("success"):
+                    tot_usd = r.get("total_equity_usd", 0.0)
+                    real["bybit"] = {
+                        "connected": True,
+                        "currency": "USDT (Unified)",
+                        "free": tot_usd,
+                        "total": tot_usd,
+                        "display": f"${tot_usd:,.2f} USDT"
+                    }
+        except Exception:
+            pass
+
+        try:
+            ok = self.api_keys.get("okx", {})
+            if ok.get("connected") and ok.get("key") and ok.get("secret") and ok.get("passphrase"):
+                r = ExchangeAPIClient.test_okx(ok["key"], ok["secret"], ok["passphrase"])
+                if r.get("success"):
+                    tot_usd = r.get("total_equity_usd", 0.0)
+                    real["okx"] = {
+                        "connected": True,
+                        "currency": "USDT (Trading)",
+                        "free": tot_usd,
+                        "total": tot_usd,
+                        "display": f"${tot_usd:,.2f} USDT"
+                    }
+        except Exception:
+            pass
+
         self.real_balances = real
         self.last_real_bal_refresh = time.time()
         return real
@@ -229,6 +261,12 @@ class AutoTradeEngine:
         bk_sec = os.environ.get("BITKUB_API_SECRET", "")
         bn_key = os.environ.get("BINANCE_API_KEY", "")
         bn_sec = os.environ.get("BINANCE_API_SECRET", "")
+        bb_key = os.environ.get("BYBIT_API_KEY", "")
+        bb_sec = os.environ.get("BYBIT_API_SECRET", "")
+        ok_key = os.environ.get("OKX_API_KEY", "")
+        ok_sec = os.environ.get("OKX_API_SECRET", "")
+        ok_pass = os.environ.get("OKX_PASSPHRASE", "")
+
         if bk_key and bk_sec:
             self.api_keys["bitkub"]["key"] = bk_key
             self.api_keys["bitkub"]["secret"] = bk_sec
@@ -237,6 +275,15 @@ class AutoTradeEngine:
             self.api_keys["binance_global"]["key"] = bn_key
             self.api_keys["binance_global"]["secret"] = bn_sec
             self.api_keys["binance_global"]["connected"] = True
+        if bb_key and bb_sec:
+            self.api_keys["bybit"]["key"] = bb_key
+            self.api_keys["bybit"]["secret"] = bb_sec
+            self.api_keys["bybit"]["connected"] = True
+        if ok_key and ok_sec and ok_pass:
+            self.api_keys["okx"]["key"] = ok_key
+            self.api_keys["okx"]["secret"] = ok_sec
+            self.api_keys["okx"]["passphrase"] = ok_pass
+            self.api_keys["okx"]["connected"] = True
 
         try:
             if os.path.exists(KEYS_FILE):
@@ -246,7 +293,12 @@ class AutoTradeEngine:
                         if ex in self.api_keys and not self.api_keys[ex]["key"]:
                             self.api_keys[ex]["key"] = v.get("key", "")
                             self.api_keys[ex]["secret"] = v.get("secret", "")
-                            self.api_keys[ex]["connected"] = bool(v.get("key") and v.get("secret"))
+                            if "passphrase" in self.api_keys[ex]:
+                                self.api_keys[ex]["passphrase"] = v.get("passphrase", "")
+                            conn = bool(v.get("key") and v.get("secret"))
+                            if ex == "okx":
+                                conn = conn and bool(v.get("passphrase"))
+                            self.api_keys[ex]["connected"] = conn
         except Exception as e:
             print(f"Error loading keys: {e}")
 
@@ -381,15 +433,20 @@ class AutoTradeEngine:
             self.log("🔄 รีเซ็ตพอร์ตโฟลิโอจำลองและประวัติการเทรดเริ่มต้นใหม่ (฿100,000 ต่อกระดาน)", "warning")
             return {"status": "ok"}
 
-    def set_api_keys(self, exchange, key, secret):
+    def set_api_keys(self, exchange, key, secret, passphrase=None):
         with self.lock:
             if exchange in self.api_keys:
                 self.api_keys[exchange]["key"] = key.strip()
                 self.api_keys[exchange]["secret"] = secret.strip()
-                self.api_keys[exchange]["connected"] = bool(key.strip() and secret.strip())
+                if passphrase is not None:
+                    self.api_keys[exchange]["passphrase"] = passphrase.strip()
+                conn = bool(key.strip() and secret.strip())
+                if exchange == "okx":
+                    conn = conn and bool(self.api_keys[exchange].get("passphrase"))
+                self.api_keys[exchange]["connected"] = conn
                 self.save_keys()
-                self.log(f"🔑 บันทึก API Key สำหรับ {exchange.upper()} (Connected: {self.api_keys[exchange]['connected']})", "info")
-                return {"status": "ok", "connected": self.api_keys[exchange]["connected"]}
+                self.log(f"🔑 บันทึก API Key สำหรับ {exchange.upper()} (Connected: {conn})", "info")
+                return {"status": "ok", "connected": conn}
             return {"status": "error", "message": "Unknown exchange"}
 
     def set_mode(self, mode):
@@ -413,20 +470,21 @@ class AutoTradeEngine:
             self.log(f"🏦 ระบบ Auto-Loan & Cross-Transfer: {status_text}", "info")
             return {"status": "ok", "auto_loan_enabled": self.auto_loan_enabled}
 
-    def test_exchange_api(self, exchange, key=None, secret=None):
+    def test_exchange_api(self, exchange, key=None, secret=None, passphrase=None):
         with self.lock:
             saved = self.api_keys.get(exchange, {})
             api_k = key.strip() if key is not None else saved.get("key", "")
             api_s = secret.strip() if secret is not None else saved.get("secret", "")
+            api_p = passphrase.strip() if passphrase is not None else saved.get("passphrase", "")
 
             if exchange == "binance_global":
                 res = ExchangeAPIClient.test_binance(api_k, api_s, is_th=False)
-            elif exchange == "binance_th":
-                res = ExchangeAPIClient.test_binance(api_k, api_s, is_th=True)
             elif exchange == "bitkub":
                 res = ExchangeAPIClient.test_bitkub(api_k, api_s)
             elif exchange == "bybit":
                 res = ExchangeAPIClient.test_bybit(api_k, api_s)
+            elif exchange == "okx":
+                res = ExchangeAPIClient.test_okx(api_k, api_s, api_p)
             else:
                 res = ExchangeAPIClient.test_generic_exchange(exchange, api_k, api_s)
 
@@ -434,9 +492,12 @@ class AutoTradeEngine:
                 if exchange in self.api_keys:
                     self.api_keys[exchange]["key"] = api_k
                     self.api_keys[exchange]["secret"] = api_s
+                    if "passphrase" in self.api_keys[exchange]:
+                        self.api_keys[exchange]["passphrase"] = api_p
                     self.api_keys[exchange]["connected"] = True
                     self.save_keys()
                 self.log(f"✅ ทดสอบเชื่อมต่อ {exchange.upper()} สำเร็จ: {res.get('message', '')}", "success")
+                self.refresh_real_balances()
             else:
                 self.log(f"❌ ทดสอบเชื่อมต่อ {exchange.upper()} ไม่สำเร็จ: {res.get('message', '')}", "error")
             return res
