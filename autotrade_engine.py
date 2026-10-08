@@ -1171,15 +1171,18 @@ class AutoTradeEngine:
                 )
                 execution_note += " [LIVE 100%]"
             else:
-                live_executed = True  # Buy already went through
+                live_executed = False
                 self.log(f"⚠️ [LIVE PARTIAL FAIL] ซื้อ {buy_ex} สำเร็จ แต่ขาย {sell_ex} ล้มเหลว: {res_sell.get('message')}", "error")
                 send_telegram_alert(
                     f"⚠️ <b>[LIVE PARTIAL ALERT] ขาซื้อสำเร็จ แต่ขาขายขัดข้อง!</b>\n\n"
                     f"🪙 เหรียญ: <b>{coin}</b>\n"
                     f"🟢 ซื้อ {buy_ex}: สำเร็จ (Order {res_buy.get('order_id')})\n"
-                    f"❌ ขาย {sell_ex}: {res_sell.get('message')}"
+                    f"❌ ขาย {sell_ex}: {res_sell.get('message')}\n"
+                    f"🛡️ ระบบกำลังขายเหรียญคืนเป็นเงินสดเข้ากระเป๋าทันทีเพื่อความปลอดภัย 100%"
                 )
-                execution_note += " [LIVE PARTIAL]"
+                if buy_ex == "bitkub":
+                    threading.Thread(target=self.unwind_unhedged_bitkub_coins, daemon=True).start()
+                return
 
         if self.mode == "live" and not live_executed:
             return
@@ -1280,16 +1283,7 @@ class AutoTradeEngine:
         )
         self.log(msg, "trade")
 
-        if live_executed:
-            send_telegram_alert(
-                f"🎉 <b>[LIVE TRADE FILLED] บอททำกำไรสำเร็จ!</b>\n\n"
-                f"🪙 เหรียญ: <b>{coin}</b>\n"
-                f"🔄 เส้นทาง: {ex_names.get(buy_ex, buy_ex)} ➔ {ex_names.get(sell_ex, sell_ex)}\n"
-                f"💵 ทุนเทรด: ฿{trade_val_thb:,.0f} THB\n"
-                f"📊 สเปรดสุทธิ: +{actual_roi_pct:.2f}%\n"
-                f"💰 <b>กำไรสุทธิ: +฿{net_profit_thb:,.2f} THB</b>\n"
-                f"⏱️ เวลา: {trade_record['time_str']}"
-            )
+        # Telegram notification is already dispatched with exact exchange order IDs upon live execution
 
     def record_missed_trade(self, p, reason, reason_th, final_spread, delay_actual):
         trade_id = p["order_id"]
