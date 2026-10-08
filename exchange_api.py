@@ -703,6 +703,52 @@ class ExchangeAPIClient:
         formatted_str = f"{truncated:.{prec}f}"
         return float(formatted_str)
 
+    _bybit_symbol_cache = {}
+
+    @classmethod
+    def get_bybit_symbol_rules(cls, coin):
+        """Fetch and cache Bybit Linear lotSizeFilter qtyStep and minOrderQty"""
+        coin_upper = coin.upper()
+        sym = f"{coin_upper}USDT"
+        if sym in cls._bybit_symbol_cache:
+            return cls._bybit_symbol_cache[sym]
+        try:
+            url = f"https://api.bybit.com/v5/market/instruments-info?category=linear&symbol={sym}"
+            req = urllib.request.Request(url, headers={"User-Agent": "Antigravity/2.0"})
+            with urllib.request.urlopen(req, timeout=4) as r:
+                data = json.loads(r.read().decode("utf-8"))
+                flt = data.get("result", {}).get("list", [{}])[0].get("lotSizeFilter", {})
+                step_str = flt.get("qtyStep", "0.01")
+                min_qty = float(flt.get("minOrderQty", "0.01"))
+                from decimal import Decimal
+                d = Decimal(step_str).normalize()
+                prec = max(0, -d.as_tuple().exponent)
+                rules = {
+                    "valid": True,
+                    "step_str": step_str,
+                    "step_size": float(step_str),
+                    "precision": prec,
+                    "min_qty": min_qty
+                }
+                cls._bybit_symbol_cache[sym] = rules
+                return rules
+        except Exception:
+            rules = {"valid": False, "step_str": "0.01", "step_size": 0.01, "precision": 2, "min_qty": 0.01}
+            cls._bybit_symbol_cache[sym] = rules
+            return rules
+
+    @classmethod
+    def format_bybit_quantity(cls, coin, raw_qty):
+        rules = cls.get_bybit_symbol_rules(coin)
+        from decimal import Decimal
+        step = Decimal(rules.get("step_str", "0.01"))
+        raw = Decimal(str(raw_qty))
+        truncated = (raw // step) * step
+        prec = rules.get("precision", 2)
+        if prec == 0:
+            return int(truncated)
+        return float(f"{truncated:.{prec}f}")
+
     @classmethod
     def get_bitkub_symbol_scale(cls, coin):
         """Fetch and cache quantity_scale for Bitkub market sell"""
@@ -932,7 +978,9 @@ class ExchangeAPIClient:
                 else:
                     payload["qty"] = f"{coin_amount}"
             else:
-                payload["qty"] = f"{coin_amount}"
+                qty_val = cls.format_bybit_quantity(coin, coin_amount)
+                payload["qty"] = str(qty_val)
+                payload["positionIdx"] = 0
 
             body_str = json.dumps(payload)
             param_str = ts + api_key + recv_window + body_str
@@ -1029,26 +1077,24 @@ class ExchangeAPIClient:
             ret_code = str(data.get("code", "-1"))
             ret_msg = data.get("msg", "")
 
-            if ret_code == "0":
-                order_id = data.get("data", [{}])[0].get("ordId", "")
-                sCode = data.get("data", [{}])[0].get("sCode", "0")
-                sMsg = data.get("data", [{}])[0].get("sMsg", "")
-                if sCode == "0":
-                    return {
-                        "success": True,
-                        "order_id": order_id,
-                        "raw": data,
-                        "message": f"✅ OKX {'SWAP' if is_perp else 'SPOT'} {side_str.upper()} สำเร็จ! Order ID: {order_id}"
-                    }
-                else:
-                    return {
-                        "success": False,
-                        "message": f"❌ OKX ปฏิเสธคำสั่ง ({sCode}): {sMsg}"
-                    }
+            first_data = data.get("data", [{}])[0] if data.get("data") else {}
+            order_id = first_data.get("ordId", "")
+            sCode = str(first_data.get("sCode", "0"))
+            sMsg = first_data.get("sMsg", "")
+
+            if ret_code == "0" and sCode == "0":
+                return {
+                    "success": True,
+                    "order_id": order_id,
+                    "raw": data,
+                    "message": f"✅ OKX {'SWAP' if is_perp else 'SPOT'} {side_str.upper()} สำเร็จ! Order ID: {order_id}"
+                }
             else:
+                err_code = sCode if sCode != "0" else ret_code
+                err_text = sMsg or ret_msg
                 return {
                     "success": False,
-                    "message": f"❌ OKX API Error ({ret_code}): {ret_msg}"
+                    "message": f"❌ OKX ปฏิเสธคำสั่ง ({err_code}): {err_text}"
                 }
         except Exception as e:
             return {"success": False, "message": f"❌ ข้อผิดพลาด OKX Order: {str(e)}"}

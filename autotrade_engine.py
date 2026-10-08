@@ -232,6 +232,7 @@ class AutoTradeEngine:
                         "connected": True,
                         "currency": "USDT (Margin)",
                         "free": free_usdt,
+                        "usdt": free_usdt,
                         "borrowed": m_bal.get("borrowed", 0.0),
                         "borrowed_assets": borrowed_assets,
                         "margin_level": r.get("margin_level", "999"),
@@ -245,6 +246,7 @@ class AutoTradeEngine:
                         "connected": True,
                         "currency": "USDT (Margin)",
                         "free": 221.43,
+                        "usdt": 221.43,
                         "borrowed": 0.0,
                         "borrowed_assets": {},
                         "margin_level": "999",
@@ -259,11 +261,14 @@ class AutoTradeEngine:
                 r = ExchangeAPIClient.test_bybit(bb["key"], bb["secret"])
                 if r.get("success"):
                     tot_usd = r.get("total_equity_usd", 0.0)
+                    coins_dict = {k: v.get("total", 0.0) for k, v in r.get("balances", {}).items()}
                     real["bybit"] = {
                         "connected": True,
                         "currency": "USDT (Unified)",
                         "free": tot_usd,
+                        "usdt": tot_usd,
                         "total": tot_usd,
+                        "coins": coins_dict,
                         "display": f"${tot_usd:,.2f} USDT"
                     }
         except Exception:
@@ -275,11 +280,14 @@ class AutoTradeEngine:
                 r = ExchangeAPIClient.test_okx(ok["key"], ok["secret"], ok["passphrase"])
                 if r.get("success"):
                     tot_usd = r.get("total_equity_usd", 0.0)
+                    coins_dict = {k: v.get("total", 0.0) for k, v in r.get("balances", {}).items()}
                     real["okx"] = {
                         "connected": True,
                         "currency": "USDT (Trading)",
                         "free": tot_usd,
+                        "usdt": tot_usd,
                         "total": tot_usd,
+                        "coins": coins_dict,
                         "display": f"${tot_usd:,.2f} USDT"
                     }
         except Exception:
@@ -683,17 +691,27 @@ class AutoTradeEngine:
 
     def check_and_rebalance_inventory(self, buy_ex, trade_val_thb):
         """
-        Realistic Inventory Balancing:
-        If Buy Exchange THB balance drops below required order capital,
-        automatically simulate an on-chain transfer from the most liquid exchange.
+        Check if buy exchange has sufficient funds to execute order.
+        In live mode: verifies actual real exchange balances (THB for Bitkub, USDT for Bybit/OKX/Binance).
+        In paper mode: checks paper balances and triggers simulation rebalance.
         """
-        ex_names = {"bitkub": "Bitkub", "binance_th": "Binance TH", "binance_global": "Binance Global", "orbix": "Orbix", "upbit": "Upbit"}
+        ex_names = {"bitkub": "Bitkub", "binance_th": "Binance TH", "binance_global": "Binance Global", "orbix": "Orbix", "upbit": "Upbit", "bybit": "Bybit", "okx": "OKX"}
+
+        if self.mode == "live":
+            if buy_ex == "bitkub":
+                free_thb = self.real_balances.get("bitkub", {}).get("free", 0.0)
+                return free_thb >= trade_val_thb
+            else:
+                needed_usdt = round(trade_val_thb / 33.54, 2)
+                free_usdt = self.real_balances.get(buy_ex, {}).get("free", 0.0) or self.real_balances.get(buy_ex, {}).get("usdt", 0.0)
+                return free_usdt >= needed_usdt
+
         buy_bal = self.balances.get(buy_ex, {})
         current_thb = buy_bal.get("THB", 0.0)
 
         if current_thb < trade_val_thb:
             # Find the exchange with the highest THB balance
-            wealthiest_ex = max(self.balances.keys(), key=lambda k: self.balances[k].get("THB", 0.0))
+            wealthiest_ex = max(self.balances.keys(), key=lambda k: self.balances[k].get("THB", 0.0), default="bitkub")
             if wealthiest_ex != buy_ex and self.balances[wealthiest_ex].get("THB", 0.0) > (trade_val_thb * 3):
                 rebal_amount = 20000.0  # transfer batch
                 self.balances[wealthiest_ex]["THB"] -= rebal_amount
@@ -702,8 +720,8 @@ class AutoTradeEngine:
                 self.rebalance_count += 1
                 self.fees_paid_thb += 20.0
                 self.log(
-                    f"🔄 [AUTO REBALANCE] ยอด THB ใน {ex_names.get(buy_ex)} ไม่พอ (เหลือ ฿{current_thb:,.0f}) "
-                    f"โอนเติมเงิน ฿{rebal_amount:,.0f} จาก {ex_names.get(wealthiest_ex)} (หัก Fee โอน ฿20)",
+                    f"🔄 [AUTO REBALANCE] ยอด THB ใน {ex_names.get(buy_ex, buy_ex)} ไม่พอ (เหลือ ฿{current_thb:,.0f}) "
+                    f"โอนเติมเงิน ฿{rebal_amount:,.0f} จาก {ex_names.get(wealthiest_ex, wealthiest_ex)} (หัก Fee โอน ฿20)",
                     "warning"
                 )
                 return True
@@ -714,7 +732,7 @@ class AutoTradeEngine:
     def on_market_tick(self, processed_coins):
         """Called on every market data tick from server.py (approx every 350-450ms)"""
         now = time.time()
-        ex_names = {"bitkub": "Bitkub", "binance_th": "Binance TH", "binance_global": "Binance Global", "orbix": "Orbix", "upbit": "Upbit"}
+        ex_names = {"bitkub": "Bitkub", "binance_th": "Binance TH", "binance_global": "Binance Global", "orbix": "Orbix", "upbit": "Upbit", "bybit": "Bybit", "okx": "OKX"}
         coin_map = {c["symbol"]: c for c in processed_coins}
 
         # Periodic non-blocking refresh of live real wallet balances every 120 seconds (2 mins)
@@ -929,10 +947,15 @@ class AutoTradeEngine:
                         if "binance_global" in (b_ex, s_ex):
                             if not ExchangeAPIClient.is_binance_margin(sym):
                                 continue
-                        # Ensure Bybit / OKX only trade verified common perpetual contracts
-                        if s_ex in ("bybit", "okx"):
+                        # OKX is in Spot Mode (Simple Account Lv1) - can only sell if holding spot coins!
+                        if s_ex == "okx":
+                            held = self.real_balances.get("okx", {}).get("coins", {}).get(sym, 0.0)
+                            if held <= 0:
+                                continue
+                        elif s_ex == "bybit":
+                            # Bybit Linear Perps: can short if symbol is in verified_common_perps OR holds spot coin
                             if sym not in self.verified_common_perps:
-                                held = self.real_balances.get(s_ex, {}).get("coins", {}).get(sym, 0.0)
+                                held = self.real_balances.get("bybit", {}).get("coins", {}).get(sym, 0.0)
                                 if held <= 0:
                                     continue
                         if b_ex in ("bybit", "okx") and s_ex == "bitkub":
