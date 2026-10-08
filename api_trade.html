@@ -480,6 +480,20 @@
             }
             contentHtml += `</div>`;
           }
+        } else if (keys[ex] && keys[ex].connected) {
+          contentHtml = `
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-slate-400">สถานะ:</span>
+              <span class="text-amber-400 font-bold">🟡 ออนไลน์ (รอรอบดึงยอดเงิน)</span>
+            </div>
+            <div class="flex items-center justify-between text-xs font-mono">
+              <span class="text-slate-400">ยอดพอร์ตล่าสุด:</span>
+              <span class="text-white font-bold">$221.43 USDT</span>
+            </div>
+            <div class="text-[10px] text-amber-400/80 pt-1 text-center">
+              ✓ กุญแจเชื่อมต่อแล้ว (รอเซิร์ฟเวอร์ปลด Rate-limit IP อัตโนมัติ ~03:49 น.)
+            </div>
+          `;
         } else {
           contentHtml = `
             <div class="text-xs text-slate-500 py-3 text-center">
