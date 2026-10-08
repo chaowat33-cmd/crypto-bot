@@ -12,6 +12,7 @@ from exchange_api import ExchangeAPIClient
 
 STATE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "autotrade_state.json")
 KEYS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "autotrade_keys.json")
+COMMON_PERPS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "common_perps.json")
 
 BORROWABLE_ASSETS = {
     "BTC": {"name": "Bitcoin", "daily_rate": 0.00015, "min_borrow": 0.0005, "collateral_ratio": 1.5, "chain": "Bitcoin / BEP20", "ref_usd": 64500.0},
@@ -136,10 +137,42 @@ class AutoTradeEngine:
         self.real_balances = {}
         self.last_real_bal_refresh = 0.0
 
+        self.verified_common_perps = set()
+        try:
+            if os.path.exists(COMMON_PERPS_FILE):
+                with open(COMMON_PERPS_FILE, "r", encoding="utf-8") as f:
+                    self.verified_common_perps = set(json.load(f))
+        except Exception:
+            pass
+
         self.load_keys()
         self.load_state()
         self.refresh_real_balances()
+        threading.Thread(target=self.unwind_unhedged_bitkub_coins, daemon=True).start()
         self.log(f"🤖 Real Cross-Exchange Arbitrage Engine Online! ทุนไม้ละ: ฿{self.trade_size_thb:,.0f} | Delay: {self.sim_delay_min_sec:.1f}-{self.sim_delay_max_sec:.1f}s", "success")
+
+    def unwind_unhedged_bitkub_coins(self):
+        """Immediately sell back any unhedged coins in Bitkub to restore 100% THB cash."""
+        time.sleep(3)
+        bk = self.api_keys.get("bitkub", {})
+        if not bk.get("key") or not bk.get("secret"):
+            return
+        real_coins = self.real_balances.get("bitkub", {}).get("coins", {})
+        for sym, amt in list(real_coins.items()):
+            if sym in ("THB", "USDT", "SAND", "MOVR") or amt <= 0:
+                continue
+            self.log(f"🔄 [AUTO-UNWIND CASH RESTORE] ขายคืน {amt:,.2f} {sym} ใน Bitkub เพื่อเปลี่ยนกลับเป็นเงินสด THB...", "warning")
+            res = ExchangeAPIClient.place_bitkub_order(bk["key"], bk["secret"], sym, "SELL", coin_amount=amt)
+            if res.get("success"):
+                self.log(f"✅ [CASH RESTORED] ขาย {sym} สำเร็จ! ได้รับเงินสด THB คืนเข้ากระเป๋าเรียบร้อย", "success")
+                send_telegram_alert(
+                    f"💵 <b>[CASH RESTORED] ปิดเหรียญรับเงินสด Bitkub สำเร็จ!</b>\n\n"
+                    f"🪙 เหรียญ: <b>{sym}</b> ({amt:,.2f})\n"
+                    f"🟢 เปลี่ยนกลับเป็นเงินสด THB เข้ากระเป๋าเรียบร้อย 100%"
+                )
+            else:
+                self.log(f"⚠️ [CASH RESTORE FAIL] {sym}: {res.get('message')}", "warning")
+        self.refresh_real_balances()
 
     def refresh_real_balances(self):
         """Fetch actual balances directly from connected exchange APIs."""
@@ -879,9 +912,19 @@ class AutoTradeEngine:
                     if b_ex not in connected_exchanges or s_ex not in connected_exchanges:
                         continue
                     if self.mode == "live":
-                        # Only require Binance Margin check if trading Bitkub Spot leg with Binance
-                        if "bitkub" in (b_ex, s_ex) and "binance_global" in (b_ex, s_ex):
+                        # Only require Binance Margin check if trading with Binance
+                        if "binance_global" in (b_ex, s_ex):
                             if not ExchangeAPIClient.is_binance_margin(sym):
+                                continue
+                        # Ensure Bybit / OKX only trade verified common perpetual contracts
+                        if s_ex in ("bybit", "okx"):
+                            if sym not in self.verified_common_perps:
+                                held = self.real_balances.get(s_ex, {}).get("coins", {}).get(sym, 0.0)
+                                if held <= 0:
+                                    continue
+                        if b_ex in ("bybit", "okx") and s_ex == "bitkub":
+                            held_bk = self.real_balances.get("bitkub", {}).get("coins", {}).get(sym, 0.0)
+                            if held_bk <= 0:
                                 continue
                     f_buy = 0.0005 if b_ex in ("bybit", "okx") else (0.001 if "binance" in b_ex else 0.0025)
                     f_sell = 0.0005 if s_ex in ("bybit", "okx") else (0.001 if "binance" in s_ex else 0.0025)
