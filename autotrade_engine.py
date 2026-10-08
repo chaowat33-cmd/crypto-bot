@@ -677,19 +677,7 @@ class AutoTradeEngine:
             self.last_real_bal_refresh = now
             threading.Thread(target=self.refresh_real_balances, daemon=True).start()
 
-        # Hourly Telegram Heartbeat (every 3600 seconds)
-        if (now - getattr(self, "last_telegram_heartbeat", 0)) > 3600.0:
-            self.last_telegram_heartbeat = now
-            bk_d = self.real_balances.get("bitkub", {}).get("display", "฿1,266.84 THB")
-            bn_d = self.real_balances.get("binance_global", {}).get("display", "227.30 USDT")
-            send_telegram_alert(
-                f"💓 <b>[ANTIGRAVITY BOT HEARTBEAT] บอทออนไลน์ปกติ</b>\n\n"
-                f"🟢 ระบบ: Live Real Trade เฝ้าสแกน 24 ชม.\n"
-                f"🏦 Bitkub: <b>{bk_d}</b>\n"
-                f"🌐 Binance Global: <b>{bn_d}</b>\n"
-                f"🎯 เป้าหมาย: สเปรดสุทธิ > +{self.min_net_spread_pct:.2f}% | ไม้ละ ฿{self.trade_size_thb:,.0f}\n"
-                f"⚡ ความเร็วยิงออเดอร์: {self.sim_delay_min_sec:.2f}s (Ultra-Fast)"
-            )
+        # Hourly Heartbeat disabled as requested - Alert ONLY on real trade execution
 
         with self.lock:
             # =========================================================================
@@ -981,15 +969,6 @@ class AutoTradeEngine:
                     f"ทุน ฿{trade_val:,.0f}{boost_msg} | หน่วงส่งคำสั่ง {delay_sec:.2f}s...",
                     "success" if is_boosted else "info"
                 )
-                if self.mode == "live":
-                    send_telegram_alert(
-                        f"⏳ <b>[TRIGGERED] พบสเปรดทำกำไร!</b>\n\n"
-                        f"🪙 เหรียญ: <b>{sym}</b>\n"
-                        f"🔄 เส้นทาง: {ex_names.get(buy_ex)} ➔ {ex_names.get(sell_ex)}\n"
-                        f"📊 สเปรดสุทธิ: +{net_spread:.2f}%\n"
-                        f"💵 ทุนเทรด: ฿{trade_val:,.0f} THB\n"
-                        f"⚡ กำลังส่งคำสั่ง (หน่วง {delay_sec:.2f}s)..."
-                    )
 
     def execute_ultra_realistic_fill(self, p, base_buy_price, base_sell_price, book_depth, raw_net_spread, raw_gross_spread, delay_actual):
         """

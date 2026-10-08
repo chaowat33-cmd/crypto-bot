@@ -46,15 +46,6 @@ class ExchangeAPIClient:
         candidate_bases = ["https://api-gcp.binance.com", "https://api3.binance.com", "https://api2.binance.com", "https://api1.binance.com", "https://api.binance.com"] if not is_th else ["https://api.binance.th"]
         ex_label = "Binance TH" if is_th else "Binance Global"
 
-        if not is_th and time.time() < cls._binance_banned_until:
-            wait_sec = int(cls._binance_banned_until - time.time())
-            return {
-                "success": False,
-                "exchange": ex_label,
-                "latency_ms": 0,
-                "message": f"⏳ Binance API อยู่ในช่วงพักคำขอชั่วคราว (เหลือเวลาอีก {wait_sec} วินาที)"
-            }
-
         if not api_key or not api_secret:
             return {
                 "success": False,
