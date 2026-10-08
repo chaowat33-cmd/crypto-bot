@@ -174,6 +174,42 @@ class AutoTradeEngine:
                 self.log(f"⚠️ [CASH RESTORE FAIL] {sym}: {res.get('message')}", "warning")
         self.refresh_real_balances()
 
+    def unwind_unhedged_bybit_coins(self, coin=None, qty=None):
+        """Immediately sell back spot coins on Bybit to restore 100% USDT cash."""
+        time.sleep(2)
+        bb = self.api_keys.get("bybit", {})
+        if not bb.get("key") or not bb.get("secret"):
+            return
+        coins_to_sell = [coin] if coin else list(self.real_balances.get("bybit", {}).get("coins", {}).keys())
+        for sym in coins_to_sell:
+            if sym in ("USDT", "USDC", "USD") or not sym:
+                continue
+            c_amt = qty if (coin and qty) else self.real_balances.get("bybit", {}).get("coins", {}).get(sym, 0.0)
+            if c_amt > 0:
+                self.log(f"🔄 [AUTO-UNWIND BYBIT] ขายคืน {c_amt} {sym} ใน Bybit Spot คืนเป็น USDT...", "warning")
+                res = ExchangeAPIClient.place_bybit_order(bb["key"], bb["secret"], sym, "SELL", coin_amount=c_amt, is_perp=False)
+                if res.get("success"):
+                    self.log(f"✅ [BYBIT CASH RESTORED] ขาย {sym} คืนเป็น USDT สำเร็จ!", "success")
+        self.refresh_real_balances()
+
+    def unwind_unhedged_okx_coins(self, coin=None, qty=None):
+        """Immediately sell back spot coins on OKX to restore 100% USDT cash."""
+        time.sleep(2)
+        ok = self.api_keys.get("okx", {})
+        if not ok.get("key") or not ok.get("secret"):
+            return
+        coins_to_sell = [coin] if coin else list(self.real_balances.get("okx", {}).get("coins", {}).keys())
+        for sym in coins_to_sell:
+            if sym in ("USDT", "USDC", "USD") or not sym:
+                continue
+            c_amt = qty if (coin and qty) else self.real_balances.get("okx", {}).get("coins", {}).get(sym, 0.0)
+            if c_amt > 0:
+                self.log(f"🔄 [AUTO-UNWIND OKX] ขายคืน {c_amt} {sym} ใน OKX Spot คืนเป็น USDT...", "warning")
+                res = ExchangeAPIClient.place_okx_order(ok["key"], ok["secret"], ok.get("passphrase", ""), sym, "SELL", coin_amount=c_amt, is_perp=False)
+                if res.get("success"):
+                    self.log(f"✅ [OKX CASH RESTORED] ขาย {sym} คืนเป็น USDT สำเร็จ!", "success")
+        self.refresh_real_balances()
+
     def refresh_real_balances(self):
         """Fetch actual balances directly from connected exchange APIs."""
         real = {}
@@ -943,24 +979,39 @@ class AutoTradeEngine:
                     if b_ex not in connected_exchanges or s_ex not in connected_exchanges:
                         continue
                     if self.mode == "live":
-                        # Only require Binance Margin check if trading with Binance
-                        if "binance_global" in (b_ex, s_ex):
-                            if not ExchangeAPIClient.is_binance_margin(sym):
+                        # 1. Validate BUY leg funds
+                        if b_ex == "bitkub":
+                            free_thb = self.real_balances.get("bitkub", {}).get("free", 0.0)
+                            if free_thb < self.trade_size_thb:
                                 continue
-                        # OKX is in Spot Mode (Simple Account Lv1) - can only sell if holding spot coins!
-                        if s_ex == "okx":
-                            held = self.real_balances.get("okx", {}).get("coins", {}).get(sym, 0.0)
-                            if held <= 0:
+                        elif b_ex in ("bybit", "okx", "binance_global"):
+                            needed_usdt = round(self.trade_size_thb / 33.54, 2)
+                            free_usdt = self.real_balances.get(b_ex, {}).get("free", 0.0) or self.real_balances.get(b_ex, {}).get("usdt", 0.0)
+                            if free_usdt < needed_usdt:
+                                continue
+
+                        # 2. Validate SELL leg ability
+                        if s_ex == "bitkub":
+                            # Bitkub has NO short selling - can only sell if holding sufficient coin!
+                            held_bk = self.real_balances.get("bitkub", {}).get("coins", {}).get(sym, 0.0)
+                            bk_val = held_bk * r.get("sell_price", 0)
+                            if bk_val < (self.trade_size_thb * 0.9):
+                                continue
+                        elif s_ex == "okx":
+                            # OKX is in Spot Mode (Simple Account Lv1) - cannot short without spot coin!
+                            held_okx = self.real_balances.get("okx", {}).get("coins", {}).get(sym, 0.0)
+                            okx_val = held_okx * (r.get("sell_price", 0) / 33.54) if r.get("sell_price", 0) else 0
+                            if okx_val < ((self.trade_size_thb / 33.54) * 0.9):
                                 continue
                         elif s_ex == "bybit":
-                            # Bybit Linear Perps: can short if symbol is in verified_common_perps OR holds spot coin
+                            # Bybit Linear Perps: can short if in verified_common_perps OR holds spot coin
                             if sym not in self.verified_common_perps:
-                                held = self.real_balances.get("bybit", {}).get("coins", {}).get(sym, 0.0)
-                                if held <= 0:
+                                held_bb = self.real_balances.get("bybit", {}).get("coins", {}).get(sym, 0.0)
+                                bb_val = held_bb * (r.get("sell_price", 0) / 33.54) if r.get("sell_price", 0) else 0
+                                if bb_val < ((self.trade_size_thb / 33.54) * 0.9):
                                     continue
-                        if b_ex in ("bybit", "okx") and s_ex == "bitkub":
-                            held_bk = self.real_balances.get("bitkub", {}).get("coins", {}).get(sym, 0.0)
-                            if held_bk <= 0:
+                        elif s_ex == "binance_global":
+                            if not ExchangeAPIClient.is_binance_margin(sym):
                                 continue
                     f_buy = 0.0005 if b_ex in ("bybit", "okx") else (0.001 if "binance" in b_ex else 0.0025)
                     f_sell = 0.0005 if s_ex in ("bybit", "okx") else (0.001 if "binance" in s_ex else 0.0025)
@@ -1205,6 +1256,10 @@ class AutoTradeEngine:
                 )
                 if buy_ex == "bitkub":
                     threading.Thread(target=self.unwind_unhedged_bitkub_coins, daemon=True).start()
+                elif buy_ex == "bybit":
+                    threading.Thread(target=self.unwind_unhedged_bybit_coins, args=(coin, coin_amount), daemon=True).start()
+                elif buy_ex == "okx":
+                    threading.Thread(target=self.unwind_unhedged_okx_coins, args=(coin, coin_amount), daemon=True).start()
                 return
 
         if self.mode == "live" and not live_executed:
