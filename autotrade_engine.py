@@ -897,6 +897,8 @@ class AutoTradeEngine:
                 buy_ex = best_route["buy_ex"]
                 sell_ex = best_route["sell_ex"]
                 real_spread = best_route["spread_pct"]
+                fee_rate_buy = 0.0005 if buy_ex in ("bybit", "okx") else (0.001 if "binance" in buy_ex else 0.0025)
+                fee_rate_sell = 0.0005 if sell_ex in ("bybit", "okx") else (0.001 if "binance" in sell_ex else 0.0025)
 
                 last_traded = self.last_trade_time_per_coin.get(sym, 0)
                 if (now - last_traded) < self.cooldown_sec:

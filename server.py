@@ -1042,7 +1042,7 @@ def recompute_thb_comparison():
         tracker.update_tick(processed_coins)
         autotrade_engine.on_market_tick(processed_coins)
     except Exception as e:
-        pass
+        print(f"[ENGINE ERROR] on_market_tick error: {e}")
 
     # Stats based on Real Executable Arbitrage
     real_positive_arbs = [c for c in processed_coins if c["execution"]["valid"] and 0 < c["execution"]["real_spread_pct"] < 35 and c["execution"]["max_capacity_thb"] >= 3000]
