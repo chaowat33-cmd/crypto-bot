@@ -473,9 +473,9 @@ class AutoTradeEngine:
     def test_exchange_api(self, exchange, key=None, secret=None, passphrase=None):
         with self.lock:
             saved = self.api_keys.get(exchange, {})
-            api_k = key.strip() if key is not None else saved.get("key", "")
-            api_s = secret.strip() if secret is not None else saved.get("secret", "")
-            api_p = passphrase.strip() if passphrase is not None else saved.get("passphrase", "")
+            api_k = key.strip() if (key and key.strip()) else saved.get("key", "")
+            api_s = secret.strip() if (secret and secret.strip()) else saved.get("secret", "")
+            api_p = passphrase.strip() if (passphrase and passphrase.strip()) else saved.get("passphrase", "")
 
             if exchange == "binance_global":
                 res = ExchangeAPIClient.test_binance(api_k, api_s, is_th=False)
@@ -972,6 +972,46 @@ class AutoTradeEngine:
                     "success" if is_boosted else "info"
                 )
 
+    def _dispatch_real_order(self, exchange, coin, side, trade_val_thb, coin_amount):
+        """Execute real order on specific exchange with appropriate market/instrument routing"""
+        k = self.api_keys.get(exchange, {})
+        if not k.get("connected") or not k.get("key"):
+            return {"success": False, "message": f"{exchange} API key not connected"}
+        
+        amount_usdt = round(trade_val_thb / 33.54, 2)
+
+        if exchange == "bitkub":
+            if side.upper() == "BUY":
+                return ExchangeAPIClient.place_bitkub_order(k["key"], k["secret"], coin, "BUY", amount_thb=trade_val_thb)
+            else:
+                return ExchangeAPIClient.place_bitkub_order(k["key"], k["secret"], coin, "SELL", coin_amount=coin_amount)
+
+        elif exchange == "binance_global":
+            return ExchangeAPIClient.place_binance_margin_order(k["key"], k["secret"], coin, side, quantity=coin_amount)
+
+        elif exchange == "bybit":
+            # If side is SELL and user doesn't hold spot coin, hedge via linear perpetual short
+            is_perp = False
+            if side.upper() == "SELL":
+                held = self.real_balances.get("bybit", {}).get("coins", {}).get(coin.upper(), 0.0)
+                if held < coin_amount:
+                    is_perp = True
+            return ExchangeAPIClient.place_bybit_order(
+                k["key"], k["secret"], coin, side, amount_usdt=amount_usdt, coin_amount=coin_amount, is_perp=is_perp
+            )
+
+        elif exchange == "okx":
+            is_perp = False
+            if side.upper() == "SELL":
+                held = self.real_balances.get("okx", {}).get("coins", {}).get(coin.upper(), 0.0)
+                if held < coin_amount:
+                    is_perp = True
+            return ExchangeAPIClient.place_okx_order(
+                k["key"], k["secret"], k.get("passphrase", ""), coin, side, amount_usdt=amount_usdt, coin_amount=coin_amount, is_perp=is_perp
+            )
+
+        return {"success": False, "message": f"Unsupported exchange: {exchange}"}
+
     def execute_ultra_realistic_fill(self, p, base_buy_price, base_sell_price, book_depth, raw_net_spread, raw_gross_spread, delay_actual):
         """
         Ultra-Realistic Execution Model:
@@ -985,7 +1025,7 @@ class AutoTradeEngine:
         buy_ex = p["buy_ex"]
         sell_ex = p["sell_ex"]
         coin = p["coin"]
-        ex_names = {"bitkub": "Bitkub", "binance_th": "Binance TH", "binance_global": "Binance Global", "orbix": "Orbix", "upbit": "Upbit"}
+        ex_names = {"bitkub": "Bitkub", "binance_th": "Binance TH", "binance_global": "Binance Global", "orbix": "Orbix", "upbit": "Upbit", "bybit": "Bybit", "okx": "OKX"}
 
         # 1. VWAP Slippage calculation
         filled_buy_price, buy_slip_pct = calculate_vwap_slippage(base_buy_price, trade_val_thb, book_depth, is_buy=True)
@@ -1029,87 +1069,59 @@ class AutoTradeEngine:
         # 5. Live Execution vs Paper Balance Update
         live_executed = False
         if self.mode == "live":
-            bk_keys = self.api_keys.get("bitkub", {})
-            bn_keys = self.api_keys.get("binance_global", {})
-            
-            # Leg 1: Bitkub Buy + Binance Global Margin Sell (Bitkub < Binance)
-            if buy_ex == "bitkub" and sell_ex == "binance_global":
-                if bk_keys.get("key") and bk_keys.get("secret") and bn_keys.get("key") and bn_keys.get("secret"):
-                    # PRE-FLIGHT CHECK: เช็คก่อนว่า Binance มีเหรียญให้ยืม Short หรือไม่ ก่อนแตะเงิน THB ใน Bitkub!
-                    can_borrow, max_avail, borrow_reason = ExchangeAPIClient.check_binance_borrowable(
-                        bn_keys["key"], bn_keys["secret"], coin, min_amount=coin_amount
+            # Safety check: Binance borrowable check if selling on Binance
+            if sell_ex == "binance_global":
+                bn_keys = self.api_keys.get("binance_global", {})
+                can_borrow, max_avail, borrow_reason = ExchangeAPIClient.check_binance_borrowable(
+                    bn_keys.get("key", ""), bn_keys.get("secret", ""), coin, min_amount=coin_amount
+                )
+                if not can_borrow:
+                    self.log(
+                        f"🛡️ [PRE-FLIGHT BLOCKED] ระงับการเทรด {coin}: Binance ปฏิเสธการกู้เหรียญ ({borrow_reason}) ➔ ระบบไม่ส่งคำสั่งเพื่อความปลอดภัย",
+                        "warning"
                     )
-                    if not can_borrow:
-                        self.log(
-                            f"🛡️ [PRE-FLIGHT BLOCKED] ระงับการเทรด {coin}: Binance ปฏิเสธการกู้เหรียญ ({borrow_reason}) ➔ ระบบไม่ส่งคำสั่งซื้อ Bitkub เพื่อป้องกันความเสี่ยงถือเหรียญขาเดียว (Zero Legging Risk)",
-                            "warning"
-                        )
-                        send_telegram_alert(
-                            f"🛡️ <b>[PRE-FLIGHT ระงับการเทรดชั่วคราว]</b> {coin}\n\n"
-                            f"⚠️ เหตุผล: Binance ปฏิเสธการกู้ ({borrow_reason})\n"
-                            f"🔒 ระบบระงับซื้อ Bitkub ทันที เพื่อป้องกันเงินทุนถือเหรียญขาเดียว (Zero Legging Risk)"
-                        )
-                        return
+                    return
 
-                    self.log(f"⚡ [LIVE TRADE DISPATCH] ยืนยันคลัง Binance มีให้กู้ {max_avail:.4f} {coin} ➔ ส่งคำสั่งซื้อ Bitkub ฿{trade_val_thb:,.0f} & ชอร์ต Binance Margin", "warning")
-                    bk_res = ExchangeAPIClient.place_bitkub_order(
-                        bk_keys["key"], bk_keys["secret"], coin, "BUY", amount_thb=trade_val_thb
-                    )
-                    if not bk_res.get("success"):
-                        self.log(f"❌ [LIVE BITKUB FAIL] ซื้อ Bitkub ไม่สำเร็จ: {bk_res.get('message')} ➔ ยกเลิกขา Binance ทันที", "error")
-                        return
+            self.log(
+                f"⚡ [LIVE TRADE DISPATCH] ส่งคำสั่งซื้อ {ex_names.get(buy_ex, buy_ex)} ➔ ขาย {ex_names.get(sell_ex, sell_ex)} ({coin}) "
+                f"ทุน ฿{trade_val_thb:,.0f} (~${trade_val_thb/33.54:.2f} USDT)...",
+                "warning"
+            )
 
-                    bn_res = ExchangeAPIClient.place_binance_margin_order(
-                        bn_keys["key"], bn_keys["secret"], coin, "SELL", quantity=coin_amount
-                    )
-                    live_executed = True
-                    if bk_res.get("success") and bn_res.get("success"):
-                        self.log(f"🎉 [LIVE MATCH SUCCESS] ซื้อ Bitkub (Order {bk_res.get('order_id')}) + ขาย Binance Margin (Order {bn_res.get('order_id')}) สำเร็จคู่!", "success")
-                        send_telegram_alert(
-                            f"🎉 <b>[LIVE MATCH SUCCESS] จับคู่ทำกำไรสำเร็จ!</b>\n\n"
-                            f"🪙 เหรียญ: <b>{coin}</b>\n"
-                            f"🟢 Bitkub ซื้อสำเร็จ (Order {bk_res.get('order_id')})\n"
-                            f"🔴 Binance Short สำเร็จ (Order {bn_res.get('order_id')})\n"
-                            f"💵 ทุนเทรด: ฿{trade_val_thb:,.0f} THB\n"
-                            f"💰 สเปรดสุทธิ: +{actual_roi_pct:.2f}% | กำไร +฿{net_profit_thb:.2f} THB"
-                        )
-                        execution_note += " [LIVE 100%]"
-                    else:
-                        self.log(f"⚠️ [LIVE PARTIAL/FAIL] BK: {bk_res.get('message')} | BN: {bn_res.get('message')}", "error")
-                        execution_note += " [LIVE ERROR]"
+            # Leg 1: BUY
+            res_buy = self._dispatch_real_order(buy_ex, coin, "BUY", trade_val_thb, coin_amount)
+            if not res_buy.get("success"):
+                self.log(f"❌ [LIVE BUY FAIL] ซื้อ {buy_ex} ไม่สำเร็จ: {res_buy.get('message')} ➔ ยกเลิกขาขายทันที", "error")
+                return
 
-            # Leg 2: Binance Buy + Bitkub Sell (Bitkub > Binance - Unwind Position)
-            elif buy_ex == "binance_global" and sell_ex == "bitkub":
-                if bk_keys.get("key") and bk_keys.get("secret") and bn_keys.get("key") and bn_keys.get("secret"):
-                    bk_coin_free = 0.0
-                    try:
-                        bk_coins = self.real_balances.get("bitkub", {}).get("coins", {})
-                        bk_coin_free = float(bk_coins.get(coin, 0.0))
-                    except Exception:
-                        pass
-
-                    if bk_coin_free >= (coin_amount * 0.85) and bk_coin_free > 0:
-                        sell_qty = min(bk_coin_free, coin_amount)
-                        self.log(f"⚡ [LIVE TRADE DISPATCH] ยิงคำสั่งปิดสถานะเงินจริง: ซื้อคืน Binance Margin ➔ ขายคืนเงินสด Bitkub {sell_qty} {coin}", "warning")
-                        bn_res = ExchangeAPIClient.place_binance_margin_order(
-                            bn_keys["key"], bn_keys["secret"], coin, "BUY", quantity=sell_qty
-                        )
-                        if not bn_res.get("success"):
-                            self.log(f"❌ [LIVE BINANCE FAIL] ซื้อปิดชอร์ต Binance Margin ไม่สำเร็จ: {bn_res.get('message')} ➔ ระงับขา Bitkub เพื่อความปลอดภัย", "error")
-                            return
-
-                        bk_res = ExchangeAPIClient.place_bitkub_order(
-                            bk_keys["key"], bk_keys["secret"], coin, "SELL", coin_amount=sell_qty
-                        )
-                        live_executed = True
-                        if bk_res.get("success") and bn_res.get("success"):
-                            self.log(f"🎉 [LIVE MATCH SUCCESS] ซื้อคืน Binance + ขายทำกำไร Bitkub สำเร็จคู่! (ปิด Arb สมบูรณ์ 100%)", "success")
-                            execution_note += " [LIVE 100% UNWIND]"
-                        else:
-                            self.log(f"⚠️ [LIVE PARTIAL/FAIL] BK: {bk_res.get('message')} | BN: {bn_res.get('message')}", "error")
-                            execution_note += " [LIVE ERROR]"
-                    else:
-                        self.log(f"🛡️ [LIVE SKIP] พบสเปรด Bitkub > Binance (+{p.get('initial_spread', 0):.2f}%) แต่ยังไม่มีเหรียญ {coin} ใน Bitkub (มี {bk_coin_free:.4f})", "info")
+            # Leg 2: SELL
+            res_sell = self._dispatch_real_order(sell_ex, coin, "SELL", trade_val_thb, coin_amount)
+            if res_sell.get("success"):
+                live_executed = True
+                self.log(
+                    f"🎉 [LIVE MATCH SUCCESS] ซื้อ {ex_names.get(buy_ex, buy_ex)} (Order {res_buy.get('order_id')}) + "
+                    f"ขาย {ex_names.get(sell_ex, sell_ex)} (Order {res_sell.get('order_id')}) สำเร็จคู่!",
+                    "success"
+                )
+                send_telegram_alert(
+                    f"🎉 <b>[LIVE MATCH SUCCESS] จับคู่ทำกำไรสำเร็จ!</b>\n\n"
+                    f"🪙 เหรียญ: <b>{coin}</b>\n"
+                    f"🟢 ซื้อ {ex_names.get(buy_ex, buy_ex)} สำเร็จ (Order {res_buy.get('order_id')})\n"
+                    f"🔴 ขาย {ex_names.get(sell_ex, sell_ex)} สำเร็จ (Order {res_sell.get('order_id')})\n"
+                    f"💵 ทุนเทรด: ฿{trade_val_thb:,.0f} THB (~${trade_val_thb/33.54:.2f} USDT)\n"
+                    f"💰 สเปรดสุทธิ: +{actual_roi_pct:.2f}% | กำไรสุทธิ +฿{net_profit_thb:.2f} THB 🟢"
+                )
+                execution_note += " [LIVE 100%]"
+            else:
+                live_executed = True  # Buy already went through
+                self.log(f"⚠️ [LIVE PARTIAL FAIL] ซื้อ {buy_ex} สำเร็จ แต่ขาย {sell_ex} ล้มเหลว: {res_sell.get('message')}", "error")
+                send_telegram_alert(
+                    f"⚠️ <b>[LIVE PARTIAL ALERT] ขาซื้อสำเร็จ แต่ขาขายขัดข้อง!</b>\n\n"
+                    f"🪙 เหรียญ: <b>{coin}</b>\n"
+                    f"🟢 ซื้อ {buy_ex}: สำเร็จ (Order {res_buy.get('order_id')})\n"
+                    f"❌ ขาย {sell_ex}: {res_sell.get('message')}"
+                )
+                execution_note += " [LIVE PARTIAL]"
 
         if self.mode == "live" and not live_executed:
             return

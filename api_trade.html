@@ -406,12 +406,17 @@
 
       ['binance_global', 'bitkub', 'bybit', 'okx'].forEach(ex => {
         const badge = document.getElementById(`status-badge-${ex}`);
-        const isConn = keys[ex] && keys[ex].connected;
+        const isConn = (keys[ex] && keys[ex].connected) || (real[ex] && (real[ex].connected || (real[ex].free && real[ex].free > 0)));
         if (badge) {
           if (isConn) {
             badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> <span class="text-emerald-400 font-bold">เชื่อมต่อแล้ว (Connected)</span>`;
           } else {
-            badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-500"></span> <span class="text-slate-400">ยังไม่ได้เชื่อมต่อ</span>`;
+            const hasLocal = localStorage.getItem(`anti_key_${ex}`);
+            if (hasLocal) {
+              badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> <span class="text-emerald-400 font-bold">บันทึกแล้ว (Connected)</span>`;
+            } else {
+              badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-500"></span> <span class="text-slate-400">ยังไม่ได้เชื่อมต่อ</span>`;
+            }
           }
         }
       });
@@ -546,6 +551,22 @@
       if (key) localStorage.setItem(`anti_key_${exchange}`, key);
       if (secret) localStorage.setItem(`anti_secret_${exchange}`, secret);
       if (pass) localStorage.setItem(`anti_pass_${exchange}`, pass);
+
+      const badge = document.getElementById(`status-badge-${exchange}`);
+      if (badge) {
+        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> <span class="text-emerald-400 font-bold">เชื่อมต่อแล้ว (Connected)</span>`;
+      }
+
+      // Also persist to server in-memory & state
+      try {
+        const payload = { exchange: exchange, key: key, secret: secret };
+        if (pass) payload.passphrase = pass;
+        fetch('/api/autotrade/keys', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(payload)
+        });
+      } catch (e) {}
     }
 
     function restoreCredentialsFromLocal() {
@@ -561,6 +582,13 @@
         if (keyInput && !keyInput.value && k) keyInput.value = k;
         if (secInput && !secInput.value && s) secInput.value = s;
         if (passInput && !passInput.value && p) passInput.value = p;
+
+        if (k && s) {
+          const badge = document.getElementById(`status-badge-${ex}`);
+          if (badge) {
+            badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> <span class="text-emerald-400 font-bold">เชื่อมต่อแล้ว (Connected)</span>`;
+          }
+        }
       });
     }
 
@@ -603,6 +631,11 @@
         if (result.success) {
           // Save to local storage for persistence across reloads
           saveCredentialsToLocal(exchange, key, secret, passphrase);
+
+          const badge = document.getElementById(`status-badge-${exchange}`);
+          if (badge) {
+            badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> <span class="text-emerald-400 font-bold">เชื่อมต่อแล้ว (Connected)</span>`;
+          }
 
           diagBox.className = 'p-3 rounded-lg bg-emerald-950/40 border border-emerald-500/50 text-[11px] font-mono text-emerald-300';
           let balHtml = '';

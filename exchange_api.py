@@ -895,3 +895,162 @@ class ExchangeAPIClient:
         except Exception as e:
             return False, 0.0, f"Error checking borrowable: {str(e)}"
 
+    @classmethod
+    def place_bybit_order(cls, api_key, api_secret, coin, side, amount_usdt=0, coin_amount=0, is_perp=False):
+        """
+        Place real Spot or Linear Perpetual order on Bybit V5.
+        side: 'BUY' or 'SELL'
+        category: 'linear' if is_perp else 'spot'
+        """
+        try:
+            server_time = int(time.time() * 1000)
+            try:
+                with urllib.request.urlopen("https://api.bybit.com/v5/market/time", timeout=3) as r:
+                    server_time = int(json.loads(r.read().decode())['time'])
+            except Exception:
+                pass
+
+            ts = str(server_time)
+            recv_window = "10000"
+            category = "linear" if is_perp else "spot"
+            sym_str = f"{coin.upper()}USDT"
+            side_str = "Buy" if side.upper() == "BUY" else "Sell"
+
+            payload = {
+                "category": category,
+                "symbol": sym_str,
+                "side": side_str,
+                "orderType": "Market",
+            }
+            if category == "spot":
+                if side_str == "Buy":
+                    if amount_usdt > 0:
+                        payload["marketUnit"] = "quoteCoin"
+                        payload["qty"] = f"{round(amount_usdt, 2)}"
+                    else:
+                        payload["qty"] = f"{coin_amount}"
+                else:
+                    payload["qty"] = f"{coin_amount}"
+            else:
+                payload["qty"] = f"{coin_amount}"
+
+            body_str = json.dumps(payload)
+            param_str = ts + api_key + recv_window + body_str
+            sig = hmac.new(api_secret.encode('utf-8'), param_str.encode('utf-8'), hashlib.sha256).hexdigest()
+
+            headers = {
+                "User-Agent": "Antigravity-Arbitrage/2.0",
+                "X-BAPI-API-KEY": api_key,
+                "X-BAPI-TIMESTAMP": ts,
+                "X-BAPI-SIGN": sig,
+                "X-BAPI-RECV-WINDOW": recv_window,
+                "Content-Type": "application/json"
+            }
+            req = urllib.request.Request("https://api.bybit.com/v5/order/create", data=body_str.encode('utf-8'), headers=headers)
+            with urllib.request.urlopen(req, timeout=7) as resp:
+                data = json.loads(resp.read().decode('utf-8'))
+
+            ret_code = data.get("retCode", -1)
+            ret_msg = data.get("retMsg", "")
+
+            if ret_code == 0:
+                order_id = data.get("result", {}).get("orderId", "")
+                return {
+                    "success": True,
+                    "order_id": order_id,
+                    "raw": data,
+                    "message": f"✅ Bybit {category.upper()} {side_str} สำเร็จ! Order ID: {order_id}"
+                }
+            else:
+                return {
+                    "success": False,
+                    "message": f"❌ Bybit ปฏิเสธ ({ret_code}): {ret_msg}"
+                }
+        except Exception as e:
+            return {"success": False, "message": f"❌ ข้อผิดพลาด Bybit Order: {str(e)}"}
+
+    @classmethod
+    def place_okx_order(cls, api_key, api_secret, passphrase, coin, side, amount_usdt=0, coin_amount=0, is_perp=False):
+        """
+        Place real Spot or Swap Futures order on OKX V5.
+        side: 'buy' or 'sell'
+        tdMode: 'cross' (for swap/margin) or 'cash' (for spot)
+        """
+        try:
+            server_time_ms = int(time.time() * 1000)
+            try:
+                req_t = urllib.request.Request("https://www.okx.com/api/v5/public/time", headers={"User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(req_t, timeout=3) as r:
+                    d = json.loads(r.read().decode())
+                    if d.get("code") == "0" and d.get("data"):
+                        server_time_ms = int(d["data"][0]["ts"])
+            except Exception:
+                pass
+
+            ts_iso = datetime.datetime.fromtimestamp(server_time_ms / 1000.0, tz=datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
+            method = "POST"
+            path = "/api/v5/trade/order"
+
+            inst_id = f"{coin.upper()}-USDT-SWAP" if is_perp else f"{coin.upper()}-USDT"
+            td_mode = "cross" if is_perp else "cash"
+            side_str = side.lower()
+
+            payload = {
+                "instId": inst_id,
+                "tdMode": td_mode,
+                "side": side_str,
+                "ordType": "market"
+            }
+            if not is_perp:
+                if side_str == "buy" and amount_usdt > 0:
+                    payload["tgtCcy"] = "quote_ccy"
+                    payload["sz"] = f"{round(amount_usdt, 2)}"
+                else:
+                    payload["sz"] = f"{coin_amount}"
+            else:
+                payload["sz"] = f"{int(max(1, coin_amount))}"
+
+            body_str = json.dumps(payload)
+            prehash = f"{ts_iso}{method}{path}{body_str}"
+            sig = base64.b64encode(hmac.new(api_secret.encode('utf-8'), prehash.encode('utf-8'), hashlib.sha256).digest()).decode('utf-8')
+
+            headers = {
+                "User-Agent": "Mozilla/5.0",
+                "OK-ACCESS-KEY": api_key,
+                "OK-ACCESS-SIGN": sig,
+                "OK-ACCESS-TIMESTAMP": ts_iso,
+                "OK-ACCESS-PASSPHRASE": passphrase,
+                "Content-Type": "application/json"
+            }
+            req = urllib.request.Request(f"https://www.okx.com{path}", data=body_str.encode('utf-8'), headers=headers)
+            with urllib.request.urlopen(req, timeout=7) as resp:
+                data = json.loads(resp.read().decode('utf-8'))
+
+            ret_code = str(data.get("code", "-1"))
+            ret_msg = data.get("msg", "")
+
+            if ret_code == "0":
+                order_id = data.get("data", [{}])[0].get("ordId", "")
+                sCode = data.get("data", [{}])[0].get("sCode", "0")
+                sMsg = data.get("data", [{}])[0].get("sMsg", "")
+                if sCode == "0":
+                    return {
+                        "success": True,
+                        "order_id": order_id,
+                        "raw": data,
+                        "message": f"✅ OKX {'SWAP' if is_perp else 'SPOT'} {side_str.upper()} สำเร็จ! Order ID: {order_id}"
+                    }
+                else:
+                    return {
+                        "success": False,
+                        "message": f"❌ OKX ปฏิเสธคำสั่ง ({sCode}): {sMsg}"
+                    }
+            else:
+                return {
+                    "success": False,
+                    "message": f"❌ OKX API Error ({ret_code}): {ret_msg}"
+                }
+        except Exception as e:
+            return {"success": False, "message": f"❌ ข้อผิดพลาด OKX Order: {str(e)}"}
+
+
