@@ -542,19 +542,46 @@
       }
     }
 
+    function saveCredentialsToLocal(exchange, key, secret, pass) {
+      if (key) localStorage.setItem(`anti_key_${exchange}`, key);
+      if (secret) localStorage.setItem(`anti_secret_${exchange}`, secret);
+      if (pass) localStorage.setItem(`anti_pass_${exchange}`, pass);
+    }
+
+    function restoreCredentialsFromLocal() {
+      ['binance_global', 'bitkub', 'bybit', 'okx'].forEach(ex => {
+        const k = localStorage.getItem(`anti_key_${ex}`);
+        const s = localStorage.getItem(`anti_secret_${ex}`);
+        const p = localStorage.getItem(`anti_pass_${ex}`);
+
+        const keyInput = document.getElementById(`key-${ex}`);
+        const secInput = document.getElementById(`secret-${ex}`);
+        const passInput = document.getElementById(`pass-${ex}`);
+
+        if (keyInput && !keyInput.value && k) keyInput.value = k;
+        if (secInput && !secInput.value && s) secInput.value = s;
+        if (passInput && !passInput.value && p) passInput.value = p;
+      });
+    }
+
     async function testConnection(exchange) {
       const keyInput = document.getElementById(`key-${exchange}`);
       const secretInput = document.getElementById(`secret-${exchange}`);
       const diagBox = document.getElementById(`diag-${exchange}`);
 
-      const key = keyInput ? keyInput.value.trim() : '';
-      const secret = secretInput ? secretInput.value.trim() : '';
+      let key = keyInput ? keyInput.value.trim() : '';
+      let secret = secretInput ? secretInput.value.trim() : '';
       let passphrase = '';
 
       if (exchange === 'okx') {
         const passInput = document.getElementById('pass-okx');
         passphrase = passInput ? passInput.value.trim() : '';
+        if (!passphrase) passphrase = localStorage.getItem('anti_pass_okx') || '';
       }
+
+      // Fallback to localStorage if empty
+      if (!key) key = localStorage.getItem(`anti_key_${exchange}`) || '';
+      if (!secret) secret = localStorage.getItem(`anti_secret_${exchange}`) || '';
 
       diagBox.className = 'p-3 rounded-lg bg-slate-950 border border-amber-500/40 text-[11px] font-mono text-amber-300';
       diagBox.innerHTML = '⏳ กำลังทดสอบส่งสัญญาณ Handshake & ตรวจสอบสิทธิ์ API...';
@@ -574,6 +601,9 @@
         const result = await res.json();
 
         if (result.success) {
+          // Save to local storage for persistence across reloads
+          saveCredentialsToLocal(exchange, key, secret, passphrase);
+
           diagBox.className = 'p-3 rounded-lg bg-emerald-950/40 border border-emerald-500/50 text-[11px] font-mono text-emerald-300';
           let balHtml = '';
           const spotKeys = result.balances ? Object.keys(result.balances).slice(0, 8) : [];
@@ -590,7 +620,7 @@
 
           diagBox.innerHTML = `
             ${result.message}
-            <br>⏱️ Latency: ${result.latency_ms}ms | Can Trade: ${result.can_trade ? '✅ อนุญาต' : '⚠️ ระงับ'}
+            <br>⏱️ Latency: ${result.latency_ms}ms | Can Trade: ${result.can_trade ? '✅ อนุญาต' : '⚠️ ระงับ'} | 💾 บันทึกในเบราว์เซอร์เรียบร้อย
             ${balHtml}
           `;
         } else {
@@ -605,7 +635,18 @@
       }
     }
 
+    // Auto-save on typing
+    ['binance_global', 'bitkub', 'bybit', 'okx'].forEach(ex => {
+      const k = document.getElementById(`key-${ex}`);
+      const s = document.getElementById(`secret-${ex}`);
+      const p = document.getElementById(`pass-${ex}`);
+      if (k) k.addEventListener('input', () => localStorage.setItem(`anti_key_${ex}`, k.value.trim()));
+      if (s) s.addEventListener('input', () => localStorage.setItem(`anti_secret_${ex}`, s.value.trim()));
+      if (p) p.addEventListener('input', () => localStorage.setItem(`anti_pass_${ex}`, p.value.trim()));
+    });
+
     // Initialize
+    restoreCredentialsFromLocal();
     fetchStatus();
     setInterval(fetchStatus, 3000);
   </script>
