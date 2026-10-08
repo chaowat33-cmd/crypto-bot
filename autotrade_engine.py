@@ -425,6 +425,8 @@ class AutoTradeEngine:
                 res = ExchangeAPIClient.test_binance(api_k, api_s, is_th=True)
             elif exchange == "bitkub":
                 res = ExchangeAPIClient.test_bitkub(api_k, api_s)
+            elif exchange == "bybit":
+                res = ExchangeAPIClient.test_bybit(api_k, api_s)
             else:
                 res = ExchangeAPIClient.test_generic_exchange(exchange, api_k, api_s)
 

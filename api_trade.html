@@ -329,6 +329,42 @@
           <div id="diag-binance_th" class="hidden p-3 rounded-lg bg-slate-950 border border-slate-800/80 text-[11px] font-mono"></div>
         </div>
 
+        <!-- EXCHANGE CARD 4: BYBIT GLOBAL (Spot + Linear Perpetual) -->
+        <div class="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 sm:p-5 space-y-4 relative">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-orange-500/10 border border-orange-500/30 flex items-center justify-center font-bold text-orange-400">
+                BB
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-white text-sm">Bybit Global</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-400 border border-orange-500/20 font-bold">Spot + Linear Perp</span>
+                </div>
+                <span id="status-badge-bybit" class="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5">
+                  <span class="w-2 h-2 rounded-full bg-slate-500"></span> ยังไม่ได้เชื่อมต่อ
+                </span>
+              </div>
+            </div>
+            <button onclick="testConnection('bybit')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
+              <span>🔌</span> ทดสอบเชื่อมต่อ
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div>
+              <label class="block text-slate-400 text-[11px] mb-1 font-semibold">Bybit API Key</label>
+              <input type="password" id="key-bybit" placeholder="กรอก Bybit API Key" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white font-mono text-xs focus:border-orange-500 focus:outline-none transition">
+            </div>
+            <div>
+              <label class="block text-slate-400 text-[11px] mb-1 font-semibold">Bybit API Secret</label>
+              <input type="password" id="secret-bybit" placeholder="กรอก Bybit Secret Key" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white font-mono text-xs focus:border-orange-500 focus:outline-none transition">
+            </div>
+          </div>
+
+          <div id="diag-bybit" class="hidden p-3 rounded-lg bg-slate-950 border border-slate-800/80 text-[11px] font-mono"></div>
+        </div>
+
       </div>
 
       <!-- RIGHT COLUMN: MANUAL CRYPTO LOAN TERMINAL (5 COLS) -->
@@ -579,8 +615,8 @@
         'bitkub': 'Bitkub Thailand',
         'binance_th': 'Binance TH by Gulf',
         'binance_global': 'Binance Global',
-        'orbix': 'Orbix',
-        'upbit': 'Upbit'
+        'bybit': 'Bybit Global',
+        'okx': 'OKX Global'
       };
 
       for (const [ex, bal] of Object.entries(data.balances || {})) {
