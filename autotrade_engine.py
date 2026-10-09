@@ -111,6 +111,8 @@ class AutoTradeEngine:
         self.filled_count = 0
         self.missed_count = 0
         self.rebalance_count = 0
+        self.active_futures_pairs = {}      # Real-time open hedged pairs {pair_id: {...}}
+        self.max_concurrent_pairs = 3       # Strict cap to prevent margin depletion
         
         # Realistic Pre-Funded Balances across 5 exchanges (฿100,000 each + Coin seed)
         self.default_balances = {
@@ -192,28 +194,79 @@ class AutoTradeEngine:
                     self.log(f"✅ [BYBIT CASH RESTORED] ขาย {sym} คืนเป็น USDT สำเร็จ!", "success")
         self.refresh_real_balances()
 
-    def unwind_unhedged_bybit_coins(self, coin=None, qty=None):
-        """Immediately close unhedged position on Bybit to restore 100% USDT cash."""
-        time.sleep(1)
-        bb = self.api_keys.get("bybit", {})
-        if not bb.get("key") or not bb.get("secret"):
-            return
-        if coin:
-            self.log(f"🔄 [AUTO-UNWIND BYBIT] ปิดสัญญา Linear Perpetual {coin} ใน Bybit...", "warning")
-            ExchangeAPIClient.place_bybit_order(bb["key"], bb["secret"], coin, "SELL", coin_amount=qty or 1.0, is_perp=True)
-        self.refresh_real_balances()
+    def close_futures_pair(self, pair_id, reason="PROFIT_CONVERGENCE"):
+        """
+        Simultaneously close both legs of an active futures hedged pair to lock in profit.
+        - Close Long on buy_ex with live position size
+        - Close Short on sell_ex with live position size
+        - Release margin back to USDT cash
+        """
+        with self.lock:
+            pair = self.active_futures_pairs.get(pair_id)
+            if not pair:
+                return {"success": False, "message": "Pair not found"}
+            coin = pair["coin"]
+            buy_ex = pair["buy_ex"]
+            sell_ex = pair["sell_ex"]
+            trade_val = pair.get("trade_val_thb", 0.0)
 
-    def unwind_unhedged_okx_coins(self, coin=None, qty=None):
-        """Immediately close unhedged SWAP position on OKX to restore 100% USDT cash."""
-        time.sleep(1)
-        ok = self.api_keys.get("okx", {})
-        if not ok.get("key") or not ok.get("secret"):
-            return
-        if coin:
-            self.log(f"🔄 [AUTO-UNWIND OKX] ปิดสัญญา SWAP {coin} ใน OKX...", "warning")
-            ExchangeAPIClient.place_okx_order(ok["key"], ok["secret"], ok.get("passphrase", ""), coin, "SELL", coin_amount=qty or 1.0, is_perp=True)
-            ExchangeAPIClient.place_okx_order(ok["key"], ok["secret"], ok.get("passphrase", ""), coin, "SELL", coin_amount=qty or 1.0, is_perp=False)
-        self.refresh_real_balances()
+        self.log(f"🎯 [AUTO-CLOSE INITIATED] ปิดสัญญาคู่ {coin} ({buy_ex.upper()} ➔ {sell_ex.upper()}) เหตุผล: {reason}...", "info")
+
+        if self.mode == "live":
+            # 1. Close buy_ex (was Long)
+            if buy_ex == "bybit":
+                bb = self.api_keys.get("bybit", {})
+                res_b = ExchangeAPIClient.close_bybit_position(bb.get("key", ""), bb.get("secret", ""), coin)
+            elif buy_ex == "okx":
+                ok = self.api_keys.get("okx", {})
+                res_b = ExchangeAPIClient.close_okx_position(ok.get("key", ""), ok.get("secret", ""), ok.get("passphrase", ""), coin)
+            else:
+                res_b = {"success": True}
+
+            # 2. Close sell_ex (was Short)
+            if sell_ex == "bybit":
+                bb = self.api_keys.get("bybit", {})
+                res_s = ExchangeAPIClient.close_bybit_position(bb.get("key", ""), bb.get("secret", ""), coin)
+            elif sell_ex == "okx":
+                ok = self.api_keys.get("okx", {})
+                res_s = ExchangeAPIClient.close_okx_position(ok.get("key", ""), ok.get("secret", ""), ok.get("passphrase", ""), coin)
+            else:
+                res_s = {"success": True}
+
+            self.log(
+                f"✅ [PAIR CLOSED SUCCESS] ปิดสัญญา {coin} ทั้ง 2 ฝั่งสำเร็จ! "
+                f"({buy_ex.upper()}: {res_b.get('message', 'OK')} | {sell_ex.upper()}: {res_s.get('message', 'OK')})",
+                "success"
+            )
+            send_telegram_alert(
+                f"🎯 <b>[AUTO-CLOSE] ปิดสัญญาล็อคกำไรสำเร็จ!</b>\n\n"
+                f"🪙 เหรียญ: <b>{coin}</b>\n"
+                f"🟢 ปิดขาซื้อ {buy_ex.upper()}\n"
+                f"🔴 ปิดขาขาย {sell_ex.upper()}\n"
+                f"💡 เหตุผล: <b>{reason}</b>\n"
+                f"💵 ปลดล็อค Margin คืนเข้าพอร์ต USDT เรียบร้อย 100% 🟢"
+            )
+            threading.Thread(target=self.refresh_real_balances, daemon=True).start()
+
+        with self.lock:
+            if pair_id in self.active_futures_pairs:
+                del self.active_futures_pairs[pair_id]
+                self.save_state()
+
+        return {"success": True}
+
+    def close_all_active_pairs(self, reason="MANUAL_RESET"):
+        """Emergency or manual function to close all currently active hedged pairs immediately."""
+        with self.lock:
+            pair_ids = list(self.active_futures_pairs.keys())
+        self.log(f"🚨 [CLOSE ALL PAIRS] กำลังปิดสัญญาที่เปิดอยู่ทั้งหมด {len(pair_ids)} คู่ ({reason})...", "warning")
+        closed_count = 0
+        for pid in pair_ids:
+            res = self.close_futures_pair(pid, reason=reason)
+            if res.get("success"):
+                closed_count += 1
+            time.sleep(0.2)
+        return {"status": "ok", "closed_count": closed_count}
 
     def refresh_real_balances(self):
         """Fetch actual balances directly from connected exchange APIs."""
@@ -433,6 +486,7 @@ class AutoTradeEngine:
                     self.filled_count = len([t for t in self.trades if t.get("status") == "FILLED"])
                     self.missed_count = len([t for t in self.trades if t.get("status") == "MISSED"])
                     self.rebalance_count = data.get("rebalance_count", 0)
+                    self.active_futures_pairs = data.get("active_futures_pairs", {})
         except Exception as e:
             print(f"Notice: Initialized fresh autotrade state ({e})")
 
@@ -455,6 +509,7 @@ class AutoTradeEngine:
                     "loans": self.loans[:100],
                     "balances": self.balances,
                     "trades": self.trades[-500:],
+                    "active_futures_pairs": self.active_futures_pairs,
                     "daily_pnl_thb": self.daily_pnl_thb,
                     "total_volume_thb": self.total_volume_thb,
                     "fees_paid_thb": self.fees_paid_thb,
@@ -949,8 +1004,60 @@ class AutoTradeEngine:
                                     )
 
             # =========================================================================
+            # PHASE 1.5: Monitor and Auto-Close Active Pure Futures Hedged Pairs
+            # =========================================================================
+            if self.active_futures_pairs:
+                coin_map = {c["symbol"]: c for c in processed_coins}
+                for pair_id, p in list(self.active_futures_pairs.items()):
+                    sym = p["coin"]
+                    c_info = coin_map.get(sym)
+                    if not c_info:
+                        continue
+                    px_dict = c_info.get("prices", {})
+                    p_buy = px_dict.get(p["buy_ex"], {}).get("price", 0.0)
+                    p_sell = px_dict.get(p["sell_ex"], {}).get("price", 0.0)
+                    if p_buy <= 0 or p_sell <= 0:
+                        continue
+
+                    curr_spread = ((p_sell - p_buy) / p_buy) * 100.0
+                    open_time = p.get("open_time", now)
+                    hold_sec = now - open_time
+
+                    # Calculate unrealized profit
+                    pnl_buy = (p_buy - p["entry_buy_price"]) * p["coin_amount"]
+                    pnl_sell = (p["entry_sell_price"] - p_sell) * p["coin_amount"]
+                    net_pnl_usd = pnl_buy + pnl_sell
+
+                    should_close = False
+                    reason = ""
+
+                    # Condition 1: Spread has converged (<= 0.03% spread or flipped)
+                    if curr_spread <= 0.03:
+                        should_close = True
+                        reason = f"สเปรดลู่เข้าหากันสมบูรณ์ ({curr_spread:+.2f}% <= +0.03%) ล็อคกำไรเขียว"
+                    # Condition 2: Dollar profit target reached (+0.02 USD)
+                    elif net_pnl_usd >= 0.02:
+                        should_close = True
+                        reason = f"ถึงเป้ากำไรสุทธิ (+${net_pnl_usd:.3f} USD)"
+                    # Condition 3: Hold timeout convergence (15+ minutes and spread <= 0.08%)
+                    elif hold_sec >= 900 and curr_spread <= 0.08:
+                        should_close = True
+                        reason = f"ถือครองครบ {int(hold_sec/60)} นาทีและสเปรดแคบลง ({curr_spread:+.2f}%)"
+                    # Condition 4: Max hold safety timeout (30 minutes)
+                    elif hold_sec >= 1800:
+                        should_close = True
+                        reason = f"ครบกำหนดเวลาถือครองสูงสุด {int(hold_sec/60)} นาที ปิดปลดล็อค Margin"
+
+                    if should_close:
+                        self.close_futures_pair(pair_id, reason=reason)
+
+            # =========================================================================
             # PHASE 2: Detect New Opportunities and Queue with Realistic Jitter Latency
             # =========================================================================
+            # Max concurrent open pairs limit: strictly cap at 3 pairs to protect free margin
+            if len(self.active_futures_pairs) >= self.max_concurrent_pairs:
+                return
+
             pending_coins = {p["coin"] for p in self.pending_orders}
 
             for coin in processed_coins:
@@ -1229,6 +1336,21 @@ class AutoTradeEngine:
                     f"💰 สเปรดสุทธิ: +{actual_roi_pct:.2f}% | กำไรสุทธิ +฿{net_profit_thb:.2f} THB 🟢"
                 )
                 execution_note += " [LIVE 100%]"
+                pair_id = f"{buy_ex}_{sell_ex}_{coin}_{int(time.time())}"
+                with self.lock:
+                    self.active_futures_pairs[pair_id] = {
+                        "pair_id": pair_id,
+                        "coin": coin,
+                        "buy_ex": buy_ex,
+                        "sell_ex": sell_ex,
+                        "trade_val_thb": trade_val_thb,
+                        "coin_amount": coin_amount,
+                        "entry_buy_price": filled_buy_price,
+                        "entry_sell_price": filled_sell_price,
+                        "entry_spread": actual_roi_pct,
+                        "open_time": time.time()
+                    }
+                    self.save_state()
             else:
                 live_executed = False
                 self.log(f"⚠️ [LIVE PARTIAL FAIL] ซื้อ {buy_ex} สำเร็จ แต่ขาย {sell_ex} ล้มเหลว: {res_sell.get('message')}", "error")
@@ -1242,13 +1364,32 @@ class AutoTradeEngine:
                 if buy_ex == "bitkub":
                     threading.Thread(target=self.unwind_unhedged_bitkub_coins, daemon=True).start()
                 elif buy_ex == "bybit":
-                    threading.Thread(target=self.unwind_unhedged_bybit_coins, args=(coin, coin_amount), daemon=True).start()
+                    bb = self.api_keys.get("bybit", {})
+                    ExchangeAPIClient.close_bybit_position(bb.get("key", ""), bb.get("secret", ""), coin)
                 elif buy_ex == "okx":
-                    threading.Thread(target=self.unwind_unhedged_okx_coins, args=(coin, coin_amount), daemon=True).start()
+                    ok = self.api_keys.get("okx", {})
+                    ExchangeAPIClient.close_okx_position(ok.get("key", ""), ok.get("secret", ""), ok.get("passphrase", ""), coin)
                 return
 
         if self.mode == "live" and not live_executed:
             return
+
+        if self.mode != "live":
+            pair_id = f"paper_{buy_ex}_{sell_ex}_{coin}_{int(time.time())}"
+            with self.lock:
+                self.active_futures_pairs[pair_id] = {
+                    "pair_id": pair_id,
+                    "coin": coin,
+                    "buy_ex": buy_ex,
+                    "sell_ex": sell_ex,
+                    "trade_val_thb": trade_val_thb,
+                    "coin_amount": coin_amount,
+                    "entry_buy_price": filled_buy_price,
+                    "entry_sell_price": filled_sell_price,
+                    "entry_spread": actual_roi_pct,
+                    "open_time": time.time()
+                }
+                self.save_state()
 
         if live_executed:
             self.refresh_real_balances()
@@ -1567,6 +1708,8 @@ class AutoTradeEngine:
                     "total_collateral_usdt": round(total_active_collateral_usdt, 2)
                 },
                 "pending_orders": pending_display,
+                "active_futures_pairs": list(self.active_futures_pairs.values()),
+                "max_concurrent_pairs": self.max_concurrent_pairs,
                 "balances": self.balances,
                 "real_balances": self.real_balances,
                 "api_keys": masked_keys,

@@ -1239,6 +1239,26 @@ class CryptoHandler(SimpleHTTPRequestHandler):
             self.wfile.write(json.dumps(res, ensure_ascii=False).encode("utf-8"))
             return
 
+        if self.path.startswith("/api/autotrade/close-pair"):
+            length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(length) if length > 0 else b"{}"
+            data = json.loads(body.decode("utf-8")) if body else {}
+            pair_id = data.get("pair_id", "")
+            res = autotrade_engine.close_futures_pair(pair_id, reason="MANUAL_API_REQUEST")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(json.dumps(res, ensure_ascii=False).encode("utf-8"))
+            return
+
+        if self.path.startswith("/api/autotrade/close-all-pairs"):
+            res = autotrade_engine.close_all_active_pairs(reason="MANUAL_API_REQUEST")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(json.dumps(res, ensure_ascii=False).encode("utf-8"))
+            return
+
         self.send_response(404)
         self.end_headers()
 

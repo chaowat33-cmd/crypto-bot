@@ -1137,4 +1137,100 @@ class ExchangeAPIClient:
         except Exception as e:
             return {"success": False, "message": f"❌ ข้อผิดพลาด OKX Order: {str(e)}"}
 
+    @classmethod
+    def close_bybit_position(cls, api_key, api_secret, coin):
+        """
+        Close any open Linear Perpetual position for coin on Bybit V5.
+        Uses live position size and reduceOnly market order.
+        """
+        try:
+            ts = str(int(time.time() * 1000) - 1000)
+            sym = f"{coin.upper()}USDT"
+            qs = f"category=linear&symbol={sym}"
+            sig = hmac.new(api_secret.encode(), (ts + api_key + "15000" + qs).encode(), hashlib.sha256).hexdigest()
+            req = urllib.request.Request(
+                f"https://api.bybit.com/v5/position/list?{qs}",
+                headers={"X-BAPI-API-KEY": api_key, "X-BAPI-TIMESTAMP": ts, "X-BAPI-SIGN": sig, "X-BAPI-RECV-WINDOW": "15000"}
+            )
+            with urllib.request.urlopen(req, timeout=5) as r:
+                data = json.loads(r.read().decode())
+                positions = data.get("result", {}).get("list", [])
+
+            for p in positions:
+                size = float(p.get("size", 0))
+                if size <= 0:
+                    continue
+                side = "Buy" if p.get("side") == "Sell" else "Sell"
+                ts_now = str(int(time.time() * 1000) - 1000)
+                payload = {
+                    "category": "linear",
+                    "symbol": sym,
+                    "side": side,
+                    "orderType": "Market",
+                    "qty": str(p.get("size")),
+                    "reduceOnly": True,
+                    "positionIdx": int(p.get("positionIdx", 0))
+                }
+                body_str = json.dumps(payload)
+                sig_order = hmac.new(api_secret.encode(), (ts_now + api_key + "15000" + body_str).encode(), hashlib.sha256).hexdigest()
+                order_req = urllib.request.Request(
+                    "https://api.bybit.com/v5/order/create",
+                    data=body_str.encode(),
+                    headers={"X-BAPI-API-KEY": api_key, "X-BAPI-TIMESTAMP": ts_now, "X-BAPI-SIGN": sig_order, "X-BAPI-RECV-WINDOW": "15000", "Content-Type": "application/json"}
+                )
+                with urllib.request.urlopen(order_req, timeout=5) as resp:
+                    pass
+            return {"success": True, "message": f"Closed Bybit {sym} successfully"}
+        except Exception as e:
+            return {"success": False, "message": f"Error closing Bybit position {coin}: {str(e)}"}
+
+    @classmethod
+    def close_okx_position(cls, api_key, api_secret, passphrase, coin):
+        """
+        Close any open SWAP Perpetual position for coin on OKX V5.
+        Uses live position size and reduceOnly market order.
+        """
+        try:
+            inst_id = f"{coin.upper()}-USDT-SWAP"
+            ts_iso = datetime.datetime.fromtimestamp(time.time(), tz=datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
+            sig = base64.b64encode(hmac.new(api_secret.encode(), (ts_iso + f"GET/api/v5/account/positions?instId={inst_id}").encode(), hashlib.sha256).digest()).decode()
+            req = urllib.request.Request(
+                f"https://www.okx.com/api/v5/account/positions?instId={inst_id}",
+                headers={"OK-ACCESS-KEY": api_key, "OK-ACCESS-SIGN": sig, "OK-ACCESS-TIMESTAMP": ts_iso, "OK-ACCESS-PASSPHRASE": passphrase, "User-Agent": "Mozilla/5.0"}
+            )
+            with urllib.request.urlopen(req, timeout=5) as r:
+                data = json.loads(r.read().decode())
+                positions = data.get("data", [])
+
+            for p in positions:
+                pos = float(p.get("pos", 0))
+                if pos == 0:
+                    continue
+                side = "sell" if pos > 0 else "buy"
+                sz = str(abs(int(pos))) if float(pos).is_integer() else str(abs(pos))
+                now_ms = int(time.time() * 1000)
+                ts_now = datetime.datetime.fromtimestamp(now_ms / 1000.0, tz=datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
+                payload = {
+                    "instId": inst_id,
+                    "tdMode": "cross",
+                    "side": side,
+                    "ordType": "market",
+                    "sz": sz,
+                    "reduceOnly": True
+                }
+                body_str = json.dumps(payload)
+                prehash = f"{ts_now}POST/api/v5/trade/order{body_str}"
+                sig_post = base64.b64encode(hmac.new(api_secret.encode(), prehash.encode(), hashlib.sha256).digest()).decode()
+                order_req = urllib.request.Request(
+                    "https://www.okx.com/api/v5/trade/order",
+                    data=body_str.encode(),
+                    headers={"User-Agent": "Mozilla/5.0", "OK-ACCESS-KEY": api_key, "OK-ACCESS-SIGN": sig_post, "OK-ACCESS-TIMESTAMP": ts_now, "OK-ACCESS-PASSPHRASE": passphrase, "Content-Type": "application/json"}
+                )
+                with urllib.request.urlopen(order_req, timeout=5) as resp:
+                    pass
+            return {"success": True, "message": f"Closed OKX {inst_id} successfully"}
+        except Exception as e:
+            return {"success": False, "message": f"Error closing OKX position {coin}: {str(e)}"}
+
+
 
