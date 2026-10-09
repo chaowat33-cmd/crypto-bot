@@ -76,13 +76,9 @@ class ExchangeAPIClient:
                 "message": f"✅ [DEMO/MOCK] จำลองการเชื่อมต่อ {ex_label} สำเร็จ (พร้อมสิทธิ์ Spot & Margin Loan)"
             }
 
-        # For Binance Global in Pure Futures Mode: Prioritize fapi.binance.com directly
+        # For Binance Global in Pure Futures Mode: Use fapi.binance.com directly
         if not is_th:
-            res_fut = cls.test_binance_futures(api_key, api_secret)
-            if res_fut.get("success"):
-                return res_fut
-            if res_fut.get("http_code") == 401:
-                return res_fut
+            return cls.test_binance_futures(api_key, api_secret)
 
         last_code = 0
         last_msg = ""

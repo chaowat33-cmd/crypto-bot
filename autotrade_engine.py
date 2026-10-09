@@ -615,7 +615,7 @@ class AutoTradeEngine:
             api_p = passphrase.strip() if (passphrase and passphrase.strip()) else saved.get("passphrase", "")
 
             if exchange == "binance_global":
-                res = ExchangeAPIClient.test_binance(api_k, api_s, is_th=False)
+                res = ExchangeAPIClient.test_binance_futures(api_k, api_s)
             elif exchange == "bitkub":
                 res = ExchangeAPIClient.test_bitkub(api_k, api_s)
             elif exchange == "bybit":
