@@ -1356,6 +1356,13 @@ class CryptoHandler(SimpleHTTPRequestHandler):
             self.wfile.write(json.dumps({"enabled": new_state}).encode("utf-8"))
             return
 
+        if self.path.startswith("/api/autotrade/export-keys"):
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(json.dumps(autotrade_engine.api_keys).encode("utf-8"))
+            return
+
         if self.path.startswith("/api/autotrade/export"):
             self.send_response(200)
             self.send_header("Content-Type", "text/csv; charset=utf-8-sig")
