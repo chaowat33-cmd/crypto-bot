@@ -192,22 +192,27 @@ class AutoTradeEngine:
                     self.log(f"✅ [BYBIT CASH RESTORED] ขาย {sym} คืนเป็น USDT สำเร็จ!", "success")
         self.refresh_real_balances()
 
+    def unwind_unhedged_bybit_coins(self, coin=None, qty=None):
+        """Immediately close unhedged position on Bybit to restore 100% USDT cash."""
+        time.sleep(1)
+        bb = self.api_keys.get("bybit", {})
+        if not bb.get("key") or not bb.get("secret"):
+            return
+        if coin:
+            self.log(f"🔄 [AUTO-UNWIND BYBIT] ปิดสัญญา Linear Perpetual {coin} ใน Bybit...", "warning")
+            ExchangeAPIClient.place_bybit_order(bb["key"], bb["secret"], coin, "SELL", coin_amount=qty or 1.0, is_perp=True)
+        self.refresh_real_balances()
+
     def unwind_unhedged_okx_coins(self, coin=None, qty=None):
-        """Immediately sell back spot coins on OKX to restore 100% USDT cash."""
-        time.sleep(2)
+        """Immediately close unhedged SWAP position on OKX to restore 100% USDT cash."""
+        time.sleep(1)
         ok = self.api_keys.get("okx", {})
         if not ok.get("key") or not ok.get("secret"):
             return
-        coins_to_sell = [coin] if coin else list(self.real_balances.get("okx", {}).get("coins", {}).keys())
-        for sym in coins_to_sell:
-            if sym in ("USDT", "USDC", "USD") or not sym:
-                continue
-            c_amt = qty if (coin and qty) else self.real_balances.get("okx", {}).get("coins", {}).get(sym, 0.0)
-            if c_amt > 0:
-                self.log(f"🔄 [AUTO-UNWIND OKX] ขายคืน {c_amt} {sym} ใน OKX Spot คืนเป็น USDT...", "warning")
-                res = ExchangeAPIClient.place_okx_order(ok["key"], ok["secret"], ok.get("passphrase", ""), sym, "SELL", coin_amount=c_amt, is_perp=False)
-                if res.get("success"):
-                    self.log(f"✅ [OKX CASH RESTORED] ขาย {sym} คืนเป็น USDT สำเร็จ!", "success")
+        if coin:
+            self.log(f"🔄 [AUTO-UNWIND OKX] ปิดสัญญา SWAP {coin} ใน OKX...", "warning")
+            ExchangeAPIClient.place_okx_order(ok["key"], ok["secret"], ok.get("passphrase", ""), coin, "SELL", coin_amount=qty or 1.0, is_perp=True)
+            ExchangeAPIClient.place_okx_order(ok["key"], ok["secret"], ok.get("passphrase", ""), coin, "SELL", coin_amount=qty or 1.0, is_perp=False)
         self.refresh_real_balances()
 
     def refresh_real_balances(self):
@@ -1022,22 +1027,15 @@ class AutoTradeEngine:
                 # Dynamic trade sizing:
                 # Base size: self.trade_size_thb (฿500)
                 # If net_spread >= 1.5%: Scale up to maximum safe capacity / available balance ("ใส่เต็มที่เลย")
-                target_size = self.trade_size_thb
-                is_boosted = False
-                if net_spread >= 1.5:
-                    is_boosted = True
-                    if self.mode == "live":
-                        bk_free = self.real_balances.get("bitkub", {}).get("free", 0.0)
-                        # Use up to 98% of free Bitkub THB (leaving 2% buffer for fees/dust, min 500 THB)
-                        target_size = max(self.trade_size_thb, bk_free * 0.98)
-                    else:
-                        paper_free = self.balances.get(buy_ex, {}).get("THB", 5000.0)
-                        target_size = max(self.trade_size_thb, min(5000.0, paper_free * 0.5))
-
+                # Pure Futures: Bybit requires min 5.00 USDT (~฿170 THB). We enforce minimum ฿190 THB (~$5.65 USDT)
+                target_size = max(190.0, self.trade_size_thb)
                 max_cap = best_route.get("max_capacity_thb", 0)
                 trade_val = min(target_size, max_cap * (self.max_book_cap_pct / 100.0))
-                if trade_val < 50.0:
-                    continue
+                if trade_val < 190.0:
+                    if max_cap >= 190.0:
+                        trade_val = 190.0
+                    else:
+                        continue
 
                 buy_price = best_route.get("buy_price", 0)
                 sell_price = best_route.get("sell_price", 0)
@@ -1154,6 +1152,10 @@ class AutoTradeEngine:
             trade_val_thb *= 0.85
             execution_note = "PARTIAL 85%"
 
+        # Enforce minimum Bybit order size of 5.00 USDT (~฿170 THB, min ฿190 THB)
+        if trade_val_thb < 190.0:
+            trade_val_thb = 195.0
+
         # 3. Truncate coin amount to real exchange decimal lot size
         buy_fee_thb = trade_val_thb * p["fee_rate_buy"]
         net_buy_thb = trade_val_thb - buy_fee_thb
@@ -1177,11 +1179,11 @@ class AutoTradeEngine:
         # 5. Live Execution vs Paper Balance Update
         live_executed = False
         if self.mode == "live":
-            # Profit Guard: strictly ensure net profit is positive (>= +0.08 THB and ROI >= +0.04%)
-            if net_profit_thb < 0.05 or actual_roi_pct < 0.03:
+            # Profit Guard: strictly ensure net profit is positive (covers all fees)
+            if net_profit_thb <= 0.0 or actual_roi_pct <= 0.0:
                 self.log(
                     f"🛡️ [PROFIT GUARD] ระงับการส่งคำสั่ง {coin}: กำไรสุทธิคาดการณ์ ({net_profit_thb:+.2f} THB) "
-                    f"น้อยกว่าเกณฑ์ปลอดภัย ➔ บอทจะเข้าเทรดเฉพาะไม้ที่ได้กำไรเขียว (+) ชัดเจนเท่านั้น",
+                    f"น้อยกว่าต้นทุน ➔ บอทจะเข้าเทรดเฉพาะไม้ที่ได้กำไรเขียว (+) ชัดเจนเท่านั้น",
                     "warning"
                 )
                 return
