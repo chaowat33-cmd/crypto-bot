@@ -318,9 +318,9 @@ def binance_th_worker():
         time.sleep(0.35)
 
 def okx_worker():
-    """Worker for OKX public spot tickers (~500ms)"""
+    """Worker for OKX public SWAP futures tickers (~500ms)"""
     global raw_okx, cache
-    url = "https://www.okx.com/api/v5/market/tickers?instType=SPOT"
+    url = "https://www.okx.com/api/v5/market/tickers?instType=SWAP"
     while True:
         t0 = time.time()
         try:
@@ -330,8 +330,8 @@ def okx_worker():
                 m = {}
                 for item in okx_data["data"]:
                     iid = item.get("instId", "")
-                    if iid.endswith("-USDT"):
-                        coin = iid.replace("-USDT", "").upper()
+                    if iid.endswith("-USDT-SWAP"):
+                        coin = iid.replace("-USDT-SWAP", "").upper()
                         try:
                             bid = float(item.get("bidPx", 0))
                             ask = float(item.get("askPx", 0))
@@ -360,9 +360,9 @@ def okx_worker():
         time.sleep(0.5)
 
 def bybit_worker():
-    """Worker for Bybit public spot tickers (~500ms)"""
+    """Worker for Bybit public linear perpetual tickers (~500ms)"""
     global raw_bybit, cache
-    url = "https://api.bybit.com/v5/market/tickers?category=spot"
+    url = "https://api.bybit.com/v5/market/tickers?category=linear"
     while True:
         t0 = time.time()
         try:

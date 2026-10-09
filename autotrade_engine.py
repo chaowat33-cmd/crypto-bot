@@ -976,41 +976,32 @@ class AutoTradeEngine:
                 for r in routes:
                     b_ex = r.get("buy_ex")
                     s_ex = r.get("sell_ex")
-                    if b_ex not in connected_exchanges or s_ex not in connected_exchanges:
+                    # Pure Futures Mode: Only Bybit Linear and OKX SWAP
+                    if b_ex not in ("bybit", "okx") or s_ex not in ("bybit", "okx"):
                         continue
-                    if self.mode == "live":
-                        # 1. Validate BUY leg funds
-                        if b_ex == "bitkub":
-                            free_thb = self.real_balances.get("bitkub", {}).get("free", 0.0)
-                            if free_thb < self.trade_size_thb:
-                                continue
-                        elif b_ex in ("bybit", "okx", "binance_global"):
-                            needed_usdt = round(self.trade_size_thb / 33.54, 2)
-                            free_usdt = self.real_balances.get(b_ex, {}).get("free", 0.0) or self.real_balances.get(b_ex, {}).get("usdt", 0.0)
-                            if free_usdt < needed_usdt:
-                                continue
+                    if b_ex == s_ex:
+                        continue
+                    # Exclude abnormal spreads (> 4.5% is typically contract unit discrepancy)
+                    if r.get("spread_pct", 0) > 4.5 or r.get("spread_pct", 0) < 0.10:
+                        continue
+                    # Must be a verified common perpetual contract
+                    if sym not in self.verified_common_perps:
+                        continue
 
-                        # 2. Validate SELL leg ability
-                        if s_ex == "bitkub":
-                            # Bitkub has NO short selling - can only sell if holding sufficient coin!
-                            held_bk = self.real_balances.get("bitkub", {}).get("coins", {}).get(sym, 0.0)
-                            bk_val = held_bk * r.get("sell_price", 0)
-                            if bk_val < (self.trade_size_thb * 0.9):
-                                continue
-                        elif s_ex in ("bybit", "okx"):
-                            # Both Bybit and OKX (Futures Mode Lv2) can short verified perpetual contracts
-                            if sym not in self.verified_common_perps:
-                                held = self.real_balances.get(s_ex, {}).get("coins", {}).get(sym, 0.0)
-                                val = held * (r.get("sell_price", 0) / 33.54) if r.get("sell_price", 0) else 0
-                                if val < ((self.trade_size_thb / 33.54) * 0.9):
-                                    continue
-                        elif s_ex == "binance_global":
-                            if not ExchangeAPIClient.is_binance_margin(sym):
-                                continue
-                    f_buy = 0.0005 if b_ex in ("bybit", "okx") else (0.001 if "binance" in b_ex else 0.0025)
-                    f_sell = 0.0005 if s_ex in ("bybit", "okx") else (0.001 if "binance" in s_ex else 0.0025)
-                    tot_fee = (f_buy + f_sell) * 100.0
+                    if self.mode == "live":
+                        # Validate USDT margin balance on BOTH exchanges
+                        needed_usdt = round(self.trade_size_thb / 33.54, 2)
+                        free_b = self.real_balances.get(b_ex, {}).get("free", 0.0) or self.real_balances.get(b_ex, {}).get("usdt", 0.0)
+                        free_s = self.real_balances.get(s_ex, {}).get("free", 0.0) or self.real_balances.get(s_ex, {}).get("usdt", 0.0)
+                        if free_b < needed_usdt or free_s < needed_usdt:
+                            continue
+
+                    # Exact Futures Taker Fees: Bybit 0.05% + OKX 0.05% = 0.10% total round-trip
+                    f_buy = 0.0005
+                    f_sell = 0.0005
+                    tot_fee = (f_buy + f_sell) * 100.0  # 0.10%
                     n_spread = r.get("spread_pct", 0) - tot_fee
+                    # Fee covered + net positive profit
                     if n_spread >= self.min_net_spread_pct and r.get("buy_price", 0) > 0 and r.get("sell_price", 0) > 0:
                         valid_routes.append((r, n_spread))
 
@@ -1116,24 +1107,15 @@ class AutoTradeEngine:
             return ExchangeAPIClient.place_binance_margin_order(k["key"], k["secret"], coin, side, quantity=coin_amount)
 
         elif exchange == "bybit":
-            # If side is SELL and user doesn't hold spot coin, hedge via linear perpetual short
-            is_perp = False
-            if side.upper() == "SELL":
-                held = self.real_balances.get("bybit", {}).get("coins", {}).get(coin.upper(), 0.0)
-                if held < coin_amount:
-                    is_perp = True
+            # Pure Futures Mode: always Linear Perpetual
             return ExchangeAPIClient.place_bybit_order(
-                k["key"], k["secret"], coin, side, amount_usdt=amount_usdt, coin_amount=coin_amount, is_perp=is_perp
+                k["key"], k["secret"], coin, side, amount_usdt=amount_usdt, coin_amount=coin_amount, is_perp=True
             )
 
         elif exchange == "okx":
-            is_perp = False
-            if side.upper() == "SELL":
-                held = self.real_balances.get("okx", {}).get("coins", {}).get(coin.upper(), 0.0)
-                if held < coin_amount:
-                    is_perp = True
+            # Pure Futures Mode: always SWAP Perpetual
             return ExchangeAPIClient.place_okx_order(
-                k["key"], k["secret"], k.get("passphrase", ""), coin, side, amount_usdt=amount_usdt, coin_amount=coin_amount, is_perp=is_perp
+                k["key"], k["secret"], k.get("passphrase", ""), coin, side, amount_usdt=amount_usdt, coin_amount=coin_amount, is_perp=True
             )
 
         return {"success": False, "message": f"Unsupported exchange: {exchange}"}
