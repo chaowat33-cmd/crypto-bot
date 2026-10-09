@@ -1024,10 +1024,8 @@ class AutoTradeEngine:
                 if (now - last_traded) < self.cooldown_sec:
                     continue
 
-                # Dynamic trade sizing:
-                # Base size: self.trade_size_thb (฿500)
-                # If net_spread >= 1.5%: Scale up to maximum safe capacity / available balance ("ใส่เต็มที่เลย")
                 # Pure Futures: Bybit requires min 5.00 USDT (~฿170 THB). We enforce minimum ฿190 THB (~$5.65 USDT)
+                is_boosted = False
                 target_size = max(190.0, self.trade_size_thb)
                 max_cap = best_route.get("max_capacity_thb", 0)
                 trade_val = min(target_size, max_cap * (self.max_book_cap_pct / 100.0))
