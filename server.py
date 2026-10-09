@@ -1270,6 +1270,18 @@ class CryptoHandler(SimpleHTTPRequestHandler):
             self.wfile.write(b'{"status":"ok","uptime":' + str(int(time.time())).encode("utf-8") + b'}')
             return
 
+        if self.path == "/api/server-ip":
+            try:
+                with urllib.request.urlopen("https://api.ipify.org", timeout=5) as r:
+                    my_ip = r.read().decode().strip()
+            except Exception as e:
+                my_ip = str(e)
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps({"ip": my_ip}).encode("utf-8"))
+            return
+
         if not self.check_auth():
             self.require_auth()
             return
