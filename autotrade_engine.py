@@ -220,6 +220,9 @@ class AutoTradeEngine:
             elif buy_ex == "okx":
                 ok = self.api_keys.get("okx", {})
                 res_b = ExchangeAPIClient.close_okx_position(ok.get("key", ""), ok.get("secret", ""), ok.get("passphrase", ""), coin)
+            elif buy_ex == "binance_global":
+                bn = self.api_keys.get("binance_global", {})
+                res_b = ExchangeAPIClient.close_binance_futures_position(bn.get("key", ""), bn.get("secret", ""), coin)
             else:
                 res_b = {"success": True}
 
@@ -230,6 +233,9 @@ class AutoTradeEngine:
             elif sell_ex == "okx":
                 ok = self.api_keys.get("okx", {})
                 res_s = ExchangeAPIClient.close_okx_position(ok.get("key", ""), ok.get("secret", ""), ok.get("passphrase", ""), coin)
+            elif sell_ex == "binance_global":
+                bn = self.api_keys.get("binance_global", {})
+                res_s = ExchangeAPIClient.close_binance_futures_position(bn.get("key", ""), bn.get("secret", ""), coin)
             else:
                 res_s = {"success": True}
 
@@ -305,32 +311,16 @@ class AutoTradeEngine:
         try:
             bn = self.api_keys.get("binance_global", {})
             if bn.get("connected") and bn.get("key") and bn.get("secret"):
-                r = ExchangeAPIClient.test_binance(bn["key"], bn["secret"], is_th=False)
+                r = ExchangeAPIClient.test_binance_futures(bn["key"], bn["secret"])
                 if r.get("success"):
-                    all_m = r.get("margin_balances", {})
-                    m_bal = all_m.get("USDT", {})
-                    free_usdt = m_bal.get("free", 0.0) if isinstance(m_bal, dict) else float(m_bal or 0.0)
-                    borrowed_assets = {}
-                    for asset, b in all_m.items():
-                        b_amt = b.get("borrowed", 0.0)
-                        if b_amt > 0.0001:
-                            borrowed_assets[asset] = {
-                                "borrowed": b_amt,
-                                "interest": b.get("interest", 0.0),
-                                "net": b.get("net", 0.0)
-                            }
-                    disp = f"{free_usdt:,.2f} USDT"
-                    if borrowed_assets:
-                        disp += f" (หนี้: {', '.join(borrowed_assets.keys())})"
+                    avail = r.get("available_balance_usdt", 0.0)
                     real["binance_global"] = {
                         "connected": True,
-                        "currency": "USDT (Margin)",
-                        "free": free_usdt,
-                        "usdt": free_usdt,
-                        "borrowed": m_bal.get("borrowed", 0.0),
-                        "borrowed_assets": borrowed_assets,
-                        "margin_level": r.get("margin_level", "999"),
-                        "display": disp
+                        "currency": "USDT (Futures)",
+                        "free": avail,
+                        "usdt": avail,
+                        "positions": r.get("positions", []),
+                        "display": f"${avail:,.2f} USDT"
                     }
                     self._last_good_binance = real["binance_global"]
                 elif hasattr(self, "_last_good_binance") and self._last_good_binance:
@@ -338,13 +328,10 @@ class AutoTradeEngine:
                 elif bn.get("connected"):
                     real["binance_global"] = {
                         "connected": True,
-                        "currency": "USDT (Margin)",
-                        "free": 221.43,
-                        "usdt": 221.43,
-                        "borrowed": 0.0,
-                        "borrowed_assets": {},
-                        "margin_level": "999",
-                        "display": "$221.43 USDT"
+                        "currency": "USDT (Futures)",
+                        "free": 0.0,
+                        "usdt": 0.0,
+                        "display": "$0.00 USDT (Futures)"
                     }
         except Exception:
             pass
@@ -1088,8 +1075,9 @@ class AutoTradeEngine:
                 for r in routes:
                     b_ex = r.get("buy_ex")
                     s_ex = r.get("sell_ex")
-                    # Pure Futures Mode: Only Bybit Linear and OKX SWAP
-                    if b_ex not in ("bybit", "okx") or s_ex not in ("bybit", "okx"):
+                    # Pure Futures Mode: 3-way between Bybit, OKX, and Binance Global (USDT-M Futures)
+                    valid_f_exs = ("bybit", "okx", "binance_global")
+                    if b_ex not in valid_f_exs or s_ex not in valid_f_exs:
                         continue
                     if b_ex == s_ex:
                         continue
@@ -1108,10 +1096,10 @@ class AutoTradeEngine:
                         if free_b < needed_usdt or free_s < needed_usdt:
                             continue
 
-                    # Exact Futures Taker Fees: Bybit 0.05% + OKX 0.05% = 0.10% total round-trip
-                    f_buy = 0.0005
-                    f_sell = 0.0005
-                    tot_fee = (f_buy + f_sell) * 100.0  # 0.10%
+                    # Exact Futures Taker Fees: Bybit 0.05%, OKX 0.05%, Binance Futures 0.04%
+                    f_buy = 0.0004 if b_ex == "binance_global" else 0.0005
+                    f_sell = 0.0004 if s_ex == "binance_global" else 0.0005
+                    tot_fee = (f_buy + f_sell) * 100.0
                     n_spread = r.get("spread_pct", 0) - tot_fee
                     # Fee covered + net positive profit
                     if n_spread >= self.min_net_spread_pct and r.get("buy_price", 0) > 0 and r.get("sell_price", 0) > 0:
@@ -1207,7 +1195,10 @@ class AutoTradeEngine:
                 return ExchangeAPIClient.place_bitkub_order(k["key"], k["secret"], coin, "SELL", coin_amount=coin_amount)
 
         elif exchange == "binance_global":
-            return ExchangeAPIClient.place_binance_margin_order(k["key"], k["secret"], coin, side, quantity=coin_amount)
+            # Pure Futures Mode: Binance USDT-M Futures
+            return ExchangeAPIClient.place_binance_futures_order(
+                k["key"], k["secret"], coin, side, amount_usdt=amount_usdt, coin_amount=coin_amount
+            )
 
         elif exchange == "bybit":
             # Pure Futures Mode: always Linear Perpetual

@@ -76,6 +76,14 @@ class ExchangeAPIClient:
                 "message": f"✅ [DEMO/MOCK] จำลองการเชื่อมต่อ {ex_label} สำเร็จ (พร้อมสิทธิ์ Spot & Margin Loan)"
             }
 
+        # For Binance Global in Pure Futures Mode: Prioritize fapi.binance.com directly
+        if not is_th:
+            res_fut = cls.test_binance_futures(api_key, api_secret)
+            if res_fut.get("success"):
+                return res_fut
+            if res_fut.get("http_code") == 401:
+                return res_fut
+
         last_code = 0
         last_msg = ""
         for base_url in candidate_bases:
@@ -1231,6 +1239,184 @@ class ExchangeAPIClient:
             return {"success": True, "message": f"Closed OKX {inst_id} successfully"}
         except Exception as e:
             return {"success": False, "message": f"Error closing OKX position {coin}: {str(e)}"}
+
+    @classmethod
+    def test_binance_futures(cls, api_key, api_secret):
+        """
+        Test Binance USDT-M Futures API credentials directly via fapi.binance.com
+        Bypasses Spot rate limits entirely (immune to api.binance.com IP bans).
+        """
+        start_t = time.time()
+        candidate_bases = ["https://fapi.binance.com", "https://fapi1.binance.com", "https://fapi2.binance.com"]
+        last_code = 0
+        last_msg = ""
+        for base_url in candidate_bases:
+            try:
+                server_time = int(time.time() * 1000)
+                try:
+                    with urllib.request.urlopen(f"{base_url}/fapi/v1/time", timeout=3) as tr:
+                        server_time = int(json.loads(tr.read().decode())["serverTime"])
+                except Exception:
+                    pass
+                ts = str(server_time)
+                query_string = f"timestamp={ts}&recvWindow=60000"
+                signature = hmac.new(
+                    api_secret.encode("utf-8"),
+                    query_string.encode("utf-8"),
+                    hashlib.sha256
+                ).hexdigest()
+
+                url = f"{base_url}/fapi/v2/account?{query_string}&signature={signature}"
+                req = urllib.request.Request(
+                    url,
+                    headers={
+                        "X-MBX-APIKEY": api_key,
+                        "User-Agent": "Antigravity/2.0"
+                    }
+                )
+
+                with urllib.request.urlopen(req, timeout=6) as resp:
+                    elapsed_ms = int((time.time() - start_t) * 1000)
+                    data = json.loads(resp.read().decode("utf-8"))
+
+                    total_wallet = float(data.get("totalWalletBalance", 0.0))
+                    avail_bal = float(data.get("availableBalance", 0.0))
+                    total_unrealized = float(data.get("totalUnrealizedProfit", 0.0))
+
+                    positions = []
+                    for p in data.get("positions", []):
+                        amt = float(p.get("positionAmt", 0.0))
+                        if abs(amt) > 0.0001:
+                            positions.append({
+                                "symbol": p.get("symbol"),
+                                "amount": amt,
+                                "entry_price": float(p.get("entryPrice", 0.0)),
+                                "unrealized_profit": float(p.get("unrealizedProfit", 0.0))
+                            })
+
+                    return {
+                        "success": True,
+                        "exchange": "Binance Futures (USDT-M)",
+                        "latency_ms": elapsed_ms,
+                        "can_trade": data.get("canTrade", True),
+                        "total_wallet_usdt": total_wallet,
+                        "available_balance_usdt": avail_bal,
+                        "unrealized_profit_usdt": total_unrealized,
+                        "positions": positions,
+                        "balances": {"USDT": avail_bal},
+                        "margin_balances": {"USDT": {"free": avail_bal, "borrowed": 0.0}},
+                        "message": f"✅ เชื่อมต่อ Binance Futures สำเร็จ ({elapsed_ms}ms) | พร้อมเทรด: ${avail_bal:,.2f} USDT"
+                    }
+            except urllib.error.HTTPError as e:
+                last_code = e.code
+                err_body = e.read().decode("utf-8", errors="ignore")
+                try:
+                    err_json = json.loads(err_body)
+                    last_msg = err_json.get("msg", err_body)
+                except Exception:
+                    last_msg = err_body
+                if last_code == 401:
+                    break
+                continue
+            except Exception as e:
+                last_msg = str(e)
+                continue
+
+        return {
+            "success": False,
+            "exchange": "Binance Futures (USDT-M)",
+            "latency_ms": 0,
+            "http_code": last_code,
+            "message": f"❌ การเชื่อมต่อ Binance Futures ล้มเหลว ({last_code}): {last_msg}"
+        }
+
+    @classmethod
+    def place_binance_futures_order(cls, api_key, api_secret, coin, side, amount_usdt=0, coin_amount=0, reduce_only=False):
+        """
+        Place real Market order on Binance USDT-M Futures (fapi.binance.com).
+        side: 'BUY' or 'SELL'
+        reduce_only: True when closing position
+        """
+        try:
+            sym_str = f"{coin.upper()}USDT"
+            server_time = int(time.time() * 1000)
+            try:
+                with urllib.request.urlopen("https://fapi.binance.com/fapi/v1/time", timeout=3) as tr:
+                    server_time = int(json.loads(tr.read().decode())["serverTime"])
+            except Exception:
+                pass
+
+            formatted_qty = cls.format_binance_quantity(coin, coin_amount) if coin_amount > 0 else 0
+
+            params = {
+                "symbol": sym_str,
+                "side": side.upper(),
+                "type": "MARKET",
+                "quantity": str(formatted_qty),
+                "timestamp": str(server_time),
+                "recvWindow": "60000"
+            }
+            if reduce_only:
+                params["reduceOnly"] = "true"
+
+            query_string = urllib.parse.urlencode(params)
+            signature = hmac.new(api_secret.encode("utf-8"), query_string.encode("utf-8"), hashlib.sha256).hexdigest()
+
+            url = f"https://fapi.binance.com/fapi/v1/order?{query_string}&signature={signature}"
+            req = urllib.request.Request(
+                url,
+                data=b"",
+                headers={"X-MBX-APIKEY": api_key, "User-Agent": "Antigravity/2.0"}
+            )
+            with urllib.request.urlopen(req, timeout=7) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                order_id = str(data.get("orderId", ""))
+                return {
+                    "success": True,
+                    "order_id": order_id,
+                    "raw": data,
+                    "message": f"✅ Binance Futures {side.upper()} สำเร็จ! Order ID: {order_id}"
+                }
+        except urllib.error.HTTPError as e:
+            err_body = e.read().decode("utf-8", errors="ignore")
+            try:
+                err_msg = json.loads(err_body).get("msg", err_body)
+            except Exception:
+                err_msg = err_body
+            return {"success": False, "message": f"❌ Binance Futures ปฏิเสธ ({e.code}): {err_msg}"}
+        except Exception as e:
+            return {"success": False, "message": f"❌ ข้อผิดพลาด Binance Futures: {str(e)}"}
+
+    @classmethod
+    def close_binance_futures_position(cls, api_key, api_secret, coin):
+        """
+        Close any open position for coin on Binance USDT-M Futures.
+        Uses positionRisk and reduceOnly market order.
+        """
+        try:
+            sym_str = f"{coin.upper()}USDT"
+            server_time = int(time.time() * 1000)
+            qs = f"symbol={sym_str}&timestamp={server_time}&recvWindow=60000"
+            sig = hmac.new(api_secret.encode("utf-8"), qs.encode("utf-8"), hashlib.sha256).hexdigest()
+            req = urllib.request.Request(
+                f"https://fapi.binance.com/fapi/v2/positionRisk?{qs}&signature={sig}",
+                headers={"X-MBX-APIKEY": api_key, "User-Agent": "Antigravity/2.0"}
+            )
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                positions = json.loads(resp.read().decode("utf-8"))
+
+            for p in positions:
+                amt = float(p.get("positionAmt", 0.0))
+                if amt == 0:
+                    continue
+                side = "SELL" if amt > 0 else "BUY"
+                cls.place_binance_futures_order(
+                    api_key, api_secret, coin, side, coin_amount=abs(amt), reduce_only=True
+                )
+            return {"success": True, "message": f"Closed Binance Futures {sym_str}"}
+        except Exception as e:
+            return {"success": False, "message": f"Error closing Binance Futures {coin}: {str(e)}"}
+
 
 
 
